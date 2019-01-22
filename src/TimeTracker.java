@@ -114,7 +114,7 @@ public class TimeTracker extends Frame
         final Handler[] handlers = rootLogger.getHandlers();
         if (handlers[0] instanceof ConsoleHandler)
         {
-            rootLogger.removeHandler(handlers[0]);
+            //rootLogger.removeHandler(handlers[0]);
         }
 
         LOGGER.setLevel(Level.INFO);
