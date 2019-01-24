@@ -45,12 +45,6 @@ import java.util.regex.Pattern;
 
 /**
  * TimeTracking-Tool
- *
- * ToDo Umlaute in Tickets
- *
- * @author $Author: BeyerA $ &copy; forcont business technology gmbh 2001-2018
- * @version $Revision: 1.0 $ $Date: 31.01.2018 07:26 $
- * @since 7.0
  */
 public class TimeTracker extends Frame
 {
@@ -106,7 +100,6 @@ public class TimeTracker extends Frame
     private static final String DEFAULT_PORT = "80";
 
     private static final transient Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-
     static
     {
         // suppress the logging output to the console
