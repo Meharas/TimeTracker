@@ -512,15 +512,14 @@ public class TimeTracker extends Frame
         }
     }
 
-    private void updateGui()
+    private void updateGui(final boolean removeLine)
     {
-        SwingUtilities.updateComponentTreeUI(this);
-        setVisible(false);
-        this.panel.updateUI();
-        revalidate();
+        if (removeLine)
+        {
+            final GridLayout layout = (GridLayout) this.panel.getLayout();
+            layout.setRows(layout.getRows() - 1);
+        }
         pack();
-        this.panel.updateUI();
-        setVisible(true);
     }
 
     private void addToPanel(final JComponent button)
@@ -1278,7 +1277,7 @@ public class TimeTracker extends Frame
                 storeProperties(properties);
 
                 remove();
-                updateGui();
+                updateGui(true);
                 --line;
             }
             catch (IOException ex)
@@ -1511,7 +1510,7 @@ public class TimeTracker extends Frame
                 outputStream.flush();
 
                 button = addButton(propertyKey, text, filePath);
-                updateGui();
+                updateGui(false);
                 ++line;
             }
             catch (IOException ex)
