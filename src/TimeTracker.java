@@ -1421,7 +1421,7 @@ public class TimeTracker extends Frame
                 @Override
                 public String getDescription()
                 {
-                    return null;
+                    return ".jpg, .jpeg, .png";
                 }
             });
             addButtonPanel.add(chooser);
