@@ -2013,9 +2013,15 @@ public class TimeTracker extends Frame
         final int currentMinutes = currentTimeUnits[1];
         final int currentTimeInMinutes = currentHours * 60 + currentMinutes;
 
-        final int timeSpent = currentTimeInMinutes - savedTimeInMinutes;
+        int timeSpent = currentTimeInMinutes - savedTimeInMinutes;
         if(timeSpent > 0)
         {
+            final String savedTime = properties.getProperty(keyPrefix + SUFFIX_TIME);
+            if(savedTime != null && !savedTime.isEmpty())
+            {
+                //Wenn es noch eine alte Zeit gibt, welche noch nicht geburnt wurde, dann wird diese aufgerechnet
+                timeSpent += Integer.parseInt(savedTime);
+            }
             saveSetting(Integer.toString(timeSpent), keyPrefix + SUFFIX_TIME);
         }
     }
