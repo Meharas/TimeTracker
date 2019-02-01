@@ -50,12 +50,6 @@ public class TimeTracker extends Frame
 {
     private static final long serialVersionUID = 7225687129886672540L;
 
-    private static final String PATH_ISSUE = "api/issues/%s";
-    private static final String PATH_COMMAND = "api/commands";
-    private static final String PATH_WORKITEM = PATH_ISSUE + "/timeTracking/workItems";
-    private static final String PATH_USER = "api/admin/users/me";
-    private static final String PATH_URL = "issue/%s";
-
     private static final Pattern PATTERN = Pattern.compile("([SEP-|DEV-|FS-]+[0-9]+).*");
     private static final Matcher MATCHER = PATTERN.matcher("");
     private static final Pattern TIME_PATTERN = Pattern.compile(".*([0-9]+)h ([0-9]+)min ([0-9]+)s");
@@ -64,6 +58,7 @@ public class TimeTracker extends Frame
     private static final Matcher DURATION_MATCHER = DURATION_PATTERN.matcher("");
 
     private static final Color MANDATORY = new Color(239, 247, 249);
+    private static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
 
     private static final String ENTITY = "{" +
                                          "\"date\":%d," +
@@ -88,6 +83,9 @@ public class TimeTracker extends Frame
     private static final String SUFFIX_DURATION = ".duration";
     private static final String ACTIONMAP_KEY_CANCEL = "Cancel";
     private static final String ISSUE_SUMMARY = "summary";
+    private static final String ISSUE_STATE = "State";
+    private static final String ISSUE_VALUE_STATE = "In Progress";
+    private static final String ISSUE_CUSTOM_FIELDS = "fields(projectCustomField(field(name)),value(name))";
 
     private static final String YOUTRACK_SCHEME = "youtrack.scheme";
     private static final String YOUTRACK_PORT = "youtrack.port";
@@ -105,45 +103,6 @@ public class TimeTracker extends Frame
 
     private static final ListCellRenderer RENDERER = new TypeRenderer();
     private static final transient Logger LOGGER = new Log(Logger.GLOBAL_LOGGER_NAME);
-
-    enum Path
-    {
-        WORKITEM(PATH_WORKITEM),
-        USER(PATH_USER),
-        ISSUE(PATH_ISSUE),
-        COMMAND(PATH_COMMAND),
-        URL(PATH_URL);
-
-        private String restEndPoint;
-
-        Path(final String path)
-        {
-            this.restEndPoint = path;
-        }
-    }
-
-    enum Icon
-    {
-        ADD("add.png"),
-        STOP("stop.png"),
-        LOG("log.png"),
-        REMOVE("delete_grey.png"),
-        BURN("burn.png"),
-        OPEN("link.png"),
-        COPY("copy.png"),
-        EDIT("edit.png");
-
-        private String png;
-        Icon(final String icon)
-        {
-            this.png = icon;
-        }
-
-        private String getIcon()
-        {
-            return "icons//" + this.png;
-        }
-    }
 
     private int line;
     private JPanel panel;
@@ -333,7 +292,7 @@ public class TimeTracker extends Frame
                     menu.setBorder(new EmptyBorder(0,0,0,0));
 
                     final JMenuItem copyItem = new JMenuItem(bundle.getString("menu.item.copy"));
-                    copyItem.setBorder(new EmptyBorder(5,5,5,5));
+                    copyItem.setBorder(BORDER);
                     setButtonIcon(copyItem, Icon.COPY);
 
                     copyItem.addActionListener(e1 -> {
@@ -343,12 +302,12 @@ public class TimeTracker extends Frame
                     });
 
                     final JMenuItem editItem = new JMenuItem(bundle.getString("menu.item.icon"));
-                    editItem.setBorder(new EmptyBorder(5,5,5,5));
+                    editItem.setBorder(BORDER);
                     editItem.addActionListener(new ShowAddButtonAction(button));
                     setButtonIcon(editItem, Icon.EDIT);
 
                     final JMenuItem resetItem = new JMenuItem(bundle.getString("button.tooltip.redo"));
-                    resetItem.setBorder(new EmptyBorder(5,5,5,5));
+                    resetItem.setBorder(BORDER);
                     setButtonIcon(resetItem, Icon.STOP);
                     resetItem.addActionListener(el -> {
                         final Action action = button.getAction();
@@ -357,13 +316,43 @@ public class TimeTracker extends Frame
 
                     menu.add(copyItem);
                     menu.add(editItem);
+                    try
+                    {
+                        final String issueState = getIssueState(button.getText());
+                        final JMenuItem inProgressItem = new JMenuItem(bundle.getString("button.label.inprogress"));
+                        inProgressItem.setBorder(BORDER);
+                        inProgressItem.setEnabled(!ISSUE_VALUE_STATE.equalsIgnoreCase(issueState));
+                        setButtonIcon(inProgressItem, Icon.PROGRESS);
+                        inProgressItem.addActionListener(new AddAction(button)
+                        {
+                            private static final long serialVersionUID = 922056815591098770L;
+
+                            @Override
+                            protected String createButtonText()
+                            {
+                                return button.getText();
+                            }
+
+                            @Override
+                            protected JButton createButton(final String text)
+                            {
+                                return button;
+                            }
+                        });
+                        menu.add(inProgressItem);
+                    }
+                    catch (URISyntaxException | IOException ex)
+                    {
+                        LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                    }
+
                     menu.addSeparator();
                     menu.add(resetItem);
 
                     if(id > 3)
                     {
                         final JMenuItem deleteItem = new JMenuItem(bundle.getString("button.tooltip.delete"));
-                        deleteItem.setBorder(new EmptyBorder(5,5,5,5));
+                        deleteItem.setBorder(BORDER);
                         setButtonIcon(deleteItem, Icon.REMOVE);
                         deleteItem.addActionListener(new DeleteButtonAction(button, key));
                         menu.add(deleteItem);
@@ -1193,7 +1182,7 @@ public class TimeTracker extends Frame
      */
     private String getID(final HttpResponse response, final String saveWithKey) throws IOException
     {
-        final String value = getValueFromJson(response, "id");
+        final String value = getValueFromJson(response, "id", false);
         if(value != null && saveWithKey != null)
         {
             saveSetting(value, saveWithKey);
@@ -1208,7 +1197,7 @@ public class TimeTracker extends Frame
      * @return Wert aus dem Json
      * @throws IOException I/O Error
      */
-    private String getValueFromJson(final HttpResponse response, final String key) throws IOException
+    private String getValueFromJson(final HttpResponse response, final String key, final boolean isCustomField) throws IOException
     {
         String result = null;
         final StatusLine statusLine = response.getStatusLine();
@@ -1232,11 +1221,21 @@ public class TimeTracker extends Frame
                 {
                     if (start)
                     {
-                        result = parser.getValueAsString();
+                        final String name = parser.getCurrentName();
+                        if(!"name".equalsIgnoreCase(name))
+                        {
+                            continue;
+                        }
+                        result = parser.nextTextValue();
                         break;
                     }
                     final String name = parser.getCurrentName();
                     if (key.equalsIgnoreCase(name))
+                    {
+                        result = parser.nextTextValue();
+                        break;
+                    }
+                    else if(isCustomField && key.equalsIgnoreCase(parser.getText()))
                     {
                         start = true;
                     }
@@ -1595,8 +1594,34 @@ public class TimeTracker extends Frame
             //Sollte der Nutzer was eigenes hingeschrieben haben, so sollte das nicht ersetzt werden
             return null;
         }
+        return getValueFromJson(ticket, ISSUE_SUMMARY);
+    }
 
-        final URIBuilder builder = getURIBuilder(Path.ISSUE, ticket, new BasicNameValuePair("fields", ISSUE_SUMMARY));
+    /**
+     * Liefert den Ticket-Status
+     * @param text Ticket, ggf. mit Beschreibung
+     * @return Ticket-Status
+     * @throws URISyntaxException Invalide URL
+     * @throws IOException I/O Error
+     */
+    private String getIssueState(final String text) throws URISyntaxException, IOException
+    {
+        MATCHER.reset(text);
+        if (!MATCHER.matches())
+        {
+            return null;
+        }
+        return getValueFromJson(MATCHER.group(1), ISSUE_CUSTOM_FIELDS, ISSUE_STATE);
+    }
+
+    private String getValueFromJson(final String ticket, final String field) throws IOException, URISyntaxException
+    {
+        return getValueFromJson(ticket, field, field);
+    }
+
+    private String getValueFromJson(final String ticket, final String fields, final String attribute) throws IOException, URISyntaxException
+    {
+        final URIBuilder builder = getURIBuilder(Path.ISSUE, ticket, new BasicNameValuePair("fields", fields));
         final HttpResponse response = execute(builder);
         if (response == null)
         {
@@ -1607,7 +1632,8 @@ public class TimeTracker extends Frame
         {
             return null;
         }
-        return getValueFromJson(response, ISSUE_SUMMARY);
+        final boolean isCustomField = ISSUE_CUSTOM_FIELDS.equalsIgnoreCase(fields);
+        return getValueFromJson(response, attribute, isCustomField);
     }
 
     private class EditAction extends TimerAction
@@ -1690,6 +1716,11 @@ public class TimeTracker extends Frame
         private JTextField textInput;
         private JFileChooser icon;
 
+        AddAction(final JButton button)
+        {
+            this(button, null, null);
+        }
+
         AddAction(final JButton button, final JTextField textInput, final JFileChooser icon)
         {
             super(button);
@@ -1700,16 +1731,26 @@ public class TimeTracker extends Frame
         @Override
         public void actionPerformed(final ActionEvent e)
         {
-            final File file = this.icon.getSelectedFile();
-            final String filePath = file == null ? STRING_EMPTY : file.getPath();
-            String text = this.textInput.getText();
+            final String text = createButtonText();
+            if(text == null)
+            {
+                return;
+            }
+
+            final JButton button = createButton(text);
+            handleConfirmationDialog(button, text);
+        }
+
+        protected String createButtonText()
+        {
+            String text = this.textInput == null ? null : this.textInput.getText();
             if(text != null)
             {
                 text = text.trim();
             }
             if (text == null || text.isEmpty())
             {
-                return;
+                return null;
             }
 
             try
@@ -1724,7 +1765,13 @@ public class TimeTracker extends Frame
             {
                 LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
             }
+            return text;
+        }
 
+        protected JButton createButton(final String text)
+        {
+            final File file = this.icon == null ? null : this.icon.getSelectedFile();
+            final String filePath = file == null ? STRING_EMPTY : file.getPath();
             final String counter = line < 10 ? "0" + line : Integer.toString(line);
 
             JButton button = null;
@@ -1752,8 +1799,7 @@ public class TimeTracker extends Frame
             {
                 frame.dispose();
             }
-
-            handleConfirmationDialog(button, text);
+            return button;
         }
 
         /**
