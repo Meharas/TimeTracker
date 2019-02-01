@@ -166,7 +166,9 @@ public class TimeTracker extends Frame
         LOG("log.png"),
         REMOVE("delete_grey.png"),
         BURN("burn.png"),
-        OPEN("link.png");
+        OPEN("link.png"),
+        COPY("copy.png"),
+        EDIT("edit.png");
 
         private String png;
         Icon(final String icon)
@@ -365,17 +367,44 @@ public class TimeTracker extends Frame
                 if(e.isPopupTrigger())
                 {
                     final JPopupMenu menu = new JPopupMenu();
+                    menu.setBorder(new EmptyBorder(0,0,0,0));
+
                     final JMenuItem copyItem = new JMenuItem(bundle.getString("menu.item.copy"));
+                    copyItem.setBorder(new EmptyBorder(5,5,5,5));
+                    setButtonIcon(copyItem, Icon.COPY);
+
                     copyItem.addActionListener(e1 -> {
                         final StringSelection stringSelection = new StringSelection(button.getText());
                         final Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
                         cb.setContents(stringSelection, stringSelection);
                     });
+
                     final JMenuItem editItem = new JMenuItem(bundle.getString("menu.item.icon"));
+                    editItem.setBorder(new EmptyBorder(5,5,5,5));
                     editItem.addActionListener(new ShowAddButtonAction(button));
+                    setButtonIcon(editItem, Icon.EDIT);
+
+                    final JMenuItem resetItem = new JMenuItem(bundle.getString("button.tooltip.redo"));
+                    resetItem.setBorder(new EmptyBorder(5,5,5,5));
+                    setButtonIcon(resetItem, Icon.STOP);
+                    resetItem.addActionListener(el -> {
+                        final Action action = button.getAction();
+                        ((TimerAction) action).reset();
+                    });
 
                     menu.add(copyItem);
                     menu.add(editItem);
+                    menu.addSeparator();
+                    menu.add(resetItem);
+
+                    if(id > 3)
+                    {
+                        final JMenuItem deleteItem = new JMenuItem(bundle.getString("button.tooltip.delete"));
+                        deleteItem.setBorder(new EmptyBorder(5,5,5,5));
+                        setButtonIcon(deleteItem, Icon.REMOVE);
+                        deleteItem.addActionListener(new DeleteButtonAction(button, key));
+                        menu.add(deleteItem);
+                    }
                     menu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
@@ -452,22 +481,6 @@ public class TimeTracker extends Frame
             }
         });
         setButtonIcon(action, Icon.OPEN);
-
-        actionsPanel.add(Box.createHorizontalStrut(10));
-        addAction(actionsPanel, new AbstractAction()
-        {
-            private static final long serialVersionUID = 4641196350640457638L;
-
-            @Override
-            public void actionPerformed(final ActionEvent e)
-            {
-                timerAction.reset();
-            }
-        }, this.bundle.getString("button.tooltip.redo"), Icon.STOP);
-
-        final JButton removeButton = addAction(actionsPanel, new DeleteButtonAction(button, key), this.bundle.getString("button.tooltip.delete"), Icon.REMOVE);
-        removeButton.setEnabled(id > 3);
-
         buttonPanel.add(actionsPanel, BorderLayout.EAST);
         addToPanel(buttonPanel);
         return button;
@@ -514,7 +527,7 @@ public class TimeTracker extends Frame
         }
     }
 
-    private void setButtonIcon(final JButton button, final Icon icon)
+    private void setButtonIcon(final AbstractButton button, final Icon icon)
     {
         if (icon == null)
         {
@@ -523,7 +536,7 @@ public class TimeTracker extends Frame
         setButtonIcon(button, icon.getIcon());
     }
 
-    private void setButtonIcon(final JButton button, final String icon)
+    private void setButtonIcon(final AbstractButton button, final String icon)
     {
         if (icon == null || icon.isEmpty())
         {
