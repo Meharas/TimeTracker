@@ -38,7 +38,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.*;
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,8 +77,8 @@ public class TimeTracker extends Frame
                                               " \"silent\":false}";
 
     private static final String PROPERTIES = TimeTracker.class.getSimpleName() + ".properties";
-    private static final String DEFAULT_PROPERTIES = TimeTracker.class.getSimpleName() + ".default.properties";
-    private static final String LOGFILE_NAME = "TimeTracker.log";
+    static final String DEFAULT_PROPERTIES = TimeTracker.class.getSimpleName() + ".default.properties";
+    static final String LOGFILE_NAME = "TimeTracker.log";
     private static final String PREFIX_BUTTON = "button.";
     private static final String SUFFIX_LABEL = ".label";
     private static final String SUFFIX_ICON = ".icon";
@@ -99,49 +100,11 @@ public class TimeTracker extends Frame
     private static final String DEFAULT_SCHEME = "http";
     private static final String DEFAULT_PORT = "80";
 
-    private static final String STRING_EMPTY = "";
+    static final String STRING_EMPTY = "";
     private static final String STRING_SPACE = " ";
 
-    private static final ListCellRenderer RENDERER = new DefaultListCellRenderer()
-    {
-        private static final long serialVersionUID = -4094337354229283799L;
-
-        @Override
-        public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus)
-        {
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value != null)
-        {
-            setText(((String[]) value)[1]);
-        }
-        return component;
-        }
-    };
-
-    private static final transient Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    static
-    {
-        // suppress the logging output to the console
-        final Logger rootLogger = Logger.getLogger(STRING_EMPTY);
-        final Handler[] handlers = rootLogger.getHandlers();
-        if (handlers[0] instanceof ConsoleHandler)
-        {
-            rootLogger.removeHandler(handlers[0]);
-        }
-
-        LOGGER.setLevel(Level.INFO);
-
-        try
-        {
-            final FileHandler fileHandler = new FileHandler(LOGFILE_NAME, true);
-            fileHandler.setFormatter(new SimpleFormatter());
-            LOGGER.addHandler(fileHandler);
-        }
-        catch (IOException e)
-        {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
-        }
-    }
+    private static final ListCellRenderer RENDERER = new TypeRenderer();
+    private static final transient Logger LOGGER = new Log(Logger.GLOBAL_LOGGER_NAME);
 
     enum Path
     {
