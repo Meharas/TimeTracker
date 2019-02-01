@@ -318,10 +318,10 @@ public class TimeTracker extends Frame
                     menu.add(editItem);
                     try
                     {
-                        final String issueState = getIssueState(button.getText());
+                        final String issueState = id > 3 ? getIssueState(button.getText()) : null;
                         final JMenuItem inProgressItem = new JMenuItem(bundle.getString("button.label.inprogress"));
                         inProgressItem.setBorder(BORDER);
-                        inProgressItem.setEnabled(!ISSUE_VALUE_STATE.equalsIgnoreCase(issueState));
+                        inProgressItem.setEnabled(issueState != null && !ISSUE_VALUE_STATE.equalsIgnoreCase(issueState));
                         setButtonIcon(inProgressItem, Icon.PROGRESS);
                         inProgressItem.addActionListener(new AddAction(button)
                         {
