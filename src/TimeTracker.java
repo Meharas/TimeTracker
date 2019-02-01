@@ -1012,7 +1012,7 @@ public class TimeTracker extends Frame
                     //die aktuelle Zeit ist kleiner als die gespeicherte. D.h. die aktuelle Zeit wird geburnt
                     return appendTimeUnits(timeToBurn);
                 }
-                return getParsedTime("0", "1" , "0");
+                return getParsedTime(Integer.toString(currentHours), Integer.toString(currentMinutes) , "0");
             }
             else if (matches)
             {
