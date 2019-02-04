@@ -9,6 +9,7 @@ public enum Path
     WORKITEM("api/issues/%s/timeTracking/workItems"),
     USER("api/admin/users/me"),
     ISSUE("api/issues/%s"),
+    COMMENT("/api/issues/%s/comments"),
     COMMAND("api/commands"),
     URL("issue/%s");
 

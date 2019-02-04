@@ -24,7 +24,7 @@ public class Log extends Logger
     private void init()
     {
         // suppress the logging output to the console
-        final Logger rootLogger = Logger.getLogger(TimeTracker.STRING_EMPTY);
+        final Logger rootLogger = Logger.getLogger(TimeTrackerConstants.STRING_EMPTY);
         final Handler[] handlers = rootLogger.getHandlers();
         if (handlers[0] instanceof ConsoleHandler)
         {
@@ -36,9 +36,9 @@ public class Log extends Logger
         try
         {
             final LogManager manager = LogManager.getLogManager();
-            manager.readConfiguration(TimeTracker.class.getResourceAsStream(TimeTracker.DEFAULT_PROPERTIES));
+            manager.readConfiguration(TimeTracker.class.getResourceAsStream(TimeTrackerConstants.DEFAULT_PROPERTIES));
 
-            final FileHandler fileHandler = new FileHandler(TimeTracker.LOGFILE_NAME, true);
+            final FileHandler fileHandler = new FileHandler(TimeTrackerConstants.LOGFILE_NAME, true);
             fileHandler.setFormatter(new LogFormatter());
             addHandler(fileHandler);
         }

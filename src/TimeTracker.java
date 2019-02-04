@@ -37,12 +37,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
-import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * TimeTracking-Tool
@@ -51,68 +49,21 @@ public class TimeTracker extends Frame
 {
     private static final long serialVersionUID = 7225687129886672540L;
 
-    private static final Pattern PATTERN = Pattern.compile("([SEP-|DEV-|FS-]+[0-9]+).*");
-    private static final Matcher MATCHER = PATTERN.matcher("");
-    private static final Pattern TIME_PATTERN = Pattern.compile(".*([0-9]+)h ([0-9]+)min ([0-9]+)s");
-    private static final Matcher TIME_MATCHER = TIME_PATTERN.matcher("");
-    private static final Pattern DURATION_PATTERN = Pattern.compile("(\\d{2})h (\\d{2})min (\\d{2})s");
-    private static final Matcher DURATION_MATCHER = DURATION_PATTERN.matcher("");
+    private static final Matcher MATCHER = TimeTrackerConstants.PATTERN.matcher("");
+    private static final Matcher TIME_MATCHER = TimeTrackerConstants.TIME_PATTERN.matcher("");
+    private static final Matcher DURATION_MATCHER = TimeTrackerConstants.DURATION_PATTERN.matcher("");
 
     private static final Color MANDATORY = new Color(239, 247, 249);
     private static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
 
-    private static final String PROPERTIES = TimeTracker.class.getSimpleName() + ".properties";
-    static final String DEFAULT_PROPERTIES = TimeTracker.class.getSimpleName() + ".default.properties";
-    static final String LOGFILE_NAME = "TimeTracker.log";
-    private static final String PREFIX_BUTTON = "button.";
-    private static final String SUFFIX_LABEL = ".label";
-    private static final String SUFFIX_ICON = ".icon";
-    private static final String SUFFIX_TICKET = ".ticket";
-    private static final String SUFFIX_TYPE = ".type";
-    private static final String SUFFIX_TIME = ".time";
-    private static final String SUFFIX_DURATION = ".duration";
-    private static final String ACTIONMAP_KEY_CANCEL = "Cancel";
-    private static final String ISSUE_SUMMARY = "summary";
-    private static final String ISSUE_STATE = "State";
-    private static final String ISSUE_VALUE_STATE_PROGRESS = "In Progress";
-    private static final String ISSUE_VALUE_STATE_VERIFY = "To verify";
-    private static final String ISSUE_FIX_VERSIONS = "Fix versions";
-    private static final String ISSUE_CUSTOM_FIELDS = "fields(projectCustomField(field(name)),value(name))";
-
-    private static final String YOUTRACK_SCHEME = "youtrack.scheme";
-    private static final String YOUTRACK_PORT = "youtrack.port";
-    private static final String YOUTRACK_HOST = "youtrack.host";
-    private static final String YOUTRACK_USERID = "youtrack.userid";
-    private static final String YOUTRACK_TOKEN = "youtrack.token";
-    private static final String YOUTRACK_TOKEN_PREFIX = "perm:";
-
-    private static final String DEFAULT_HOST = "youtrack";
-    private static final String DEFAULT_SCHEME = "http";
-    private static final String DEFAULT_PORT = "80";
-
-    static final String STRING_EMPTY = "";
-    private static final String STRING_SPACE = " ";
-
     private static final ListCellRenderer RENDERER = new TypeRenderer();
     static final transient Logger LOGGER = new Log(Logger.GLOBAL_LOGGER_NAME);
-    private static final List<String> FINISH_STATES = Arrays.asList("Verified", "Verified obsolete", "Duplicate", ISSUE_VALUE_STATE_VERIFY);
 
-    private static final String ENTITY = "{" +
-                                         "\"date\":%d," +
-                                         "\"author\": {\"id\":\"%s\"}," +
-                                         "\"duration\":{\"presentation\":\"%s\"}," +
-                                         "\"type\":{\"id\":\"%s\"}," +
-                                         "\"text\":\"%s\"}";
-
-    private static final String ISSUE_COMMAND = "{\"query\":\"%s: %s\",\n" +
-                                                " \"issues\":[{\"id\":\"%s\"}],\n" +
-                                                " \"silent\":false}";
+    private final transient ResourceBundle bundle = ResourceBundle.getBundle("TimeTracker", new Locale((String) System.getProperties().get("user.language")));
 
     private int line;
     private JPanel panel;
-    private final Frame timeTracker;
-    private final transient ResourceBundle bundle = ResourceBundle.getBundle("TimeTracker", new Locale((String) System.getProperties().get("user.language")));
-
+    private final Frame frame;
     private final String token;
     private String userId;
     private final String host;
@@ -135,13 +86,13 @@ public class TimeTracker extends Frame
             }
         });
 
-        this.timeTracker = this;
+        this.frame = this;
         this.panel = new JPanel(new GridLayout(0, 1));
 
-        this.scheme = properties.getProperty(YOUTRACK_SCHEME, DEFAULT_SCHEME);
-        this.host = properties.getProperty(YOUTRACK_HOST, DEFAULT_HOST);
-        this.port = Integer.parseInt(properties.getProperty(YOUTRACK_PORT, DEFAULT_PORT));
-        this.token = properties.getProperty(YOUTRACK_TOKEN);
+        this.scheme = properties.getProperty(TimeTrackerConstants.YOUTRACK_SCHEME, TimeTrackerConstants.DEFAULT_SCHEME);
+        this.host = properties.getProperty(TimeTrackerConstants.YOUTRACK_HOST, TimeTrackerConstants.DEFAULT_HOST);
+        this.port = Integer.parseInt(properties.getProperty(TimeTrackerConstants.YOUTRACK_PORT, TimeTrackerConstants.DEFAULT_PORT));
+        this.token = properties.getProperty(TimeTrackerConstants.YOUTRACK_TOKEN);
 
         try
         {
@@ -163,7 +114,7 @@ public class TimeTracker extends Frame
                 @Override
                 public void actionPerformed(final ActionEvent e)
                 {
-                    final File log = new File(LOGFILE_NAME);
+                    final File log = new File(TimeTrackerConstants.LOGFILE_NAME);
                     if (log.exists())
                     {
                         final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
@@ -196,9 +147,9 @@ public class TimeTracker extends Frame
             for (final Map.Entry<Object, Object> entry : properties.entrySet())
             {
                 final String key = (String) entry.getKey();
-                if (key.startsWith(PREFIX_BUTTON) && key.endsWith(SUFFIX_LABEL))
+                if (key.startsWith(TimeTrackerConstants.PREFIX_BUTTON) && key.endsWith(TimeTrackerConstants.SUFFIX_LABEL))
                 {
-                    final String icon = properties.getProperty(key.replace(SUFFIX_LABEL, SUFFIX_ICON));
+                    final String icon = properties.getProperty(key.replace(TimeTrackerConstants.SUFFIX_LABEL, TimeTrackerConstants.SUFFIX_ICON));
                     labelMap.put(key, new String[]{(String) entry.getValue(), icon});
                 }
             }
@@ -231,7 +182,7 @@ public class TimeTracker extends Frame
      */
     private String getUserID(final Properties properties) throws URISyntaxException, IOException
     {
-        final String userID = properties != null ? properties.getProperty(YOUTRACK_USERID) : null;
+        final String userID = properties != null ? properties.getProperty(TimeTrackerConstants.YOUTRACK_USERID) : null;
         if (userID != null && !userID.isEmpty())
         {
             return userID;
@@ -243,7 +194,7 @@ public class TimeTracker extends Frame
         {
             return null;
         }
-        return getID(response, YOUTRACK_USERID);
+        return getID(response, TimeTrackerConstants.YOUTRACK_USERID);
     }
 
     private HttpResponse execute(final URIBuilder builder) throws IOException, URISyntaxException
@@ -268,7 +219,7 @@ public class TimeTracker extends Frame
             return null;
         }
 
-        final int id = Integer.parseInt(key.substring(PREFIX_BUTTON.length()));
+        final int id = Integer.parseInt(key.substring(TimeTrackerConstants.PREFIX_BUTTON.length()));
 
         final JButton button = new JButton(label);
         setButtonIcon(button, icon);
@@ -349,7 +300,7 @@ public class TimeTracker extends Frame
         timeLabel.setPreferredSize(new Dimension(100, 20));
         timeLabel.setBorder(new EmptyBorder(0, 8, 0, 0));
 
-        final String savedDuration = loadSetting(key, SUFFIX_DURATION);
+        final String savedDuration = loadSetting(key, TimeTrackerConstants.SUFFIX_DURATION);
         if(savedDuration != null && !savedDuration.isEmpty())
         {
             setLabelTooltip(savedDuration, key, timeLabel);
@@ -372,7 +323,7 @@ public class TimeTracker extends Frame
         addAction(actionsPanel, new BurnButtonAction(button, timeLabel, key), this.bundle.getString("button.tooltip.burn"), Icon.BURN);
 
         final JButton action = addAction(actionsPanel);
-        action.setAction(new TextAction(STRING_EMPTY)
+        action.setAction(new TextAction(TimeTrackerConstants.STRING_EMPTY)
         {
             private static final long serialVersionUID = -8597151290962363254L;
 
@@ -430,7 +381,7 @@ public class TimeTracker extends Frame
             final String issueState = id > 3 ? getIssueState(button.getText()) : null;
             final JMenuItem inProgressItem = new JMenuItem(bundle.getString("button.label.inprogress"));
             inProgressItem.setBorder(BORDER);
-            inProgressItem.setEnabled(issueState != null && !ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));
+            inProgressItem.setEnabled(issueState != null && !TimeTrackerConstants.ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));
             setButtonIcon(inProgressItem, Icon.PROGRESS);
             inProgressItem.addActionListener(new AddAction(button)
             {
@@ -470,7 +421,7 @@ public class TimeTracker extends Frame
             final String issueState = id > 3 ? getIssueState(button.getText()) : null;
             final JMenuItem finishItem = new JMenuItem(bundle.getString("button.label.finish"));
             finishItem.setBorder(BORDER);
-            finishItem.setEnabled(issueState != null && !FINISH_STATES.contains(issueState));
+            finishItem.setEnabled(issueState != null && !State.getNames().contains(issueState));
             setButtonIcon(finishItem, Icon.FINISH);
             finishItem.addActionListener(new FinishDialogAction(button));
             menu.add(finishItem);
@@ -504,7 +455,7 @@ public class TimeTracker extends Frame
     {
         final Properties properties = new Properties();
 
-        try (final InputStream inputStream = loadProperties(properties, PROPERTIES))
+        try (final InputStream inputStream = loadProperties(properties, TimeTrackerConstants.PROPERTIES))
         {
             if (inputStream != null)
             {
@@ -750,7 +701,7 @@ public class TimeTracker extends Frame
             {
                 if (saveSpentTime)
                 {
-                    final String savedDuration = loadSetting(this.key, SUFFIX_DURATION);
+                    final String savedDuration = loadSetting(this.key, TimeTrackerConstants.SUFFIX_DURATION);
                     if(savedDuration != null && !savedDuration.isEmpty())
                     {
                         TIME_MATCHER.reset(currentDuration);
@@ -768,7 +719,7 @@ public class TimeTracker extends Frame
                         if(timeToSave > 0)
                         {
                             //es wird nur die verbrauchte Zeit vermerkt.
-                            saveSetting(Integer.toString(timeToSave), this.key + SUFFIX_TIME);
+                            saveSetting(Integer.toString(timeToSave), this.key + TimeTrackerConstants.SUFFIX_TIME);
                             return;
                         }
                     }
@@ -776,11 +727,11 @@ public class TimeTracker extends Frame
                 else
                 {
                     saveSetting(currentDuration, getDurationKey());
-                    saveSetting(STRING_EMPTY, this.key + SUFFIX_TIME);
+                    saveSetting(TimeTrackerConstants.STRING_EMPTY, this.key + TimeTrackerConstants.SUFFIX_TIME);
                     return;
                 }
             }
-            saveSetting(reset ? STRING_EMPTY : currentDuration, getDurationKey());
+            saveSetting(reset ? TimeTrackerConstants.STRING_EMPTY : currentDuration, getDurationKey());
         }
 
         void reset()
@@ -789,7 +740,7 @@ public class TimeTracker extends Frame
             this.duration = 0;
             if (this.label != null)
             {
-                this.label.setText(STRING_EMPTY);
+                this.label.setText(TimeTrackerConstants.STRING_EMPTY);
             }
             removeDuration();
         }
@@ -801,7 +752,7 @@ public class TimeTracker extends Frame
                 return;
             }
 
-            try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(PROPERTIES))
+            try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(TimeTrackerConstants.PROPERTIES))
             {
 
                 final Properties properties = new Properties();
@@ -817,7 +768,7 @@ public class TimeTracker extends Frame
 
         private String getDurationKey()
         {
-            return this.key + SUFFIX_DURATION;
+            return this.key + TimeTrackerConstants.SUFFIX_DURATION;
         }
     }
 
@@ -828,7 +779,7 @@ public class TimeTracker extends Frame
      */
     private String getDurationKey(final String key)
     {
-        return key + SUFFIX_DURATION;
+        return key + TimeTrackerConstants.SUFFIX_DURATION;
     }
 
     /**
@@ -839,7 +790,7 @@ public class TimeTracker extends Frame
      */
     private String getTicket(final String key, final JButton button)
     {
-        final String ticket = loadSetting(key, SUFFIX_TICKET);
+        final String ticket = loadSetting(key, TimeTrackerConstants.SUFFIX_TICKET);
         final String label = button.getText();
         if (ticket != null && !ticket.isEmpty())
         {
@@ -871,12 +822,12 @@ public class TimeTracker extends Frame
     private void setLabelTooltip(final String savedDuration, final String key, final JLabel timeLabel)
     {
         final StringBuilder sb = new StringBuilder();
-        sb.append("<html>").append(this.bundle.getString("time.saved")).append(STRING_SPACE).append(savedDuration);
+        sb.append("<html>").append(this.bundle.getString("time.saved")).append(TimeTrackerConstants.STRING_SPACE).append(savedDuration);
 
-        final String timeToBurn = loadSetting(key, SUFFIX_TIME);
+        final String timeToBurn = loadSetting(key, TimeTrackerConstants.SUFFIX_TIME);
         if(timeToBurn != null && !timeToBurn.isEmpty())
         {
-            sb.append("<br>").append(this.bundle.getString("time.to.burn")).append(STRING_SPACE).append(timeToBurn).append("m");
+            sb.append("<br>").append(this.bundle.getString("time.to.burn")).append(TimeTrackerConstants.STRING_SPACE).append(timeToBurn).append("m");
         }
         timeLabel.setToolTipText(sb.append("</html>").toString());
     }
@@ -903,7 +854,7 @@ public class TimeTracker extends Frame
         {
             final Point location = getWindowLocation();
 
-            final JDialog dialog = new JDialog(timeTracker, "Burning time", true);
+            final JDialog dialog = new JDialog(frame, "Burning time", true);
             dialog.setBounds(location.x, location.y, 250, 200);
             dialog.setResizable(false);
 
@@ -918,7 +869,7 @@ public class TimeTracker extends Frame
             final JTextField ticketField = new JTextField();
             ticketField.setBackground(MANDATORY);
 
-            final String ticket = loadSetting(this.key, SUFFIX_TICKET);
+            final String ticket = loadSetting(this.key, TimeTrackerConstants.SUFFIX_TICKET);
             final String buttonText = this.button.getText();
             if (ticket != null && !ticket.isEmpty())
             {
@@ -936,7 +887,7 @@ public class TimeTracker extends Frame
             rows.add(new JLabel(bundle.getString("button.label.ticket")));
             rows.add(ticketField);
 
-            final String savedTime = loadSetting(this.key, SUFFIX_DURATION);
+            final String savedTime = loadSetting(this.key, TimeTrackerConstants.SUFFIX_DURATION);
 
             final JTextField timeField = new JTextField();
             timeField.setBackground(MANDATORY);
@@ -947,7 +898,7 @@ public class TimeTracker extends Frame
             final JComboBox typeField = new JComboBox();
             timeField.setBackground(MANDATORY);
 
-            final String type = loadSetting(this.key, SUFFIX_TYPE);
+            final String type = loadSetting(this.key, TimeTrackerConstants.SUFFIX_TYPE);
             final LinkedList<String[]> items = new LinkedList<>();
             items.add(new String[]{"136-0", "Development"});
             items.add(new String[]{"136-1", "Testing"});
@@ -998,7 +949,7 @@ public class TimeTracker extends Frame
                         {
                             timerAction.saveDuration(false, false);
 
-                            final String savedDuration = loadSetting(key, SUFFIX_DURATION);
+                            final String savedDuration = loadSetting(key, TimeTrackerConstants.SUFFIX_DURATION);
                             setLabelTooltip(savedDuration, key, label);
                         }
                         dialog.dispose();
@@ -1053,7 +1004,7 @@ public class TimeTracker extends Frame
                 final String seconds = TIME_MATCHER.group(3);
                 return getParsedTime(hours, minutes, seconds);
             }
-            return STRING_EMPTY;
+            return TimeTrackerConstants.STRING_EMPTY;
         }
 
         /**
@@ -1121,28 +1072,28 @@ public class TimeTracker extends Frame
 
             final String type = ((String[]) selectedItem)[0];
 
-            saveSetting(ticket, this.key + SUFFIX_TICKET);
-            saveSetting(type, this.key + SUFFIX_TYPE);
-            saveSetting(STRING_EMPTY, this.key + SUFFIX_TIME);
+            saveSetting(ticket, this.key + TimeTrackerConstants.SUFFIX_TICKET);
+            saveSetting(type, this.key + TimeTrackerConstants.SUFFIX_TYPE);
+            saveSetting(TimeTrackerConstants.STRING_EMPTY, this.key + TimeTrackerConstants.SUFFIX_TIME);
 
             if (token == null || token.isEmpty())
             {
-                JOptionPane.showMessageDialog(timeTracker, String.format("Authorization token not found! Please create a token in youtrack and enter it in the " +
-                                                                         "%s with the key %s", PROPERTIES, YOUTRACK_TOKEN));
+                JOptionPane.showMessageDialog(frame, String.format("Authorization token not found! Please create a token in youtrack and enter it in the " +
+                                                                   "%s with the key %s", PROPERTIES, TimeTrackerConstants.YOUTRACK_TOKEN));
                 return false;
             }
 
             String text = textArea.getText();
             if (text == null)
             {
-                text = STRING_EMPTY;
+                text = TimeTrackerConstants.STRING_EMPTY;
             }
 
             try
             {
                 final URIBuilder builder = getURIBuilder(Path.WORKITEM, ticket);
                 final HttpPost request = new HttpPost(builder.build());
-                request.setEntity(new StringEntity(String.format(ENTITY, System.currentTimeMillis(), userId, spentTime, type, text), ContentType.APPLICATION_JSON));
+                request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ENTITY, System.currentTimeMillis(), userId, spentTime, type, text), ContentType.APPLICATION_JSON));
 
                 final HttpResponse response = executeRequest(request);
                 if (response == null)
@@ -1167,7 +1118,7 @@ public class TimeTracker extends Frame
 
         int timeToBurn = currentTimeValue - savedTimeValue;
 
-        final String savedTime = loadSetting(key, SUFFIX_TIME);
+        final String savedTime = loadSetting(key, TimeTrackerConstants.SUFFIX_TIME);
         if(savedTime != null && !savedTime.isEmpty())
         {
             LOGGER.log(Level.INFO, "Saved time found {0}", savedTime);
@@ -1182,9 +1133,9 @@ public class TimeTracker extends Frame
      */
     private Point getWindowLocation()
     {
-        final Point location = this.timeTracker.getLocationOnScreen();
-        final int x = location.x + (this.timeTracker.getWidth() / 2) - 125;
-        final int y = location.y + (this.timeTracker.getHeight() / 2) - 85;
+        final Point location = this.frame.getLocationOnScreen();
+        final int x = location.x + (this.frame.getWidth() / 2) - 125;
+        final int y = location.y + (this.frame.getHeight() / 2) - 85;
         return new Point(x, y);
     }
 
@@ -1372,7 +1323,7 @@ public class TimeTracker extends Frame
         @Override
         public void actionPerformed(final ActionEvent e)
         {
-            try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(PROPERTIES))
+            try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(TimeTrackerConstants.PROPERTIES))
             {
                 final Properties properties = new Properties();
                 properties.load(inputStream);
@@ -1461,8 +1412,8 @@ public class TimeTracker extends Frame
      */
     private void addEscapeEvent(final RootPaneContainer window)
     {
-        window.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), ACTIONMAP_KEY_CANCEL); //$NON-NLS-1$
-        window.getRootPane().getActionMap().put(ACTIONMAP_KEY_CANCEL, new AbstractAction(){
+        window.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), TimeTrackerConstants.ACTIONMAP_KEY_CANCEL); //$NON-NLS-1$
+        window.getRootPane().getActionMap().put(TimeTrackerConstants.ACTIONMAP_KEY_CANCEL, new AbstractAction(){
             private static final long serialVersionUID = 4056930123544439411L; //$NON-NLS-1$
 
             @Override
@@ -1528,7 +1479,7 @@ public class TimeTracker extends Frame
 
             final JButton ok = new JButton(bundle.getString("text.ok"));
             final String name = this.button.getName();
-            if(name != null && name.startsWith(PREFIX_BUTTON))
+            if(name != null && name.startsWith(TimeTrackerConstants.PREFIX_BUTTON))
             {
                 labelField.setText(this.button.getText());
                 ok.setAction(new EditAction(ok, this.button, labelField, chooser));
@@ -1579,7 +1530,7 @@ public class TimeTracker extends Frame
             final Frame topMostFrame = getParentFrame(this.button);
             if(topMostFrame != null)
             {
-                frame.setLocation(topMostFrame.getX() - ((frame.getWidth() - topMostFrame.getWidth()) / 2), timeTracker.getY());
+                frame.setLocation(topMostFrame.getX() - ((frame.getWidth() - topMostFrame.getWidth()) / 2), TimeTracker.this.frame.getY());
             }
         }
 
@@ -1650,13 +1601,13 @@ public class TimeTracker extends Frame
             return null;
         }
         final String ticket = MATCHER.group(1);
-        text = text.replace(ticket, STRING_EMPTY);
+        text = text.replace(ticket, TimeTrackerConstants.STRING_EMPTY);
         if(!text.trim().isEmpty())
         {
             //Sollte der Nutzer was eigenes hingeschrieben haben, so sollte das nicht ersetzt werden
             return null;
         }
-        return getValueFromJson(ticket, ISSUE_SUMMARY);
+        return getValueFromJson(ticket, TimeTrackerConstants.ISSUE_SUMMARY);
     }
 
     /**
@@ -1673,7 +1624,7 @@ public class TimeTracker extends Frame
         {
             return null;
         }
-        return getValueFromJson(MATCHER.group(1), ISSUE_CUSTOM_FIELDS, ISSUE_STATE);
+        return getValueFromJson(MATCHER.group(1), TimeTrackerConstants.ISSUE_CUSTOM_FIELDS, TimeTrackerConstants.ISSUE_STATE);
     }
 
     private String getValueFromJson(final String ticket, final String field) throws IOException, URISyntaxException
@@ -1694,7 +1645,7 @@ public class TimeTracker extends Frame
         {
             return null;
         }
-        final boolean isCustomField = ISSUE_CUSTOM_FIELDS.equalsIgnoreCase(fields);
+        final boolean isCustomField = TimeTrackerConstants.ISSUE_CUSTOM_FIELDS.equalsIgnoreCase(fields);
         return getValueFromJson(response, attribute, isCustomField);
     }
 
@@ -1717,7 +1668,7 @@ public class TimeTracker extends Frame
         public void actionPerformed(final ActionEvent e)
         {
             final File file = this.icon.getSelectedFile();
-            final String filePath = file == null ? STRING_EMPTY : file.getPath();
+            final String filePath = file == null ? TimeTrackerConstants.STRING_EMPTY : file.getPath();
             String text = this.textInput.getText();
             if(text != null)
             {
@@ -1733,7 +1684,7 @@ public class TimeTracker extends Frame
                 final String summary = getIssueSummary(text);
                 if(summary != null)
                 {
-                    text = text + STRING_SPACE + summary;
+                    text = text + TimeTrackerConstants.STRING_SPACE + summary;
                 }
             }
             catch (URISyntaxException | IOException ex)
@@ -1744,15 +1695,15 @@ public class TimeTracker extends Frame
             this.issueButton.setText(text);
             setButtonIcon(this.issueButton, filePath);
 
-            try (final FileOutputStream outputStream = new FileOutputStream(PROPERTIES, true))
+            try (final FileOutputStream outputStream = new FileOutputStream(TimeTrackerConstants.PROPERTIES, true))
             {
-                final String propertyKey = PREFIX_BUTTON + this.issueButton.getName().substring(PREFIX_BUTTON.length());
+                final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + this.issueButton.getName().substring(TimeTrackerConstants.PREFIX_BUTTON.length());
 
                 final Properties properties = new Properties();
-                properties.remove(propertyKey + SUFFIX_LABEL);
-                properties.remove(propertyKey + SUFFIX_ICON);
-                properties.setProperty(propertyKey + SUFFIX_LABEL, text);
-                properties.setProperty(propertyKey + SUFFIX_ICON, filePath);
+                properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_LABEL);
+                properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_ICON);
+                properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_LABEL, text);
+                properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_ICON, filePath);
                 properties.store(outputStream, null);
                 outputStream.flush();
             }
@@ -1820,7 +1771,7 @@ public class TimeTracker extends Frame
                 final String summary = getIssueSummary(text);
                 if(summary != null)
                 {
-                    text = text + STRING_SPACE + summary;
+                    text = text + TimeTrackerConstants.STRING_SPACE + summary;
                 }
             }
             catch (URISyntaxException | IOException ex)
@@ -1833,17 +1784,17 @@ public class TimeTracker extends Frame
         protected JButton createButton(final String text)
         {
             final File file = this.icon == null ? null : this.icon.getSelectedFile();
-            final String filePath = file == null ? STRING_EMPTY : file.getPath();
+            final String filePath = file == null ? TimeTrackerConstants.STRING_EMPTY : file.getPath();
             final String counter = line < 10 ? "0" + line : Integer.toString(line);
 
             JButton button = null;
-            try (final FileOutputStream outputStream = new FileOutputStream(PROPERTIES, true))
+            try (final FileOutputStream outputStream = new FileOutputStream(TimeTrackerConstants.PROPERTIES, true))
             {
-                final String propertyKey = PREFIX_BUTTON + counter;
+                final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + counter;
 
                 final Properties properties = new Properties();
-                properties.setProperty(propertyKey + SUFFIX_LABEL, text);
-                properties.setProperty(propertyKey + SUFFIX_ICON, filePath);
+                properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_LABEL, text);
+                properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_ICON, filePath);
                 properties.store(outputStream, null);
                 outputStream.flush();
 
@@ -1907,7 +1858,8 @@ public class TimeTracker extends Frame
                         }
 
                         final HttpPost request = new HttpPost(builder.build());
-                        request.setEntity(new StringEntity(String.format(ISSUE_COMMAND, ISSUE_STATE, ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
+                        request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMAND, TimeTrackerConstants.ISSUE_STATE,
+                                                                         TimeTrackerConstants.ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
 
                         final HttpResponse response = executeRequest(request);
                         if (response == null)
@@ -1948,27 +1900,29 @@ public class TimeTracker extends Frame
             MATCHER.reset(button.getText());
             if (MATCHER.matches())
             {
-                final JComboBox<String> versionsBox = new JComboBox<>();
-                final Map<String, String> versions = Versions.get();
-                for(final Map.Entry<String, String> entry : versions.entrySet())
-                {
-                    final String value = entry.getValue();
-                    versionsBox.addItem(value);
-
-                    if(entry.getKey().equalsIgnoreCase(Versions.getSelectedVersion()))
-                    {
-                        versionsBox.setSelectedItem(value);
-                    }
-                }
-
                 final JDialog dialog = getDialog(200);
-
-                final JPanel rows = new JPanel(new GridLayout(1, 2));
+                final JPanel rows = new JPanel();
                 rows.setBorder(new EmptyBorder(10, 10, 10, 10));
                 dialog.add(rows);
 
+                rows.add(new JLabel(bundle.getString("button.label.state")));
+                final JComboBox<String> statesBox = new ComboBoxStates();
+                rows.add(statesBox);
+
                 rows.add(new JLabel(bundle.getString("button.label.version")));
+                final JComboBox<String> versionsBox = new ComboBoxFixVersions();
                 rows.add(versionsBox);
+
+                final JPanel commentPanel = new JPanel();
+                commentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+                dialog.add(commentPanel);
+
+                commentPanel.add(new JLabel(bundle.getString("button.label.comment")));
+                final JTextArea comment = new JTextArea(1, 5);
+                comment.setLineWrap(true);
+                comment.setWrapStyleWord(true);
+                comment.setPreferredSize(new Dimension(300, 100));
+                commentPanel.add(comment);
 
                 final JButton okButton = new JButton(bundle.getString("text.ok"));
                 okButton.addActionListener(new TextAction(bundle.getString("text.ok"))
@@ -1982,15 +1936,28 @@ public class TimeTracker extends Frame
                         {
                             final String issueID = getIssueID(MATCHER.group(1));
 
-                            final URIBuilder builder = getCommandURIBuilder();
-                            final HttpPost request = new HttpPost(builder.build());
-                            request.setEntity(new StringEntity(String.format(ISSUE_COMMAND, ISSUE_FIX_VERSIONS, versionsBox.getSelectedItem(), issueID), ContentType.APPLICATION_JSON));
+                            URIBuilder builder = getCommandURIBuilder();
+                            HttpPost request = new HttpPost(builder.build());
+                            request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMAND, TimeTrackerConstants.ISSUE_FIX_VERSIONS,
+                                                                             versionsBox.getSelectedItem(), issueID), ContentType.APPLICATION_JSON));
                             HttpResponse response = executeRequest(request);
                             logResponse(response);
 
-                            request.setEntity(new StringEntity(String.format(ISSUE_COMMAND, ISSUE_STATE, ISSUE_VALUE_STATE_VERIFY, issueID), ContentType.APPLICATION_JSON));
+                            request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMAND, TimeTrackerConstants.ISSUE_STATE,
+                                                                             statesBox.getSelectedItem(), issueID), ContentType.APPLICATION_JSON));
                             response = executeRequest(request);
                             logResponse(response);
+
+                            final String commentText = comment.getText();
+                            if (commentText != null && !commentText.isEmpty())
+                            {
+                                builder = getURIBuilder(Path.COMMENT, issueID);
+                                request = new HttpPost(builder.build());
+                                request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMENT, commentText), ContentType.APPLICATION_JSON));
+
+                                response = executeRequest(request);
+                                logResponse(response);
+                            }
 
                             dialog.dispose();
                         }
@@ -2015,7 +1982,7 @@ public class TimeTracker extends Frame
     private JDialog getDialog(final int width)
     {
         final Point location = getWindowLocation();
-        final JDialog dialog = new JDialog(timeTracker, bundle.getString("text.confirmation"), true);
+        final JDialog dialog = new JDialog(frame, bundle.getString("text.confirmation"), true);
         dialog.setBounds(location.x, location.y, width, 200);
         dialog.setResizable(false);
         dialog.getContentPane().setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
@@ -2084,7 +2051,7 @@ public class TimeTracker extends Frame
     private void saveWindowPositionAndSize()
     {
         final Properties properties = new Properties();
-        try (final InputStream inputStream = loadProperties(properties, PROPERTIES))
+        try (final InputStream inputStream = loadProperties(properties, TimeTrackerConstants.PROPERTIES))
         {
             if (inputStream != null)
             {
@@ -2165,13 +2132,13 @@ public class TimeTracker extends Frame
         int timeSpent = currentTimeInMinutes - savedTimeInMinutes;
         if(timeSpent > 0)
         {
-            final String savedTime = properties.getProperty(keyPrefix + SUFFIX_TIME);
+            final String savedTime = properties.getProperty(keyPrefix + TimeTrackerConstants.SUFFIX_TIME);
             if(savedTime != null && !savedTime.isEmpty())
             {
                 //Wenn es noch eine alte Zeit gibt, welche noch nicht geburnt wurde, dann wird diese aufgerechnet
                 timeSpent += Integer.parseInt(savedTime);
             }
-            saveSetting(Integer.toString(timeSpent), keyPrefix + SUFFIX_TIME);
+            saveSetting(Integer.toString(timeSpent), keyPrefix + TimeTrackerConstants.SUFFIX_TIME);
         }
     }
 
@@ -2245,7 +2212,7 @@ public class TimeTracker extends Frame
     private void restoreWindowPositionAndSize()
     {
         final Properties properties = new Properties();
-        try (final InputStream inputStream = loadProperties(properties, PROPERTIES))
+        try (final InputStream inputStream = loadProperties(properties, TimeTrackerConstants.PROPERTIES))
         {
             if (inputStream != null)
             {
@@ -2282,8 +2249,8 @@ public class TimeTracker extends Frame
     {
         final Properties properties = new Properties();
 
-        try (@SuppressWarnings("unused") final InputStream defaultInputStream = loadProperties(properties, DEFAULT_PROPERTIES);
-             @SuppressWarnings("unused") final InputStream inputStream = loadProperties(properties, PROPERTIES))
+        try (@SuppressWarnings("unused") final InputStream defaultInputStream = loadProperties(properties, TimeTrackerConstants.DEFAULT_PROPERTIES);
+             @SuppressWarnings("unused") final InputStream inputStream = loadProperties(properties, TimeTrackerConstants.PROPERTIES))
         {
             return properties;
         }
@@ -2338,7 +2305,7 @@ public class TimeTracker extends Frame
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOGGER.log(Level.SEVERE, e.getMessage(), e));
 
-        final String token = properties.getProperty(YOUTRACK_TOKEN);
+        final String token = properties.getProperty(TimeTrackerConstants.YOUTRACK_TOKEN);
         if (token == null || token.isEmpty())
         {
             final int frameWidth = 500;
@@ -2351,8 +2318,8 @@ public class TimeTracker extends Frame
             dialog.setResizable(false);
             dialog.setLayout(new GridLayout(2, 1));
 
-            final JTextField tokenField = new JTextField(YOUTRACK_TOKEN_PREFIX);
-            tokenField.setCaretPosition(YOUTRACK_TOKEN_PREFIX.length());
+            final JTextField tokenField = new JTextField(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX);
+            tokenField.setCaretPosition(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length());
             tokenField.setBackground(MANDATORY);
             dialog.add(tokenField);
 
@@ -2370,24 +2337,24 @@ public class TimeTracker extends Frame
                         return;
                     }
 
-                    if(!localToken.startsWith(YOUTRACK_TOKEN_PREFIX))
+                    if(!localToken.startsWith(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX))
                     {
-                        localToken = YOUTRACK_TOKEN_PREFIX + localToken;
+                        localToken = TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX + localToken;
                     }
 
-                    if(localToken.startsWith(YOUTRACK_TOKEN_PREFIX + YOUTRACK_TOKEN_PREFIX))
+                    if(localToken.startsWith(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX + TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX))
                     {
-                        localToken = localToken.substring(YOUTRACK_TOKEN_PREFIX.length());
+                        localToken = localToken.substring(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length());
                     }
 
-                    if(localToken.length() <= YOUTRACK_TOKEN_PREFIX.length())
+                    if(localToken.length() <= TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length())
                     {
                         return;
                     }
 
                     saveToken(localToken);
 
-                    properties.setProperty(YOUTRACK_TOKEN, localToken);
+                    properties.setProperty(TimeTrackerConstants.YOUTRACK_TOKEN, localToken);
 
                     dialog.dispose();
                     callTimeTracker(properties);
@@ -2420,7 +2387,7 @@ public class TimeTracker extends Frame
      */
     private static void saveToken(final String token)
     {
-        saveSetting(token, YOUTRACK_TOKEN);
+        saveSetting(token, TimeTrackerConstants.YOUTRACK_TOKEN);
     }
 
     /**
@@ -2431,7 +2398,7 @@ public class TimeTracker extends Frame
     private static void saveSetting(final String value, final String key)
     {
         LOGGER.log(Level.INFO, "Saving key = {0} with value =  {1}", new String[]{key, value});
-        try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(PROPERTIES))
+        try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(TimeTrackerConstants.PROPERTIES))
         {
             final Properties properties = new Properties();
             properties.load(inputStream);
@@ -2462,7 +2429,7 @@ public class TimeTracker extends Frame
         OutputStream outputStream = null;
         try
         {
-            outputStream = Files.newOutputStream(Paths.get(PROPERTIES), StandardOpenOption.TRUNCATE_EXISTING);
+            outputStream = Files.newOutputStream(Paths.get(TimeTrackerConstants.PROPERTIES), StandardOpenOption.TRUNCATE_EXISTING);
             //properties.store(outputStream, null);
             store(outputStream, map);
             outputStream.flush();
