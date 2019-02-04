@@ -75,6 +75,7 @@ public class TimeTracker extends Frame
     {
         super("Time Tracker");
         setMinimumSize(new Dimension(575, 0));
+        setMaximumSize(new Dimension(800, 0));
         setAlwaysOnTop(true);
 
         addWindowListener(new WindowAdapter()
@@ -261,14 +262,49 @@ public class TimeTracker extends Frame
                     editItem.addActionListener(new ShowAddButtonAction(button));
                     setButtonIcon(editItem, Icon.EDIT);
 
-                    final JMenuItem resetItem = new JMenuItem(bundle.getString("button.tooltip.redo"));
-                    resetItem.setBorder(BORDER);
-                    setButtonIcon(resetItem, Icon.STOP);
-                    resetItem.addActionListener(el -> {
-                        final Action action = button.getAction();
-                        ((TimerAction) action).reset();
-                    });
+                    final JMenuItem openItem = new JMenuItem(bundle.getString("menu.item.open"));
+                    openItem.setBorder(BORDER);
+                    openItem.addActionListener(new TextAction(TimeTrackerConstants.STRING_EMPTY)
+                    {
+                        private static final long serialVersionUID = -8597151290962363254L;
 
+                        @Override
+                        public void actionPerformed(final ActionEvent e)
+                        {
+                            final String ticket = getTicket(key, button);
+                            if (ticket != null && !ticket.isEmpty())
+                            {
+                                try
+                                {
+                                    final URIBuilder builder = getURIBuilder(Path.URL, ticket);
+                                    openWebpage(builder.build());
+                                }
+                                catch (URISyntaxException ex)
+                                {
+                                    LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                                }
+                            }
+                        }
+
+                        private void openWebpage(final URI uri)
+                        {
+                            final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+                            if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE))
+                            {
+                                try
+                                {
+                                    desktop.browse(uri);
+                                }
+                                catch (Exception e)
+                                {
+                                    LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                                }
+                            }
+                        }
+                    });
+                    setButtonIcon(openItem, Icon.OPEN);
+
+                    menu.add(openItem);
                     menu.add(copyItem);
                     menu.add(editItem);
 
@@ -276,7 +312,6 @@ public class TimeTracker extends Frame
                     addFinishItem(menu, button, id);
 
                     menu.addSeparator();
-                    menu.add(resetItem);
 
                     if(id > 3)
                     {
@@ -322,46 +357,12 @@ public class TimeTracker extends Frame
 
         addAction(actionsPanel, new BurnButtonAction(button, timeLabel, key), this.bundle.getString("button.tooltip.burn"), Icon.BURN);
 
-        final JButton action = addAction(actionsPanel);
-        action.setAction(new TextAction(TimeTrackerConstants.STRING_EMPTY)
-        {
-            private static final long serialVersionUID = -8597151290962363254L;
-
-            @Override
-            public void actionPerformed(final ActionEvent e)
-            {
-                final String ticket = getTicket(key, button);
-                if (ticket != null && !ticket.isEmpty())
-                {
-                    try
-                    {
-                        final URIBuilder builder = getURIBuilder(Path.URL, ticket);
-                        openWebpage(builder.build());
-                    }
-                    catch (URISyntaxException ex)
-                    {
-                        LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-                    }
-                }
-            }
-
-            private void openWebpage(final URI uri)
-            {
-                final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
-                if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE))
-                {
-                    try
-                    {
-                        desktop.browse(uri);
-                    }
-                    catch (Exception e)
-                    {
-                        LOGGER.log(Level.SEVERE, e.getMessage(), e);
-                    }
-                }
-            }
+        final JButton action = addAction(actionsPanel, null, bundle.getString("button.tooltip.redo"), Icon.STOP);
+        action.addActionListener(el -> {
+            final Action a = button.getAction();
+            ((TimerAction) a).reset();
         });
-        setButtonIcon(action, Icon.OPEN);
+
         buttonPanel.add(actionsPanel, BorderLayout.EAST);
         addToPanel(buttonPanel);
         return button;
