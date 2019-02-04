@@ -985,7 +985,7 @@ public class TimeTracker extends Frame
                 timerAction.stopWithoutSave();
             }
 
-            final JButton ok = new JButton(new AbstractAction("OK")
+            final JButton ok = new JButton(new AbstractAction(bundle.getString("text.ok"))
             {
                 private static final long serialVersionUID = -2918616353182983419L;
 
@@ -1526,7 +1526,7 @@ public class TimeTracker extends Frame
             labelField.setPreferredSize(new Dimension(200, 25));
             labelField.setBackground(MANDATORY);
 
-            final JButton ok = new JButton("OK");
+            final JButton ok = new JButton(bundle.getString("text.ok"));
             final String name = this.button.getName();
             if(name != null && name.startsWith(PREFIX_BUTTON))
             {
@@ -1970,8 +1970,8 @@ public class TimeTracker extends Frame
                 rows.add(new JLabel(bundle.getString("button.label.version")));
                 rows.add(versionsBox);
 
-                final JButton okButton = new JButton("OK");
-                okButton.addActionListener(new TextAction("OK")
+                final JButton okButton = new JButton(bundle.getString("text.ok"));
+                okButton.addActionListener(new TextAction(bundle.getString("text.ok"))
                 {
                     private static final long serialVersionUID = 566865284107947772L;
 
