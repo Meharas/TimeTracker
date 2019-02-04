@@ -14,7 +14,8 @@ public enum Icon
     OPEN("link.png"),
     COPY("copy.png"),
     EDIT("edit.png"),
-    PROGRESS("progress.png");
+    PROGRESS("progress.png"),
+    FINISH("ok.png");
 
     private String png;
     Icon(final String icon)

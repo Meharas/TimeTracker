@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
+import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,17 +61,6 @@ public class TimeTracker extends Frame
     private static final Color MANDATORY = new Color(239, 247, 249);
     private static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
 
-    private static final String ENTITY = "{" +
-                                         "\"date\":%d," +
-                                         "\"author\": {\"id\":\"%s\"}," +
-                                         "\"duration\":{\"presentation\":\"%s\"}," +
-                                         "\"type\":{\"id\":\"%s\"}," +
-                                         "\"text\":\"%s\"}";
-
-    private static final String IN_PROGRESS = "{\"query\":\"State: In Progress\",\n" +
-                                              " \"issues\":[{\"id\":\"%s\"}],\n" +
-                                              " \"silent\":false}";
-
     private static final String PROPERTIES = TimeTracker.class.getSimpleName() + ".properties";
     static final String DEFAULT_PROPERTIES = TimeTracker.class.getSimpleName() + ".default.properties";
     static final String LOGFILE_NAME = "TimeTracker.log";
@@ -84,7 +74,9 @@ public class TimeTracker extends Frame
     private static final String ACTIONMAP_KEY_CANCEL = "Cancel";
     private static final String ISSUE_SUMMARY = "summary";
     private static final String ISSUE_STATE = "State";
-    private static final String ISSUE_VALUE_STATE = "In Progress";
+    private static final String ISSUE_VALUE_STATE_PROGRESS = "In Progress";
+    private static final String ISSUE_VALUE_STATE_VERIFY = "To verify";
+    private static final String ISSUE_FIX_VERSIONS = "Fix versions";
     private static final String ISSUE_CUSTOM_FIELDS = "fields(projectCustomField(field(name)),value(name))";
 
     private static final String YOUTRACK_SCHEME = "youtrack.scheme";
@@ -102,7 +94,19 @@ public class TimeTracker extends Frame
     private static final String STRING_SPACE = " ";
 
     private static final ListCellRenderer RENDERER = new TypeRenderer();
-    private static final transient Logger LOGGER = new Log(Logger.GLOBAL_LOGGER_NAME);
+    static final transient Logger LOGGER = new Log(Logger.GLOBAL_LOGGER_NAME);
+    private static final List<String> FINISH_STATES = Arrays.asList("Verified", "Verified obsolete", "Duplicate", ISSUE_VALUE_STATE_VERIFY);
+
+    private static final String ENTITY = "{" +
+                                         "\"date\":%d," +
+                                         "\"author\": {\"id\":\"%s\"}," +
+                                         "\"duration\":{\"presentation\":\"%s\"}," +
+                                         "\"type\":{\"id\":\"%s\"}," +
+                                         "\"text\":\"%s\"}";
+
+    private static final String ISSUE_COMMAND = "{\"query\":\"%s: %s\",\n" +
+                                                " \"issues\":[{\"id\":\"%s\"}],\n" +
+                                                " \"silent\":false}";
 
     private int line;
     private JPanel panel;
@@ -316,35 +320,9 @@ public class TimeTracker extends Frame
 
                     menu.add(copyItem);
                     menu.add(editItem);
-                    try
-                    {
-                        final String issueState = id > 3 ? getIssueState(button.getText()) : null;
-                        final JMenuItem inProgressItem = new JMenuItem(bundle.getString("button.label.inprogress"));
-                        inProgressItem.setBorder(BORDER);
-                        inProgressItem.setEnabled(issueState != null && !ISSUE_VALUE_STATE.equalsIgnoreCase(issueState));
-                        setButtonIcon(inProgressItem, Icon.PROGRESS);
-                        inProgressItem.addActionListener(new AddAction(button)
-                        {
-                            private static final long serialVersionUID = 922056815591098770L;
 
-                            @Override
-                            protected String createButtonText()
-                            {
-                                return button.getText();
-                            }
-
-                            @Override
-                            protected JButton createButton(final String text)
-                            {
-                                return button;
-                            }
-                        });
-                        menu.add(inProgressItem);
-                    }
-                    catch (URISyntaxException | IOException ex)
-                    {
-                        LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-                    }
+                    addInProgressItem(menu, button, id);
+                    addFinishItem(menu, button, id);
 
                     menu.addSeparator();
                     menu.add(resetItem);
@@ -436,6 +414,71 @@ public class TimeTracker extends Frame
         buttonPanel.add(actionsPanel, BorderLayout.EAST);
         addToPanel(buttonPanel);
         return button;
+    }
+
+    /**
+     * Fügt den Menüeintrag "In Bearbeitung nehmen" hinzu. Dabei wird geprüft, ob das Ticket nicht schon in Bearbeitung ist. Ausserdem ist diese Aktion
+     * für die Standardaktionen nicht vorgesehen
+     * @param menu Menü
+     * @param button Issue-Button
+     * @param id Id
+     */
+    private void addInProgressItem(final JPopupMenu menu, final JButton button, final int id)
+    {
+        try
+        {
+            final String issueState = id > 3 ? getIssueState(button.getText()) : null;
+            final JMenuItem inProgressItem = new JMenuItem(bundle.getString("button.label.inprogress"));
+            inProgressItem.setBorder(BORDER);
+            inProgressItem.setEnabled(issueState != null && !ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));
+            setButtonIcon(inProgressItem, Icon.PROGRESS);
+            inProgressItem.addActionListener(new AddAction(button)
+            {
+                private static final long serialVersionUID = 922056815591098770L;
+
+                @Override
+                protected String createButtonText()
+                {
+                    return button.getText();
+                }
+
+                @Override
+                protected JButton createButton(final String text)
+                {
+                    return button;
+                }
+            });
+            menu.add(inProgressItem);
+        }
+        catch (URISyntaxException | IOException ex)
+        {
+            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Fügt den Menüeintrag "Abschließen" hinzu. Dabei wird geprüft, ob das Ticket nicht schon abgeschlossen ist. Ausserdem ist diese Aktion
+     * für die Standardaktionen nicht vorgesehen
+     * @param menu Menü
+     * @param button Issue-Button
+     * @param id Id
+     */
+    private void addFinishItem(final JPopupMenu menu, final JButton button, final int id)
+    {
+        try
+        {
+            final String issueState = id > 3 ? getIssueState(button.getText()) : null;
+            final JMenuItem finishItem = new JMenuItem(bundle.getString("button.label.finish"));
+            finishItem.setBorder(BORDER);
+            finishItem.setEnabled(issueState != null && !FINISH_STATES.contains(issueState));
+            setButtonIcon(finishItem, Icon.FINISH);
+            finishItem.addActionListener(new FinishDialogAction(button));
+            menu.add(finishItem);
+        }
+        catch (URISyntaxException | IOException ex)
+        {
+            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+        }
     }
 
     private JButton addAction(final JPanel parent)
@@ -1574,6 +1617,25 @@ public class TimeTracker extends Frame
     }
 
     /**
+     * Liefert die interne ID eines Issues. Für manche Operationen, z.b. Commands, kann nicht mit dem Issue gearbeitet werden
+     * @param ticket Issue
+     * @return Interne ID des Issues
+     * @throws URISyntaxException Wenn das Parsen als URI-Referenz schief ging
+     * @throws IOException Verbindungsproblem
+     */
+    private String getIssueID(final String ticket) throws URISyntaxException, IOException
+    {
+        final URIBuilder getIssueBuilder = getURIBuilder(Path.ISSUE, ticket);
+        final HttpGet request = new HttpGet(getIssueBuilder.build());
+        final HttpResponse response = executeRequest(request);
+        if (response == null)
+        {
+            return null;
+        }
+        return getID(response, null);
+    }
+
+    /**
      * Ermittelt die Beschreibung zu einem Ticket
      * @param text Ticket
      * @return die Beschreibung zu einem Ticket
@@ -1812,12 +1874,7 @@ public class TimeTracker extends Frame
             if (MATCHER.matches())
             {
                 final String ticket = MATCHER.group(1);
-                final Point location = getWindowLocation();
-
-                final JDialog dialog = new JDialog(timeTracker, bundle.getString("text.confirmation"), true);
-                dialog.setBounds(location.x, location.y, 250, 200);
-                dialog.setResizable(false);
-                dialog.getContentPane().setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
+                final JDialog dialog = getDialog(250);
 
                 final JPanel rows = new JPanel(new GridLayout(2, 1));
                 rows.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -1850,7 +1907,7 @@ public class TimeTracker extends Frame
                         }
 
                         final HttpPost request = new HttpPost(builder.build());
-                        request.setEntity(new StringEntity(String.format(IN_PROGRESS, issueID), ContentType.APPLICATION_JSON));
+                        request.setEntity(new StringEntity(String.format(ISSUE_COMMAND, ISSUE_STATE, ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
 
                         final HttpResponse response = executeRequest(request);
                         if (response == null)
@@ -1874,34 +1931,104 @@ public class TimeTracker extends Frame
                 dialog.setVisible(true);
             }
         }
+    }
 
-        /**
-         * Liefert den URI-Builder für Commands
-         * @return URIBuilder
-         */
-        private URIBuilder getCommandURIBuilder()
+    private class FinishDialogAction extends TimerAction
+    {
+        private static final long serialVersionUID = 7059526162584192854L;
+
+        FinishDialogAction(final JButton button)
         {
-            return getURIBuilder(Path.COMMAND, null);
+            super(button);
         }
 
-        /**
-         * Liefert die interne ID eines Issues. Für manche Operationen, z.b. Commands, kann nicht mit dem Issue gearbeitet werden
-         * @param ticket Issue
-         * @return Interne ID des Issues
-         * @throws URISyntaxException Wenn das Parsen als URI-Referenz schief ging
-         * @throws IOException Verbindungsproblem
-         */
-        private String getIssueID(final String ticket) throws URISyntaxException, IOException
+        @Override
+        public void actionPerformed(final ActionEvent e)
         {
-            final URIBuilder getIssueBuilder = getURIBuilder(Path.ISSUE, ticket);
-            final HttpGet request = new HttpGet(getIssueBuilder.build());
-            final HttpResponse response = executeRequest(request);
-            if (response == null)
+            MATCHER.reset(button.getText());
+            if (MATCHER.matches())
             {
-                return null;
+                final JComboBox<String> versionsBox = new JComboBox<>();
+                final Map<String, String> versions = Versions.get();
+                for(final Map.Entry<String, String> entry : versions.entrySet())
+                {
+                    final String value = entry.getValue();
+                    versionsBox.addItem(value);
+
+                    if(entry.getKey().equalsIgnoreCase(Versions.getSelectedVersion()))
+                    {
+                        versionsBox.setSelectedItem(value);
+                    }
+                }
+
+                final JDialog dialog = getDialog(200);
+
+                final JPanel rows = new JPanel(new GridLayout(1, 2));
+                rows.setBorder(new EmptyBorder(10, 10, 10, 10));
+                dialog.add(rows);
+
+                rows.add(new JLabel(bundle.getString("button.label.version")));
+                rows.add(versionsBox);
+
+                final JButton okButton = new JButton("OK");
+                okButton.addActionListener(new TextAction("OK")
+                {
+                    private static final long serialVersionUID = 566865284107947772L;
+
+                    @Override
+                    public void actionPerformed(final ActionEvent e)
+                    {
+                        try
+                        {
+                            final String issueID = getIssueID(MATCHER.group(1));
+
+                            final URIBuilder builder = getCommandURIBuilder();
+                            final HttpPost request = new HttpPost(builder.build());
+                            request.setEntity(new StringEntity(String.format(ISSUE_COMMAND, ISSUE_FIX_VERSIONS, versionsBox.getSelectedItem(), issueID), ContentType.APPLICATION_JSON));
+                            HttpResponse response = executeRequest(request);
+                            logResponse(response);
+
+                            request.setEntity(new StringEntity(String.format(ISSUE_COMMAND, ISSUE_STATE, ISSUE_VALUE_STATE_VERIFY, issueID), ContentType.APPLICATION_JSON));
+                            response = executeRequest(request);
+                            logResponse(response);
+
+                            dialog.dispose();
+                        }
+                        catch (URISyntaxException | IOException ex)
+                        {
+                            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                        }
+                    }
+                });
+                dialog.add(okButton);
+                dialog.pack();
+                dialog.setVisible(true);
             }
-            return getID(response, null);
         }
+    }
+
+    /**
+     * Liefert einen kleinen Rückfragedialog
+     * @param width Breite des Dialogs
+     * @return Rückfragedialog
+     */
+    private JDialog getDialog(final int width)
+    {
+        final Point location = getWindowLocation();
+        final JDialog dialog = new JDialog(timeTracker, bundle.getString("text.confirmation"), true);
+        dialog.setBounds(location.x, location.y, width, 200);
+        dialog.setResizable(false);
+        dialog.getContentPane().setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
+        return dialog;
+    }
+
+    /**
+     * Liefert den URI-Builder für Commands
+     * @return URIBuilder
+     */
+    private URIBuilder getCommandURIBuilder()
+    {
+        return getURIBuilder(Path.COMMAND, null);
     }
 
     /**
