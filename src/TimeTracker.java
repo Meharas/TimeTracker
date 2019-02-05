@@ -2456,6 +2456,11 @@ public class TimeTracker extends Frame
 
     private static void store(final BufferedWriter bw, final Map<String, String> map) throws IOException
     {
+        if(map.isEmpty())
+        {
+            return;
+        }
+
         bw.write("#" + new Date().toString());
 
         for(final Map.Entry<String, String> entry : map.entrySet())
