@@ -75,7 +75,6 @@ public class TimeTracker extends Frame
     {
         super("Time Tracker");
         setMinimumSize(new Dimension(575, 0));
-        setMaximumSize(new Dimension(800, 0));
         setAlwaysOnTop(true);
 
         addWindowListener(new WindowAdapter()
@@ -225,8 +224,6 @@ public class TimeTracker extends Frame
         final JButton button = new JButton(label);
         setButtonIcon(button, icon);
         button.setName(key);
-        button.setPreferredSize(new Dimension(850, 300));
-        button.setMaximumSize(new Dimension(850, 30));
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.addMouseListener(new MouseAdapter()
         {
