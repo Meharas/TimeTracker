@@ -48,6 +48,9 @@ final class TimeTrackerConstants
 
     static final String STRING_EMPTY = "";
     static final String STRING_SPACE = " ";
+    static final String FIELDS = "fields";
+    static final String NO_CACHE = "no-cache";
+    static final String MIMETYPE_JSON = "application/json";
 
 
     static final String ENTITY = "{" +
