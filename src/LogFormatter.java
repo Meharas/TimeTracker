@@ -13,7 +13,8 @@ import java.util.logging.LogRecord;
  */
 public class LogFormatter extends Formatter
 {
-    private static final String FORMAT = "%1$tb %1$td, %1$tY %1$tl:%1$tM:%1$tS %1$Tp %2$s     %4$s: %5$s%6$s%n";
+    //private static final String FORMAT = "%1$tb %1$td, %1$tY %1$tl:%1$tM:%1$tS %1$Tp %2$s     %4$s: %5$s%6$s%n";
+    private static final String FORMAT = "[%1$tF %1$tT.%1$tQ] %2$-15.11s %3$-30.30s %4$s%5$s%n";
     private final Date date = new Date();
 
     @Override
@@ -45,6 +46,6 @@ public class LogFormatter extends Formatter
             pw.close();
             throwable = sw.toString();
         }
-        return String.format(FORMAT, this.date, source, record.getLoggerName(), record.getLevel().getLocalizedName(), message, throwable);
+        return String.format(FORMAT, this.date, record.getLevel().getLocalizedName(), source, message, throwable);
     }
 }
