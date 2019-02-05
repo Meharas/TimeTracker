@@ -1486,13 +1486,13 @@ public class TimeTracker extends Frame
             else
             {
                 ok.setAction(new AddAction(ok, labelField, chooser));
-            }
 
-            final boolean issueFound = setLabelFromClipboard(labelField);
-            if(issueFound)
-            {
-                ok.doClick();
-                return;
+                final boolean issueFound = setLabelFromClipboard(labelField);
+                if(issueFound)
+                {
+                    ok.doClick();
+                    return;
+                }
             }
 
             final JFrame frame = new JFrame();
