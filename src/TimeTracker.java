@@ -225,6 +225,8 @@ public class TimeTracker extends Frame
         final JButton button = new JButton(label);
         setButtonIcon(button, icon);
         button.setName(key);
+        button.setPreferredSize(new Dimension(850, 300));
+        button.setMaximumSize(new Dimension(850, 30));
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.addMouseListener(new MouseAdapter()
         {
@@ -313,14 +315,12 @@ public class TimeTracker extends Frame
 
                     menu.addSeparator();
 
-                    if(id > 3)
-                    {
-                        final JMenuItem deleteItem = new JMenuItem(bundle.getString("button.tooltip.delete"));
-                        deleteItem.setBorder(BORDER);
-                        setButtonIcon(deleteItem, Icon.REMOVE);
-                        deleteItem.addActionListener(new DeleteButtonAction(button, key));
-                        menu.add(deleteItem);
-                    }
+                    final JMenuItem deleteItem = new JMenuItem(bundle.getString("button.tooltip.delete"));
+                    deleteItem.setBorder(BORDER);
+                    deleteItem.setEnabled(id > 3);
+                    setButtonIcon(deleteItem, Icon.REMOVE);
+                    deleteItem.addActionListener(new DeleteButtonAction(button, key));
+                    menu.add(deleteItem);
                     menu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
@@ -355,7 +355,8 @@ public class TimeTracker extends Frame
         final JPanel actionsPanel = new JPanel();
         actionsPanel.setLayout(new BoxLayout(actionsPanel, BoxLayout.X_AXIS));
 
-        addAction(actionsPanel, new BurnButtonAction(button, timeLabel, key), this.bundle.getString("button.tooltip.burn"), Icon.BURN);
+        final JButton burnAction = addAction(actionsPanel, null, this.bundle.getString("button.tooltip.burn"), Icon.BURN);
+        burnAction.addActionListener(new BurnButtonAction(button, timeLabel, key));
 
         final JButton action = addAction(actionsPanel, null, bundle.getString("button.tooltip.redo"), Icon.STOP);
         action.addActionListener(el -> {
