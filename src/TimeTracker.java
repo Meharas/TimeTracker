@@ -678,50 +678,16 @@ public class TimeTracker extends Frame
                 this.timer.stop();
                 if (saveDuration && this.label != null)
                 {
-                    saveDuration(reset, true);
+                    saveDuration(reset);
                 }
             }
             this.button.setBackground(null);
             this.button.setOpaque(false);
         }
 
-        private void saveDuration(boolean reset, final boolean saveSpentTime)
+        private void saveDuration(boolean reset)
         {
             final String currentDuration = this.label.getText();
-            if(!reset)
-            {
-                if (saveSpentTime)
-                {
-                    final String savedDuration = loadSetting(this.key, TimeTrackerConstants.SUFFIX_DURATION);
-                    if(savedDuration != null && !savedDuration.isEmpty())
-                    {
-                        TIME_MATCHER.reset(currentDuration);
-                        final int[] currentTimeUnits = getTimeUnits();
-                        final int currentHours = currentTimeUnits[0];
-                        final int currentMinutes = currentTimeUnits[1];
-
-                        TIME_MATCHER.reset(savedDuration);
-                        final int[] savedTimeUnits = getTimeUnits();
-                        final int savedHours = savedTimeUnits[0];
-                        final int savedMinutes = savedTimeUnits[1];
-
-                        final int timeToSave = getTimeToSave(currentHours, currentMinutes, savedHours, savedMinutes, this.key);
-
-                        if(timeToSave > 0)
-                        {
-                            //es wird nur die verbrauchte Zeit vermerkt.
-                            saveSetting(Integer.toString(timeToSave), this.key + TimeTrackerConstants.SUFFIX_TIME);
-                            return;
-                        }
-                    }
-                }
-                else
-                {
-                    saveSetting(currentDuration, getDurationKey());
-                    saveSetting(TimeTrackerConstants.STRING_EMPTY, this.key + TimeTrackerConstants.SUFFIX_TIME);
-                    return;
-                }
-            }
             saveSetting(reset ? TimeTrackerConstants.STRING_EMPTY : currentDuration, getDurationKey());
         }
 
