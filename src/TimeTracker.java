@@ -309,7 +309,7 @@ public class TimeTracker extends Frame
                     menu.add(editItem);
 
                     addInProgressItem(menu, button, id);
-                    addFinishItem(menu, button, id);
+                    addRedoItem(menu, button);
 
                     menu.addSeparator();
 
@@ -333,7 +333,7 @@ public class TimeTracker extends Frame
         timeLabel.setPreferredSize(new Dimension(100, 20));
         timeLabel.setBorder(new EmptyBorder(0, 8, 0, 0));
 
-        final String savedDuration = loadSetting(key, TimeTrackerConstants.SUFFIX_DURATION);
+        final String savedDuration = loadSetting(key, TimeTrackerConstants.SUFFIX_DURATION_SAVED);
         if(savedDuration != null && !savedDuration.isEmpty())
         {
             setLabelTooltip(savedDuration, timeLabel);
@@ -356,11 +356,9 @@ public class TimeTracker extends Frame
         final JButton burnAction = addAction(actionsPanel,  this.bundle.getString(PropertyConstants.TOOLTIP_BURN), Icon.BURN);
         burnAction.addActionListener(new BurnButtonAction(button, timeLabel, key));
 
-        final JButton action = addAction(actionsPanel, this.bundle.getString(PropertyConstants.TOOLTIP_REDO), Icon.STOP);
-        action.addActionListener(el -> {
-            final Action a = button.getAction();
-            ((TimerAction) a).reset();
-        });
+        final JButton action = addAction(actionsPanel, this.bundle.getString(PropertyConstants.LABEL_FINISH), Icon.FINISH);
+        action.addActionListener(new FinishDialogAction(button));
+        action.setEnabled(id > 3);
 
         buttonPanel.add(actionsPanel, BorderLayout.EAST);
         addToPanel(buttonPanel);
@@ -408,28 +406,20 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * Fügt den Menüeintrag "Abschließen" hinzu. Dabei wird geprüft, ob das Ticket nicht schon abgeschlossen ist. Ausserdem ist diese Aktion
-     * für die Standardaktionen nicht vorgesehen
+     * Fügt den Menüeintrag "Zurücksetzen" hinzu
      * @param menu Menü
      * @param button Issue-Button
-     * @param id Id
      */
-    private void addFinishItem(final JPopupMenu menu, final JButton button, final int id)
+    private void addRedoItem(final JPopupMenu menu, final JButton button)
     {
-        try
-        {
-            final String issueState = id > 3 ? getIssueState(button.getText()) : null;
-            final JMenuItem finishItem = new JMenuItem(bundle.getString(PropertyConstants.LABEL_FINISH));
-            finishItem.setBorder(BORDER);
-            finishItem.setEnabled(issueState != null && !State.getNames().contains(issueState));
-            setButtonIcon(finishItem, Icon.FINISH);
-            finishItem.addActionListener(new FinishDialogAction(button));
-            menu.add(finishItem);
-        }
-        catch (URISyntaxException | IOException ex)
-        {
-            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-        }
+        final JMenuItem redoItem = new JMenuItem(bundle.getString(PropertyConstants.TOOLTIP_REDO));
+        redoItem.setBorder(BORDER);
+        setButtonIcon(redoItem, Icon.STOP);
+        redoItem.addActionListener(el -> {
+            final Action a = button.getAction();
+            ((TimerAction) a).reset();
+        });
+        menu.add(redoItem);
     }
 
     private JButton addAction(final JPanel parent, final String tooltip, final Icon icon)
@@ -715,7 +705,7 @@ public class TimeTracker extends Frame
                 final Properties properties = new Properties();
                 properties.load(inputStream);
                 properties.remove(this.key + TimeTrackerConstants.SUFFIX_DURATION);
-                properties.remove(this.key + TimeTrackerConstants.SUFFIX_DURATION_SAVED);
+                //properties.remove(this.key + TimeTrackerConstants.SUFFIX_DURATION_SAVED);
                 storeProperties(properties);
             }
             catch (IOException ex)
@@ -780,7 +770,7 @@ public class TimeTracker extends Frame
     private void setLabelTooltip(final String savedDuration, final JLabel timeLabel)
     {
         final StringBuilder sb = new StringBuilder();
-        sb.append("<html>").append(this.bundle.getString("time.saved")).append(TimeTrackerConstants.STRING_SPACE).append(savedDuration);
+        sb.append("<html>").append(this.bundle.getString(PropertyConstants.TIME_SAVED)).append(TimeTrackerConstants.STRING_SPACE).append(savedDuration);
         timeLabel.setToolTipText(sb.append("</html>").toString());
     }
 
@@ -895,7 +885,13 @@ public class TimeTracker extends Frame
                 {
                     if (burnTime(ticketField, timeField, typeField, textArea))
                     {
-                        setLabelTooltip(timeField.getText(), label);
+                        if(timerAction != null)
+                        {
+                            timerAction.reset();
+                        }
+
+                        final String savedDuration = loadSetting(key, TimeTrackerConstants.SUFFIX_DURATION_SAVED);
+                        setLabelTooltip(savedDuration, label);
                         dialog.dispose();
                     }
                 }
@@ -918,19 +914,6 @@ public class TimeTracker extends Frame
             final int[] timeUnits = getTimeUnits(currentDuration);
             int currentHours = timeUnits[0];
             int currentMinutes = timeUnits[1];
-
-            final String savedTime = loadSetting(this.key, TimeTrackerConstants.SUFFIX_DURATION_SAVED);
-            if (savedTime != null && !savedTime.isEmpty())
-            {
-                LOGGER.log(Level.INFO, "Saved time found {0}", savedTime);
-
-                final int[] savedTimeUnits = getTimeUnits(savedTime);
-                final int savedHours = savedTimeUnits[0];
-                final int savedMinutes = savedTimeUnits[1] - (savedHours * 60);
-
-                currentHours -= savedHours;
-                currentMinutes -= savedMinutes;
-            }
             return getParsedTime(Integer.toString(Math.max(0, currentHours)), Integer.toString(Math.max(1, currentMinutes)));
         }
 

@@ -33,6 +33,7 @@ final class PropertyConstants
     static final String LABEL_TEXT = "button.label.text";
 
     static final String TICKET_IN_PROGRESS = "ticket.inprogress";
+    static final String TIME_SAVED = "time.saved";
 
     static final String WINDOW_LOCATION = "window.location";
     static final String WINDOW_DIMENSION = "window.dimension";
