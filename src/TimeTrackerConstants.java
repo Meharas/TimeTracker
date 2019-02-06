@@ -15,6 +15,7 @@ final class TimeTrackerConstants
 
     static final Pattern PATTERN = Pattern.compile("([SEP-|DEV-|FS-]+[0-9]+).*");
     static final Pattern TIME_PATTERN = Pattern.compile(".*([0-9]+)h ([0-9]+)min ([0-9]+)s");
+    static final Pattern BURN_PATTERN = Pattern.compile(".*([0-9]+)h ([0-9]+)m");
     static final Pattern DURATION_PATTERN = Pattern.compile("(\\d{2})h (\\d{2})min (\\d{2})s");
 
     static final String PROPERTIES = TimeTracker.class.getSimpleName() + ".properties";
@@ -25,13 +26,12 @@ final class TimeTrackerConstants
     static final String SUFFIX_ICON = ".icon";
     static final String SUFFIX_TICKET = ".ticket";
     static final String SUFFIX_TYPE = ".type";
-    static final String SUFFIX_TIME = ".time";
     static final String SUFFIX_DURATION = ".duration";
+    static final String SUFFIX_DURATION_SAVED = ".duration.saved";
     static final String ACTIONMAP_KEY_CANCEL = "Cancel";
     static final String ISSUE_SUMMARY = "summary";
     static final String ISSUE_STATE = "State";
     static final String ISSUE_VALUE_STATE_PROGRESS = "In Progress";
-    static final String ISSUE_VALUE_STATE_VERIFY = "To verify";
     static final String ISSUE_FIX_VERSIONS = "Fix versions";
     static final String ISSUE_CUSTOM_FIELDS = "fields(projectCustomField(field(name)),value(name))";
 

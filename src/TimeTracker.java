@@ -51,6 +51,7 @@ public class TimeTracker extends Frame
 
     private static final Matcher MATCHER = TimeTrackerConstants.PATTERN.matcher("");
     private static final Matcher TIME_MATCHER = TimeTrackerConstants.TIME_PATTERN.matcher("");
+    private static final Matcher BURN_MATCHER = TimeTrackerConstants.BURN_PATTERN.matcher("");
     private static final Matcher DURATION_MATCHER = TimeTrackerConstants.DURATION_PATTERN.matcher("");
 
     private static final Color MANDATORY = new Color(239, 247, 249);
@@ -335,7 +336,7 @@ public class TimeTracker extends Frame
         final String savedDuration = loadSetting(key, TimeTrackerConstants.SUFFIX_DURATION);
         if(savedDuration != null && !savedDuration.isEmpty())
         {
-            setLabelTooltip(savedDuration, key, timeLabel);
+            setLabelTooltip(savedDuration, timeLabel);
         }
         labelPanel.add(timeLabel, BorderLayout.EAST);
 
@@ -747,7 +748,8 @@ public class TimeTracker extends Frame
 
                 final Properties properties = new Properties();
                 properties.load(inputStream);
-                properties.remove(getDurationKey());
+                properties.remove(this.key + TimeTrackerConstants.SUFFIX_DURATION);
+                properties.remove(this.key + TimeTrackerConstants.SUFFIX_DURATION_SAVED);
                 storeProperties(properties);
             }
             catch (IOException ex)
@@ -809,16 +811,10 @@ public class TimeTracker extends Frame
         return properties != null ? properties.getProperty(key + setting) : null;
     }
 
-    private void setLabelTooltip(final String savedDuration, final String key, final JLabel timeLabel)
+    private void setLabelTooltip(final String savedDuration, final JLabel timeLabel)
     {
         final StringBuilder sb = new StringBuilder();
         sb.append("<html>").append(this.bundle.getString("time.saved")).append(TimeTrackerConstants.STRING_SPACE).append(savedDuration);
-
-        final String timeToBurn = loadSetting(key, TimeTrackerConstants.SUFFIX_TIME);
-        if(timeToBurn != null && !timeToBurn.isEmpty())
-        {
-            sb.append("<br>").append(this.bundle.getString("time.to.burn")).append(TimeTrackerConstants.STRING_SPACE).append(timeToBurn).append("m");
-        }
         timeLabel.setToolTipText(sb.append("</html>").toString());
     }
 
@@ -877,11 +873,9 @@ public class TimeTracker extends Frame
             rows.add(new JLabel(bundle.getString("button.label.ticket")));
             rows.add(ticketField);
 
-            final String savedTime = loadSetting(this.key, TimeTrackerConstants.SUFFIX_DURATION);
-
             final JTextField timeField = new JTextField();
             timeField.setBackground(MANDATORY);
-            timeField.setText(getParsedTime(this.label.getText(), savedTime));
+            timeField.setText(getParsedTime(this.label.getText()));
             rows.add(new JLabel(bundle.getString("button.label.time")));
             rows.add(timeField);
 
@@ -910,13 +904,13 @@ public class TimeTracker extends Frame
             //noinspection unchecked
             typeField.setRenderer(RENDERER);
 
-            rows.add(new JLabel(bundle.getString("button.label.type")));
+            rows.add(new JLabel(bundle.getString(PropertyConstants.LABEL_TYPE)));
             rows.add(typeField);
 
             final JTextArea textArea = new JTextArea(5, 20);
             textArea.setLineWrap(true);
             textArea.setWrapStyleWord(true);
-            rows.add(new JLabel(bundle.getString("button.label.text")));
+            rows.add(new JLabel(bundle.getString(PropertyConstants.LABEL_TEXT)));
             rows.add(new JScrollPane(textArea));
 
             final Action action = this.button.getAction();
@@ -935,13 +929,7 @@ public class TimeTracker extends Frame
                 {
                     if (burnTime(ticketField, timeField, typeField, textArea))
                     {
-                        if(timerAction != null)
-                        {
-                            timerAction.saveDuration(false, false);
-
-                            final String savedDuration = loadSetting(key, TimeTrackerConstants.SUFFIX_DURATION);
-                            setLabelTooltip(savedDuration, key, label);
-                        }
+                        setLabelTooltip(timeField.getText(), label);
                         dialog.dispose();
                     }
                 }
@@ -957,88 +945,71 @@ public class TimeTracker extends Frame
         /**
          * Liefert einen Formatierten String zum Burnen
          * @param currentDuration Die angezeigte Zeit
-         * @param savedDuration Die gespeicherte Zeit
          * @return Formatierte Zeit zur Burnen
          */
-        private String getParsedTime(final String currentDuration, final String savedDuration)
+        private String getParsedTime(final String currentDuration)
         {
-            TIME_MATCHER.reset(currentDuration);
-            final boolean matches = TIME_MATCHER.matches();
-            if (savedDuration != null && !savedDuration.isEmpty())
-            {
-                final int[] timeUnits = getTimeUnits();
-                final int currentHours = timeUnits[0];
-                final int currentMinutes = timeUnits[1];
+            final int[] timeUnits = getTimeUnits(currentDuration);
+            int currentHours = timeUnits[0];
+            int currentMinutes = timeUnits[1];
 
-                TIME_MATCHER.reset(savedDuration);
-                final int[] savedTimeUnits = getTimeUnits();
+            final String savedTime = loadSetting(this.key, TimeTrackerConstants.SUFFIX_DURATION_SAVED);
+            if (savedTime != null && !savedTime.isEmpty())
+            {
+                LOGGER.log(Level.INFO, "Saved time found {0}", savedTime);
+
+                final int[] savedTimeUnits = getTimeUnits(savedTime);
                 final int savedHours = savedTimeUnits[0];
-                final int savedMinutes = savedTimeUnits[1];
+                final int savedMinutes = savedTimeUnits[1] - (savedHours * 60);
 
-                LOGGER.log(Level.INFO, "Saved hours = {0}, Saved minutes = {1}", new Object[]{savedHours, savedMinutes});
-                LOGGER.log(Level.INFO, "Current hours = {0}, Current minutes = {1}", new Object[]{currentHours, currentMinutes});
-
-                final int timeToBurn = getTimeToSave(currentHours, currentMinutes, savedHours, savedMinutes, this.key);
-                if (timeToBurn > 0)
-                {
-                    LOGGER.log(Level.INFO, "Setting current time {0}", timeToBurn);
-                    //die aktuelle Zeit ist kleiner als die gespeicherte. D.h. die aktuelle Zeit wird geburnt
-                    return appendTimeUnits(timeToBurn);
-                }
-                return getParsedTime(Integer.toString(currentHours), Integer.toString(currentMinutes) , "0");
+                currentHours -= savedHours;
+                currentMinutes -= savedMinutes;
             }
-            else if (matches)
+            return getParsedTime(Integer.toString(Math.max(0, currentHours)), Integer.toString(Math.max(1, currentMinutes)));
+        }
+
+        private int[] getTimeUnits(final String time)
+        {
+            int currentHours = 0;
+            int currentMinutes = 0;
+
+            if (time != null && !time.isEmpty())
             {
-                final String hours = TIME_MATCHER.group(1);
-                final String minutes = TIME_MATCHER.group(2);
-                final String seconds = TIME_MATCHER.group(3);
-                return getParsedTime(hours, minutes, seconds);
+                TIME_MATCHER.reset(time);
+                if (TIME_MATCHER.matches())
+                {
+                    //aufaddieren
+                    currentHours = Integer.parseInt(TIME_MATCHER.group(1));
+                    currentMinutes = Integer.parseInt(TIME_MATCHER.group(2));
+
+                    final int currentSeconds = Integer.parseInt(TIME_MATCHER.group(3));
+                    if (currentSeconds > 0)
+                    {
+                        currentMinutes += 1;
+                    }
+                }
+                else
+                {
+                    BURN_MATCHER.reset(time);
+                    if(BURN_MATCHER.matches())
+                    {
+                        currentHours = Integer.parseInt(BURN_MATCHER.group(1));
+                        currentMinutes = Integer.parseInt(BURN_MATCHER.group(2));
+                    }
+                }
             }
-            return TimeTrackerConstants.STRING_EMPTY;
+            return new int[]{currentHours, currentMinutes};
         }
 
         /**
          * Erzeugt einen Formatstring zum Burnen, ohne Sekunden
          * @param hours Stunden
          * @param minutes Minuten
-         * @param seconds Sekunden
          * @return Formatierter String zum Burnen
          */
-        private String getParsedTime(final String hours, final String minutes, final String seconds)
+        private String getParsedTime(final String hours, final String minutes)
         {
-            //Sekunden burnen wir mal nicht. Angefangene Minuten werden aufgerundet
-            final StringBuilder sb = new StringBuilder();
-            final int h = Integer.parseInt(hours);
-            if (h > 0)
-            {
-                sb.append(h).append("h ");
-            }
-            final int s = Integer.parseInt(seconds);
-            int m = Integer.parseInt(minutes);
-            if (s > 0)
-            {
-                m += 1;
-            }
-            sb.append(m).append("m");
-            return sb.toString();
-        }
-
-        /**
-         * Erzeugt einen formatierten String aus den übergebenen Minuten
-         * @param time Minuten
-         * @return Formatierter String
-         */
-        private String appendTimeUnits(int time)
-        {
-            LOGGER.log(Level.INFO, "appendTimeUnits({0})", time);
-            final StringBuilder sb = new StringBuilder();
-            final int hours = time / 60;
-            if (hours > 0)
-            {
-                sb.append(hours).append("h ");
-            }
-            sb.append(Math.max(1, time - (hours * 60))).append('m');
-            return sb.toString();
+            return String.format("%sh %sm", hours, minutes);
         }
 
         /**
@@ -1061,10 +1032,25 @@ public class TimeTracker extends Frame
             }
 
             final String type = ((String[]) selectedItem)[0];
-
             saveSetting(ticket, this.key + TimeTrackerConstants.SUFFIX_TICKET);
             saveSetting(type, this.key + TimeTrackerConstants.SUFFIX_TYPE);
-            saveSetting(TimeTrackerConstants.STRING_EMPTY, this.key + TimeTrackerConstants.SUFFIX_TIME);
+
+            final int[] spentTimeUnits = getTimeUnits(spentTime);
+            int spentHours = spentTimeUnits[0];
+            int spentMinutes = spentTimeUnits[1];
+
+            final String savedDuration = loadSetting(this.key, TimeTrackerConstants.SUFFIX_DURATION_SAVED);
+            final int[] savedTimeUnits = getTimeUnits(savedDuration);
+            final int savedHours = savedTimeUnits[0];
+            int savedMinutes = savedTimeUnits[1];
+
+            final int additionalHours = savedHours / 60;
+            savedMinutes = savedMinutes - additionalHours * 60;
+
+            spentHours += savedHours + additionalHours;
+            spentMinutes += savedMinutes;
+
+            saveSetting(getParsedTime(Integer.toString(spentHours), Integer.toString(spentMinutes)), this.key + TimeTrackerConstants.SUFFIX_DURATION_SAVED);
 
             if (token == null || token.isEmpty())
             {
@@ -1099,22 +1085,6 @@ public class TimeTracker extends Frame
 
             return true;
         }
-    }
-
-    private int getTimeToSave(final int currentHours, final int currentMinutes, final int savedHours, final int savedMinutes, final String key)
-    {
-        final int currentTimeValue = currentHours * 60 + currentMinutes;
-        final int savedTimeValue = savedHours * 60 + savedMinutes;
-
-        int timeToBurn = currentTimeValue - savedTimeValue;
-
-        final String savedTime = loadSetting(key, TimeTrackerConstants.SUFFIX_TIME);
-        if(savedTime != null && !savedTime.isEmpty())
-        {
-            LOGGER.log(Level.INFO, "Saved time found {0}", savedTime);
-            timeToBurn += Integer.parseInt(savedTime);
-        }
-        return timeToBurn;
     }
 
     /**
@@ -2086,69 +2056,10 @@ public class TimeTracker extends Frame
                 if (name != null)
                 {
                     final String currentTime = ((JLabel) component).getText();
-                    saveTime(properties, name, currentTime); //Speichert den Zeitunterschied zum letzten Mal. Würde sonst für das Burnen verloren gehen
                     properties.put(getDurationKey(name), currentTime);
                 }
             }
         }
-    }
-
-    private void saveTime(final Properties properties, final String keyPrefix, final String currentTime)
-    {
-        final String durationKey = getDurationKey(keyPrefix);
-        final String savedDuration = properties.getProperty(durationKey);
-        if(savedDuration == null || savedDuration.isEmpty())
-        {
-            return;
-        }
-
-        TIME_MATCHER.reset(savedDuration);
-        if (!TIME_MATCHER.matches())
-        {
-            return;
-        }
-
-        final int[] savedTimeUnits = getTimeUnits();
-        final int savedHours = savedTimeUnits[0];
-        final int savedMinutes = savedTimeUnits[1];
-        final int savedTimeInMinutes = savedHours * 60 + savedMinutes;
-
-        TIME_MATCHER.reset(currentTime);
-        final int[] currentTimeUnits = getTimeUnits();
-        final int currentHours = currentTimeUnits[0];
-        final int currentMinutes = currentTimeUnits[1];
-        final int currentTimeInMinutes = currentHours * 60 + currentMinutes;
-
-        int timeSpent = currentTimeInMinutes - savedTimeInMinutes;
-        if(timeSpent > 0)
-        {
-            final String savedTime = properties.getProperty(keyPrefix + TimeTrackerConstants.SUFFIX_TIME);
-            if(savedTime != null && !savedTime.isEmpty())
-            {
-                //Wenn es noch eine alte Zeit gibt, welche noch nicht geburnt wurde, dann wird diese aufgerechnet
-                timeSpent += Integer.parseInt(savedTime);
-            }
-            saveSetting(Integer.toString(timeSpent), keyPrefix + TimeTrackerConstants.SUFFIX_TIME);
-        }
-    }
-
-    private int[] getTimeUnits()
-    {
-        int currentHours = 0;
-        int currentMinutes = 0;
-        if (TIME_MATCHER.matches())
-        {
-            //aufaddieren
-            currentHours = Integer.parseInt(TIME_MATCHER.group(1));
-            currentMinutes = Integer.parseInt(TIME_MATCHER.group(2));
-
-            final int currentSeconds = Integer.parseInt(TIME_MATCHER.group(3));
-            if (currentSeconds > 0)
-            {
-                currentMinutes += 1;
-            }
-        }
-        return new int[]{currentHours, currentMinutes};
     }
 
     /**

@@ -29,6 +29,8 @@ final class PropertyConstants
     static final String LABEL_STATE = "button.label.state";
     static final String LABEL_VERSION = "button.label.version";
     static final String LABEL_COMMENT = "button.label.comment";
+    static final String LABEL_TYPE = "button.label.type";
+    static final String LABEL_TEXT = "button.label.text";
 
     static final String TICKET_IN_PROGRESS = "ticket.inprogress";
 
