@@ -53,6 +53,7 @@ public class TimeTracker extends Frame
     private static final Matcher TIME_MATCHER = TimeTrackerConstants.TIME_PATTERN.matcher("");
     private static final Matcher BURN_MATCHER = TimeTrackerConstants.BURN_PATTERN.matcher("");
     private static final Matcher DURATION_MATCHER = TimeTrackerConstants.DURATION_PATTERN.matcher("");
+    private static final Matcher USER_ID_MATCHER = TimeTrackerConstants.USER_ID_PATTERN.matcher("");
 
     private static final Color MANDATORY = new Color(239, 247, 249);
     private static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
@@ -97,7 +98,7 @@ public class TimeTracker extends Frame
 
         try
         {
-            this.userId = getUserID(properties);
+            setUserID(properties);
 
             final JButton add = new JButton(this.bundle.getString("button.label.add"));
             setButtonIcon(add, Icon.ADD);
@@ -175,27 +176,37 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * Liefert die UserId entweder aus den Properties, oder wenn noch nicht vorhanden, vom Youtrack
+     * Setzt die UserId entweder aus den Properties, oder wenn noch nicht vorhanden, vom Youtrack
      * @param properties Properties
-     * @return UserId
      * @throws URISyntaxException Wenn das Parsen als URI-Referenz schief ging
      * @throws IOException I/O Error
      */
-    private String getUserID(final Properties properties) throws URISyntaxException, IOException
+    private void setUserID(final Properties properties) throws URISyntaxException, IOException
     {
-        final String userID = properties != null ? properties.getProperty(TimeTrackerConstants.YOUTRACK_USERID) : null;
-        if (userID != null && !userID.isEmpty())
-        {
-            return userID;
-        }
+        this.userId = properties != null ? properties.getProperty(TimeTrackerConstants.YOUTRACK_USERID) : null;
 
+        USER_ID_MATCHER.reset(this.userId);
+        if (this.userId != null && !this.userId.isEmpty() && USER_ID_MATCHER.matches())
+        {
+            return;
+        }
+        requestUserID();
+    }
+
+    /**
+     * Ermittelt die Nutzer-ID
+     * @throws URISyntaxException Wenn das Parsen als URI-Referenz schief ging
+     * @throws IOException I/O Error
+     */
+    private void requestUserID() throws IOException, URISyntaxException
+    {
         final URIBuilder builder = getUserURIBuilder();
         final HttpResponse response = execute(builder);
         if (response == null)
         {
-            return null;
+            return;
         }
-        return getID(response, TimeTrackerConstants.YOUTRACK_USERID);
+        this.userId = getID(response, TimeTrackerConstants.YOUTRACK_USERID);
     }
 
     private HttpResponse execute(final URIBuilder builder) throws IOException, URISyntaxException
@@ -1057,6 +1068,12 @@ public class TimeTracker extends Frame
     private URIBuilder getURIBuilder(final Path path, final String ticket, final NameValuePair... parameters)
     {
         final URIBuilder builder = new URIBuilder();
+        if(!checkUserId())
+        {
+            LOGGER.log(Level.SEVERE, "User id {0} does not match", this.userId);
+            return builder;
+        }
+
         builder.setScheme(this.scheme);
         builder.setHost(this.host);
         builder.setPort(this.port);
@@ -1074,6 +1091,25 @@ public class TimeTracker extends Frame
             builder.setParameters(parameters);
         }
         return builder;
+    }
+
+    private boolean checkUserId()
+    {
+        USER_ID_MATCHER.reset(this.userId);
+        if(!USER_ID_MATCHER.matches())
+        {
+            LOGGER.log(Level.WARNING, "User id {0} does not match", this.userId);
+            try
+            {
+                requestUserID();
+            }
+            catch (IOException | URISyntaxException ex)
+            {
+                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+            }
+        }
+        USER_ID_MATCHER.reset(this.userId);
+        return USER_ID_MATCHER.matches();
     }
 
     /**

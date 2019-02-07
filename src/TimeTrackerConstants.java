@@ -17,6 +17,7 @@ final class TimeTrackerConstants
     static final Pattern TIME_PATTERN = Pattern.compile(".*([0-9]+)h ([0-9]+)min ([0-9]+)s");
     static final Pattern BURN_PATTERN = Pattern.compile(".*([0-9]+)h ([0-9]+)m");
     static final Pattern DURATION_PATTERN = Pattern.compile("(\\d{2})h (\\d{2})min (\\d{2})s");
+    static final Pattern USER_ID_PATTERN = Pattern.compile("(\\d+-\\d+)");
 
     static final String PROPERTIES = TimeTracker.class.getSimpleName() + ".properties";
     static final String DEFAULT_PROPERTIES = TimeTracker.class.getSimpleName() + ".default.properties";
