@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.*;
 import java.util.logging.Level;
@@ -1778,7 +1779,7 @@ public class TimeTracker extends Frame
                 rows.setBorder(new EmptyBorder(10, 10, 10, 10));
                 dialog.add(rows);
 
-                rows.add(new JLabel(bundle.getString(PropertyConstants.TICKET_IN_PROGRESS)));
+                rows.add(new JLabel(MessageFormat.format(bundle.getString(PropertyConstants.TICKET_IN_PROGRESS), ticket)));
 
                 final JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
                 buttonPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
