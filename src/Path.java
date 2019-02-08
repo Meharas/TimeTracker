@@ -6,12 +6,12 @@
  */
 public enum Path
 {
-    WORKITEM("api/issues/%s/timeTracking/workItems"),
-    USER("api/admin/users/me"),
     ISSUE("api/issues/%s"),
-    COMMENT("/api/issues/%s/comments"),
+    COMMENT(ISSUE.restEndPoint + "/comments"),
+    WORKITEM(ISSUE.restEndPoint + "/timeTracking/workItems"),
     COMMAND("api/commands"),
-    URL("issue/%s");
+    URL("issue/%s"),
+    USER("api/admin/users/me");
 
     String restEndPoint;
 
