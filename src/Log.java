@@ -10,14 +10,9 @@ import java.util.logging.*;
  */
 public class Log extends Logger
 {
-    Log(final String name)
+    Log()
     {
-        this(name, null);
-    }
-
-    Log(final String name, final String resourceBundleName)
-    {
-        super(name, resourceBundleName);
+        super(Logger.GLOBAL_LOGGER_NAME, null);
         init();
     }
 
