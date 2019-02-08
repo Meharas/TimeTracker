@@ -184,11 +184,13 @@ public class TimeTracker extends Frame
     private void setUserID(final Properties properties) throws URISyntaxException, IOException
     {
         this.userId = properties != null ? properties.getProperty(TimeTrackerConstants.YOUTRACK_USERID) : null;
-
-        USER_ID_MATCHER.reset(this.userId);
-        if (this.userId != null && !this.userId.isEmpty() && USER_ID_MATCHER.matches())
+        if (this.userId != null && !this.userId.isEmpty())
         {
-            return;
+            USER_ID_MATCHER.reset(this.userId);
+            if(USER_ID_MATCHER.matches())
+            {
+                return;
+            }
         }
         requestUserID();
     }
@@ -1068,7 +1070,7 @@ public class TimeTracker extends Frame
     private URIBuilder getURIBuilder(final Path path, final String ticket, final NameValuePair... parameters)
     {
         final URIBuilder builder = new URIBuilder();
-        if(!checkUserId())
+        if(path != Path.USER && !checkUserId())
         {
             LOGGER.log(Level.SEVERE, "User id {0} does not match", this.userId);
             return builder;
@@ -1095,8 +1097,11 @@ public class TimeTracker extends Frame
 
     private boolean checkUserId()
     {
-        USER_ID_MATCHER.reset(this.userId);
-        if(!USER_ID_MATCHER.matches())
+        if(this.userId != null)
+        {
+            USER_ID_MATCHER.reset(this.userId);
+        }
+        if(this.userId == null || !USER_ID_MATCHER.matches())
         {
             LOGGER.log(Level.WARNING, "User id {0} does not match", this.userId);
             try
