@@ -55,7 +55,7 @@ public class TimeTracker extends Frame
     private static final Matcher DURATION_MATCHER = TimeTrackerConstants.DURATION_PATTERN.matcher("");
     private static final Matcher USER_ID_MATCHER = TimeTrackerConstants.USER_ID_PATTERN.matcher("");
 
-    private static final Color MANDATORY = new Color(239, 247, 249);
+    private static final Color MANDATORY = new Color(200, 221, 242);
     private static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
 
     private static final ListCellRenderer RENDERER = new TypeRenderer();
@@ -824,19 +824,16 @@ public class TimeTracker extends Frame
             final JTextField ticketField = new JTextField();
             ticketField.setBackground(MANDATORY);
 
-            final String ticket = loadSetting(this.key, TimeTrackerConstants.SUFFIX_TICKET);
             final String buttonText = this.button.getText();
-            if (ticket != null && !ticket.isEmpty())
+            MATCHER.reset(buttonText);
+            if (MATCHER.matches())
             {
-                ticketField.setText(ticket);
+                ticketField.setText(MATCHER.group(1));
             }
             else
             {
-                MATCHER.reset(buttonText);
-                if (MATCHER.matches())
-                {
-                    ticketField.setText(MATCHER.group(1));
-                }
+                final String ticket = loadSetting(this.key, TimeTrackerConstants.SUFFIX_TICKET);
+                ticketField.setText(ticket);
             }
 
             rows.add(new JLabel(bundle.getString("button.label.ticket")));
