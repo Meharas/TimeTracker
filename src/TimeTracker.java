@@ -577,6 +577,7 @@ public class TimeTracker extends Frame
             formatTime(0);
             this.timer.start();
             this.button.setBackground(Color.GREEN);
+            saveSetting(Boolean.toString(false), this.key + TimeTrackerConstants.SUFFIX_MARKED);
             this.button.setOpaque(true);
         }
 
