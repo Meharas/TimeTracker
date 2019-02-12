@@ -19,6 +19,7 @@ final class PropertyConstants
     static final String MENU_ITEM_COPY = "menu.item.copy";
     static final String MENU_ITEM_EDIT = "menu.item.edit";
     static final String MENU_ITEM_OPEN = "menu.item.open";
+    static final String MENU_ITEM_STAR = "menu.item.star";
 
     static final String TOOLTIP_DELETE = "button.tooltip.delete";
     static final String TOOLTIP_BURN = "button.tooltip.burn";

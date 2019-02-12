@@ -4,7 +4,7 @@
  * @author $Author: beyera $ © forcont business technology gmbh 2001-2019
  * @version $Revision: 1.0 $$Date: 01.02.2019 14:40 $
  */
-public enum Path
+public enum ServicePath
 {
     ISSUE("api/issues/%s"),
     COMMENT(ISSUE.restEndPoint + "/comments"),
@@ -15,7 +15,7 @@ public enum Path
 
     String restEndPoint;
 
-    Path(final String path)
+    ServicePath(final String path)
     {
         this.restEndPoint = path;
     }

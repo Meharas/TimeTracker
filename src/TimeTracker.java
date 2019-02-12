@@ -36,12 +36,10 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 /**
@@ -51,17 +49,18 @@ public class TimeTracker extends Frame
 {
     private static final long serialVersionUID = 7225687129886672540L;
 
-    private static final Matcher MATCHER = TimeTrackerConstants.PATTERN.matcher("");
-    private static final Matcher TIME_MATCHER = TimeTrackerConstants.TIME_PATTERN.matcher("");
-    private static final Matcher BURN_MATCHER = TimeTrackerConstants.BURN_PATTERN.matcher("");
-    private static final Matcher DURATION_MATCHER = TimeTrackerConstants.DURATION_PATTERN.matcher("");
-    private static final Matcher USER_ID_MATCHER = TimeTrackerConstants.USER_ID_PATTERN.matcher("");
+    private static final Matcher MATCHER = TimeTrackerConstants.PATTERN.matcher(TimeTrackerConstants.STRING_EMPTY);
+    private static final Matcher TIME_MATCHER = TimeTrackerConstants.TIME_PATTERN.matcher(TimeTrackerConstants.STRING_EMPTY);
+    private static final Matcher BURN_MATCHER = TimeTrackerConstants.BURN_PATTERN.matcher(TimeTrackerConstants.STRING_EMPTY);
+    private static final Matcher DURATION_MATCHER = TimeTrackerConstants.DURATION_PATTERN.matcher(TimeTrackerConstants.STRING_EMPTY);
+    private static final Matcher USER_ID_MATCHER = TimeTrackerConstants.USER_ID_PATTERN.matcher(TimeTrackerConstants.STRING_EMPTY);
 
     private static final Color MANDATORY = new Color(200, 221, 242);
     private static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
 
+    static String home = TimeTrackerConstants.STRING_EMPTY;
+
     private static final ListCellRenderer RENDERER = new TypeRenderer();
-    static final transient Logger LOGGER = new Log();
 
     private int line;
     private JPanel panel;
@@ -116,7 +115,7 @@ public class TimeTracker extends Frame
                 @Override
                 public void actionPerformed(final ActionEvent e)
                 {
-                    final File log = new File(TimeTrackerConstants.LOGFILE_NAME);
+                    final File log = new File(TimeTracker.home + TimeTrackerConstants.LOGFILE_NAME);
                     if (log.exists())
                     {
                         final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
@@ -128,7 +127,7 @@ public class TimeTracker extends Frame
                             }
                             catch (IOException ex)
                             {
-                                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                                Log.severe(ex.getMessage(), ex);
                             }
                         }
                     }
@@ -170,7 +169,7 @@ public class TimeTracker extends Frame
         }
         catch (Exception e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
             JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }
@@ -223,7 +222,7 @@ public class TimeTracker extends Frame
      */
     private URIBuilder getUserURIBuilder()
     {
-        return getURIBuilder(Path.USER, null);
+        return getURIBuilder(ServicePath.USER, null);
     }
 
     private JButton addButton(final String key, final String label, final String icon)
@@ -262,6 +261,7 @@ public class TimeTracker extends Frame
                 }
             }
         });
+        setButtonMarked(button, key);
 
         final JPanel labelPanel = new JPanel();
         labelPanel.setLayout(new BorderLayout(0, 0));
@@ -304,6 +304,23 @@ public class TimeTracker extends Frame
         return button;
     }
 
+    private void setButtonMarked(final JButton button, final String key)
+    {
+        final Properties properties = new Properties();
+        try (final InputStream inputStream = loadProperties(properties, TimeTrackerConstants.PROPERTIES))
+        {
+            if (inputStream != null)
+            {
+                final String value = properties.getProperty(key + TimeTrackerConstants.SUFFIX_MARKED);
+                button.setBackground(Boolean.parseBoolean(value) ? Color.YELLOW : null);
+            }
+        }
+        catch (IOException e)
+        {
+            Log.severe(e.getMessage(), e);
+        }
+    }
+
     /**
      * Fügt den Menüeintrag "In Bearbeitung nehmen" hinzu. Dabei wird geprüft, ob das Ticket nicht schon in Bearbeitung ist. Ausserdem ist diese Aktion
      * für die Standardaktionen nicht vorgesehen
@@ -340,7 +357,7 @@ public class TimeTracker extends Frame
         }
         catch (URISyntaxException | IOException ex)
         {
-            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+            Log.severe(ex.getMessage(), ex);
         }
     }
 
@@ -359,6 +376,26 @@ public class TimeTracker extends Frame
             ((TimerAction) a).reset();
         });
         menu.add(redoItem);
+    }
+
+    void addStarItem(final JPopupMenu menu, final JButton button, final String key, final int id)
+    {
+        final JMenuItem starItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_STAR));
+        starItem.setBorder(BORDER);
+        starItem.addActionListener(new TextAction(TimeTrackerConstants.STRING_EMPTY)
+        {
+            private static final long serialVersionUID = -101044272648382148L;
+
+            @Override
+            public void actionPerformed(final ActionEvent e)
+            {
+                button.setBackground(Color.YELLOW);
+                saveSetting(Boolean.toString(true), key + TimeTrackerConstants.SUFFIX_MARKED);
+            }
+        });
+        setButtonIcon(starItem, Icon.STAR);
+        starItem.setEnabled(id > 3);
+        menu.add(starItem);
     }
 
     private JButton addAction(final JPanel parent, final String tooltip, final Icon icon)
@@ -389,7 +426,7 @@ public class TimeTracker extends Frame
         }
         catch (IOException e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
         }
     }
 
@@ -427,7 +464,7 @@ public class TimeTracker extends Frame
         }
         catch (IOException e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
         }
     }
 
@@ -610,6 +647,12 @@ public class TimeTracker extends Frame
                     saveDuration(reset);
                 }
             }
+
+            if(this.button.getBackground() == Color.YELLOW)
+            {
+                //Der Button wurde markiert
+                return;
+            }
             this.button.setBackground(null);
             this.button.setOpaque(false);
         }
@@ -649,7 +692,7 @@ public class TimeTracker extends Frame
             }
             catch (IOException ex)
             {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                Log.severe(ex.getMessage(), ex);
             }
         }
 
@@ -952,7 +995,7 @@ public class TimeTracker extends Frame
 
             try
             {
-                final URIBuilder builder = getURIBuilder(Path.WORKITEM, ticket);
+                final URIBuilder builder = getURIBuilder(ServicePath.WORKITEM, ticket);
                 final HttpPost request = new HttpPost(builder.build());
                 request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ENTITY, System.currentTimeMillis(), userId, spentTime, type, text), ContentType.APPLICATION_JSON));
 
@@ -965,7 +1008,7 @@ public class TimeTracker extends Frame
             }
             catch (URISyntaxException | IOException e)
             {
-                LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                Log.severe(e.getMessage(), e);
             }
 
             return true;
@@ -990,12 +1033,12 @@ public class TimeTracker extends Frame
      * @param ticket Ticket
      * @return URIBuilder
      */
-    URIBuilder getURIBuilder(final Path path, final String ticket, final NameValuePair... parameters)
+    URIBuilder getURIBuilder(final ServicePath path, final String ticket, final NameValuePair... parameters)
     {
         final URIBuilder builder = new URIBuilder();
-        if(path != Path.USER && !checkUserId())
+        if(path != ServicePath.USER && !checkUserId())
         {
-            LOGGER.log(Level.SEVERE, "User id {0} does not match", this.userId);
+            Log.severe("User id {0} does not match", this.userId);
             return builder;
         }
 
@@ -1026,14 +1069,14 @@ public class TimeTracker extends Frame
         }
         if(this.userId == null || !USER_ID_MATCHER.matches())
         {
-            LOGGER.log(Level.WARNING, "User id {0} does not match", this.userId);
+            Log.warning("User id {0} does not match", this.userId);
             try
             {
                 requestUserID();
             }
             catch (IOException | URISyntaxException ex)
             {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                Log.severe(ex.getMessage(), ex);
             }
         }
         USER_ID_MATCHER.reset(this.userId);
@@ -1078,7 +1121,7 @@ public class TimeTracker extends Frame
                 outputStream.flush();
 
                 final String msg = new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
-                LOGGER.info(msg);
+                Log.info(msg);
 
                 final JsonFactory jsonFactory = new JsonFactory();
                 parser = jsonFactory.createParser(msg);
@@ -1157,7 +1200,7 @@ public class TimeTracker extends Frame
         }
         catch (UnsupportedSchemeException e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
             return;
         }
 
@@ -1235,7 +1278,7 @@ public class TimeTracker extends Frame
             }
             catch (IOException ex)
             {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                Log.severe(ex.getMessage(), ex);
             }
         }
 
@@ -1454,7 +1497,7 @@ public class TimeTracker extends Frame
                 }
                 catch (UnsupportedFlavorException | IOException ex)
                 {
-                    LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                    Log.severe(ex.getMessage(), ex);
                 }
             }
             return false;
@@ -1470,7 +1513,7 @@ public class TimeTracker extends Frame
      */
     private String getIssueID(final String ticket) throws URISyntaxException, IOException
     {
-        final URIBuilder getIssueBuilder = getURIBuilder(Path.ISSUE, ticket);
+        final URIBuilder getIssueBuilder = getURIBuilder(ServicePath.ISSUE, ticket);
         final HttpGet request = new HttpGet(getIssueBuilder.build());
         final HttpResponse response = executeRequest(request);
         if (response == null)
@@ -1528,7 +1571,7 @@ public class TimeTracker extends Frame
 
     private String getValueFromJson(final String ticket, final String fields, final String attribute) throws IOException, URISyntaxException
     {
-        final URIBuilder builder = getURIBuilder(Path.ISSUE, ticket, new BasicNameValuePair(TimeTrackerConstants.FIELDS, fields));
+        final URIBuilder builder = getURIBuilder(ServicePath.ISSUE, ticket, new BasicNameValuePair(TimeTrackerConstants.FIELDS, fields));
         final HttpResponse response = execute(builder);
         if (response == null)
         {
@@ -1568,10 +1611,14 @@ public class TimeTracker extends Frame
             this.issueButton.setText(text);
             setButtonIcon(this.issueButton, filePath);
 
-            try (final FileOutputStream outputStream = new FileOutputStream(TimeTrackerConstants.PROPERTIES, true))
+            try (final OutputStream outputStream = getPropertiesOutputStream(TimeTrackerConstants.PROPERTIES))
             {
-                final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + this.issueButton.getName().substring(TimeTrackerConstants.PREFIX_BUTTON.length());
+                if(outputStream == null)
+                {
+                    return;
+                }
 
+                final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + this.issueButton.getName().substring(TimeTrackerConstants.PREFIX_BUTTON.length());
                 final Properties properties = new Properties();
                 properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_LABEL);
                 properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_ICON);
@@ -1579,7 +1626,7 @@ public class TimeTracker extends Frame
             }
             catch (IOException ex)
             {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                Log.severe(ex.getMessage(), ex);
             }
 
             final Frame frame = getParentFrame(this.button);
@@ -1611,12 +1658,12 @@ public class TimeTracker extends Frame
         }
         catch (URISyntaxException | IOException ex)
         {
-            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+            Log.severe(ex.getMessage(), ex);
         }
         return text;
     }
 
-    private void storeButtonProperties(final Properties properties, final FileOutputStream outputStream, final String propertyKey, final String text,
+    private void storeButtonProperties(final Properties properties, final OutputStream outputStream, final String propertyKey, final String text,
                                        final String filePath) throws IOException
     {
         properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_LABEL, text);
@@ -1671,10 +1718,13 @@ public class TimeTracker extends Frame
             final String counter = line < 10 ? "0" + line : Integer.toString(line);
 
             JButton button = null;
-            try (final FileOutputStream outputStream = new FileOutputStream(TimeTrackerConstants.PROPERTIES, true))
+            try (final OutputStream outputStream = getPropertiesOutputStream(TimeTrackerConstants.PROPERTIES))
             {
+                if(outputStream == null)
+                {
+                    return null;
+                }
                 final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + counter;
-
                 final Properties properties = new Properties();
                 storeButtonProperties(properties, outputStream, propertyKey, text, filePath);
 
@@ -1684,7 +1734,7 @@ public class TimeTracker extends Frame
             }
             catch (IOException ex)
             {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                Log.severe(ex.getMessage(), ex);
             }
 
             final Frame frame = getParentFrame(this.button);
@@ -1727,7 +1777,7 @@ public class TimeTracker extends Frame
                         final String issueID = getIssueID(ticket);
                         if (issueID == null)
                         {
-                            LOGGER.severe("Issue id of " + ticket + " not found");
+                            Log.severe("Issue id of " + ticket + " not found");
                             return;
                         }
 
@@ -1752,7 +1802,7 @@ public class TimeTracker extends Frame
                     }
                     catch (URISyntaxException | IOException ex)
                     {
-                        LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                        Log.severe(ex.getMessage(), ex);
                     }
                 });
 
@@ -1831,7 +1881,7 @@ public class TimeTracker extends Frame
                             final String commentText = comment.getText();
                             if (commentText != null && !commentText.isEmpty())
                             {
-                                builder = getURIBuilder(Path.COMMENT, issueID);
+                                builder = getURIBuilder(ServicePath.COMMENT, issueID);
                                 request = new HttpPost(builder.build());
                                 request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMENT, commentText), ContentType.APPLICATION_JSON));
 
@@ -1843,7 +1893,7 @@ public class TimeTracker extends Frame
                         }
                         catch (URISyntaxException | IOException ex)
                         {
-                            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                            Log.severe(ex.getMessage(), ex);
                         }
                     }
                 });
@@ -1875,7 +1925,7 @@ public class TimeTracker extends Frame
      */
     private URIBuilder getCommandURIBuilder()
     {
-        return getURIBuilder(Path.COMMAND, null);
+        return getURIBuilder(ServicePath.COMMAND, null);
     }
 
     /**
@@ -1896,12 +1946,12 @@ public class TimeTracker extends Frame
             final String msg = new String(outputStream.toByteArray());
             if (status == HttpStatus.SC_OK)
             {
-                LOGGER.info(msg);
-                LOGGER.info("Success.");
+                Log.info(msg);
+                Log.info("Success.");
             }
             else
             {
-                LOGGER.warning(msg);
+                Log.warning(msg);
             }
         }
     }
@@ -1937,12 +1987,12 @@ public class TimeTracker extends Frame
             {
                 final Point location = getLocationOnScreen();
                 String value = String.format("%s,%s", Math.max(location.x, 0), Math.max(location.y, 0));
-                LOGGER.log(Level.FINE, "Saving window position {0}", value);
+                Log.fine("Saving window position {0}", value);
                 properties.setProperty(PropertyConstants.WINDOW_LOCATION, value);
 
                 final Dimension dimension = getSize();
                 value = String.format("%s,%s", dimension.width, dimension.height);
-                LOGGER.log(Level.FINE, "Saving window dimension {0}", value);
+                Log.fine("Saving window dimension {0}", value);
                 properties.setProperty(PropertyConstants.WINDOW_DIMENSION, value);
 
                 saveDurations(properties);
@@ -1951,7 +2001,7 @@ public class TimeTracker extends Frame
         }
         catch (IOException e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
         }
         finally
         {
@@ -2040,7 +2090,7 @@ public class TimeTracker extends Frame
                 final String windowLocation = properties.getProperty(PropertyConstants.WINDOW_LOCATION);
                 if (windowLocation != null && !windowLocation.isEmpty())
                 {
-                    LOGGER.log(Level.FINE, "Restoring window position {0}", windowLocation);
+                    Log.fine("Restoring window position {0}", windowLocation);
                     final StringTokenizer tokenizer = new StringTokenizer(windowLocation, ",");
                     final Rectangle rectangle = new Rectangle(new Point(Integer.parseInt(tokenizer.nextToken()), Integer.parseInt(tokenizer.nextToken())));
                     setBounds(rectangle);
@@ -2049,7 +2099,7 @@ public class TimeTracker extends Frame
                 final String windowDimension = properties.getProperty(PropertyConstants.WINDOW_DIMENSION);
                 if (windowDimension != null && !windowDimension.isEmpty())
                 {
-                    LOGGER.log(Level.FINE, "Restoring window dimension {0}", windowDimension);
+                    Log.fine("Restoring window dimension {0}", windowDimension);
                     final StringTokenizer tokenizer = new StringTokenizer(windowDimension, ",");
                     final Dimension dimension = new Dimension(Integer.parseInt(tokenizer.nextToken()), Integer.parseInt(tokenizer.nextToken()));
                     setSize(dimension);
@@ -2058,7 +2108,7 @@ public class TimeTracker extends Frame
         }
         catch (IOException e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
         }
     }
 
@@ -2077,7 +2127,7 @@ public class TimeTracker extends Frame
         }
         catch (IOException e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
         }
         return null;
     }
@@ -2091,23 +2141,89 @@ public class TimeTracker extends Frame
      */
     private static InputStream loadProperties(final Properties properties, final String propertyFileName) throws IOException
     {
-        final InputStream inputStream = TimeTracker.class.getResourceAsStream(propertyFileName);
-        if (inputStream != null)
+        final InputStream inputStream = getPropertiesInputStream(propertyFileName);
+        if(inputStream != null)
         {
             properties.load(inputStream);
-            return inputStream;
         }
-        LOGGER.log(Level.WARNING, "Property file {0} not found!", propertyFileName);
+        return inputStream;
+    }
 
-        LOGGER.log(Level.INFO, "Creating property file {0}", propertyFileName);
-        final File propertyFile = new File(propertyFileName);
-        final boolean created = propertyFile.createNewFile();
-        LOGGER.log(created ? Level.INFO : Level.SEVERE, created ? "Property file created" : "Failed to create property file");
-        return null;
+    private static File getPropertyFile(final String propertyFileName)
+    {
+        File propertyFile = new File(TimeTracker.home + propertyFileName);
+        if(!propertyFile.exists())
+        {
+            Log.warning("Property file {0} not found: {0}", propertyFile.getAbsolutePath());
+            Log.info("Creating property file: {0}", propertyFile.getAbsolutePath());
+            try
+            {
+                final Path file = Files.createFile(propertyFile.toPath());
+                propertyFile = file.toFile();
+                Log.info("Property file created: " + propertyFile.getAbsolutePath());
+            }
+            catch (IOException | SecurityException | UnsupportedOperationException e)
+            {
+                Log.severe(e.getMessage(), e);
+                return null;
+            }
+        }
+        return propertyFile;
+    }
+
+    /**
+     * Liefert das Property-File als Inputstream
+     * @param propertyFileName Name des PropertyFiles
+     * @return InputStream
+     * @throws FileNotFoundException wenn die Property-Datei nicht gefunden wurde
+     */
+    private static InputStream getPropertiesInputStream(final String propertyFileName) throws FileNotFoundException
+    {
+        final File propertyFile = getPropertyFile(propertyFileName);
+        if(propertyFile == null)
+        {
+            return null;
+        }
+        Log.fine("Property file found: {0}", propertyFile.getAbsolutePath());
+        return new FileInputStream(propertyFile);
+    }
+
+    /**
+     * Liefert das Property-File als OutputStream
+     * @param propertyFileName Name des PropertyFiles
+     * @return OutputStream
+     * @throws FileNotFoundException wenn die Property-Datei nicht gefunden wurde
+     */
+    private static OutputStream getPropertiesOutputStream(final String propertyFileName) throws FileNotFoundException
+    {
+        final File propertyFile = getPropertyFile(propertyFileName);
+        if(propertyFile == null)
+        {
+            return null;
+        }
+        Log.fine("Property file found: {0}", propertyFile.getAbsolutePath());
+        return new FileOutputStream(propertyFile, true);
     }
 
     public static void main(final String[] args)
     {
+        if(args != null && args.length > 0)
+        {
+            for(final String arg : args)
+            {
+                if(arg.startsWith("-h"))
+                {
+                    final StringBuilder sb = new StringBuilder(arg.substring(2));
+                    if(!TimeTracker.home.endsWith("\\"))
+                    {
+                        sb.append("\\");
+                    }
+                    TimeTracker.home = sb.toString();
+                    Log.info("Home = {0}", TimeTracker.home);
+                }
+            }
+        }
+
         final Properties properties = getProperties();
         if (properties == null || properties.isEmpty())
         {
@@ -2121,10 +2237,10 @@ public class TimeTracker extends Frame
         }
         catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
         }
 
-        Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOGGER.log(Level.SEVERE, e.getMessage(), e));
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> Log.severe(e.getMessage(), e));
 
         final String token = properties.getProperty(TimeTrackerConstants.YOUTRACK_TOKEN);
         if (token == null || token.isEmpty())
@@ -2218,7 +2334,7 @@ public class TimeTracker extends Frame
      */
     private static void saveSetting(final String value, final String key)
     {
-        LOGGER.log(Level.INFO, "Saving key = {0} with value =  {1}", new String[]{key, value});
+        Log.info("Saving key = {0} with value =  {1}", new String[]{key, value});
         try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(TimeTrackerConstants.PROPERTIES))
         {
             final Properties properties = new Properties();
@@ -2229,7 +2345,7 @@ public class TimeTracker extends Frame
         }
         catch (IOException e)
         {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            Log.severe(e.getMessage(), e);
         }
     }
 
@@ -2242,16 +2358,17 @@ public class TimeTracker extends Frame
     {
         for(final Map.Entry<Object, Object> entry : properties.entrySet())
         {
-            LOGGER.log(Level.INFO, "property key={0}, value={1}", new Object[]{entry.getKey(), entry.getValue()});
+            Log.info("property key={0}, value={1}", new Object[]{entry.getKey(), entry.getValue()});
         }
+
+        final File propertyFile = new File(TimeTracker.home + TimeTrackerConstants.PROPERTIES);
 
         //noinspection unchecked
         final Map<String, String> map = new TreeMap<>((Map) properties);
         OutputStream outputStream = null;
         try
         {
-            outputStream = Files.newOutputStream(Paths.get(TimeTrackerConstants.PROPERTIES), StandardOpenOption.TRUNCATE_EXISTING);
-            //properties.store(outputStream, null);
+            outputStream = Files.newOutputStream(propertyFile.toPath(), StandardOpenOption.TRUNCATE_EXISTING);
             store(outputStream, map);
             outputStream.flush();
         }
@@ -2265,7 +2382,7 @@ public class TimeTracker extends Frame
                 }
                 catch (IOException e)
                 {
-                    LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                    Log.severe(e.getMessage(), e);
                 }
             }
         }

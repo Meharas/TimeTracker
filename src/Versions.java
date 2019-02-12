@@ -3,7 +3,6 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
-import java.util.logging.Level;
 
 /**
  * Liefert die Versionen
@@ -44,7 +43,7 @@ final class Versions
         }
         catch (IOException ex)
         {
-            TimeTracker.LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+            Log.severe(ex.getMessage(), ex);
         }
     }
 

@@ -9,7 +9,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.logging.Level;
 
 /**
  * Kontextmenü
@@ -61,12 +60,12 @@ public class ContextMenu
                 {
                     try
                     {
-                        final URIBuilder builder = timeTracker.getURIBuilder(Path.URL, ticket);
+                        final URIBuilder builder = timeTracker.getURIBuilder(ServicePath.URL, ticket);
                         openWebpage(builder.build());
                     }
                     catch (URISyntaxException ex)
                     {
-                        TimeTracker.LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                        Log.severe(ex.getMessage(), ex);
                     }
                 }
             }
@@ -82,7 +81,7 @@ public class ContextMenu
                     }
                     catch (Exception e)
                     {
-                        TimeTracker.LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                        Log.severe(e.getMessage(), e);
                     }
                 }
             }
@@ -90,12 +89,11 @@ public class ContextMenu
         timeTracker.setButtonIcon(openItem, Icon.OPEN);
 
         menu.add(openItem);
+        timeTracker.addStarItem(menu, parent, key, id);
         menu.add(copyItem);
         menu.add(editItem);
-
         timeTracker.addInProgressItem(menu, parent, id);
         timeTracker.addRedoItem(menu, parent);
-
         menu.addSeparator();
 
         final JMenuItem deleteItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_DELETE));

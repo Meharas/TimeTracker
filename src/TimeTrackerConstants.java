@@ -26,6 +26,7 @@ final class TimeTrackerConstants
     static final String SUFFIX_LABEL = ".label";
     static final String SUFFIX_ICON = ".icon";
     static final String SUFFIX_TICKET = ".ticket";
+    static final String SUFFIX_MARKED = ".marked";
     static final String SUFFIX_TYPE = ".type";
     static final String SUFFIX_DURATION = ".duration";
     static final String SUFFIX_DURATION_SAVED = ".duration.saved";
