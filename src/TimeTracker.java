@@ -974,10 +974,13 @@ public class TimeTracker extends Frame
             int savedMinutes = savedTimeUnits[1];
 
             final int additionalHours = savedHours / 60;
-            savedMinutes = savedMinutes - additionalHours * 60;
+            savedMinutes = savedMinutes % 60;
 
             spentHours += savedHours + additionalHours;
             spentMinutes += savedMinutes;
+
+            spentHours += spentMinutes / 60;
+            spentMinutes = spentMinutes % 60;
 
             saveSetting(getParsedTime(Integer.toString(spentHours), Integer.toString(spentMinutes)), this.key + TimeTrackerConstants.SUFFIX_DURATION_SAVED);
 
