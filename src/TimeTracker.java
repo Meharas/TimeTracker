@@ -37,6 +37,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -1614,13 +1615,18 @@ public class TimeTracker extends Frame
             this.issueButton.setText(text);
             setButtonIcon(this.issueButton, filePath);
 
-            try
+            try (final OutputStream outputStream = getPropertiesOutputStream(TimeTrackerConstants.PROPERTIES))
             {
+                if(outputStream == null)
+                {
+                    return;
+                }
+
                 final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + this.issueButton.getName().substring(TimeTrackerConstants.PREFIX_BUTTON.length());
                 final Properties properties = new Properties();
                 properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_LABEL);
                 properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_ICON);
-                storeButtonProperties(properties, propertyKey, text, filePath);
+                storeButtonProperties(properties, outputStream, propertyKey, text, filePath);
             }
             catch (IOException ex)
             {
@@ -1661,11 +1667,13 @@ public class TimeTracker extends Frame
         return text;
     }
 
-    private void storeButtonProperties(final Properties properties, final String propertyKey, final String text, final String filePath) throws IOException
+    private void storeButtonProperties(final Properties properties, final OutputStream outputStream, final String propertyKey, final String text,
+                                       final String filePath) throws IOException
     {
         properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_LABEL, text);
         properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_ICON, filePath);
-        storeProperties(properties);
+        properties.store(outputStream, null);
+        outputStream.flush();
     }
 
     /**
@@ -1714,11 +1722,15 @@ public class TimeTracker extends Frame
             final String counter = line < 10 ? "0" + line : Integer.toString(line);
 
             JButton button = null;
-            try
+            try (final OutputStream outputStream = getPropertiesOutputStream(TimeTrackerConstants.PROPERTIES))
             {
+                if(outputStream == null)
+                {
+                    return null;
+                }
                 final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + counter;
                 final Properties properties = new Properties();
-                storeButtonProperties(properties, propertyKey, text, filePath);
+                storeButtonProperties(properties, outputStream, propertyKey, text, filePath);
 
                 button = addButton(propertyKey, text, filePath);
                 updateGui(false);
@@ -2353,16 +2365,30 @@ public class TimeTracker extends Frame
             Log.info("property key={0}, value={1}", new Object[]{entry.getKey(), entry.getValue()});
         }
 
+        final File propertyFile = new File(TimeTracker.home + TimeTrackerConstants.PROPERTIES);
+
         //noinspection unchecked
         final Map<String, String> map = new TreeMap<>((Map) properties);
-        try (final OutputStream outputStream = getPropertiesOutputStream(TimeTrackerConstants.PROPERTIES))
+        OutputStream outputStream = null;
+        try
         {
-            if(outputStream == null)
-            {
-                return;
-            }
+            outputStream = Files.newOutputStream(propertyFile.toPath(), StandardOpenOption.TRUNCATE_EXISTING);
             store(outputStream, map);
             outputStream.flush();
+        }
+        finally
+        {
+            if(outputStream != null)
+            {
+                try
+                {
+                    outputStream.close();
+                }
+                catch (IOException e)
+                {
+                    Log.severe(e.getMessage(), e);
+                }
+            }
         }
     }
 
@@ -2377,6 +2403,8 @@ public class TimeTracker extends Frame
         {
             return;
         }
+
+        bw.write("#" + new Date().toString());
 
         for(final Map.Entry<String, String> entry : map.entrySet())
         {
