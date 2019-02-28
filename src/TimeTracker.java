@@ -1615,18 +1615,23 @@ public class TimeTracker extends Frame
             this.issueButton.setText(text);
             setButtonIcon(this.issueButton, filePath);
 
-            try (final OutputStream outputStream = getPropertiesOutputStream(TimeTrackerConstants.PROPERTIES))
+            final Properties properties = new Properties();
+            try(final InputStream inputStream = getPropertiesInputStream(TimeTrackerConstants.PROPERTIES))
             {
-                if(outputStream == null)
-                {
-                    return;
-                }
+                properties.load(inputStream);
+            }
+            catch (IOException ex)
+            {
+                Log.severe(ex.getMessage(), ex);
+                return;
+            }
 
+            try
+            {
                 final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + this.issueButton.getName().substring(TimeTrackerConstants.PREFIX_BUTTON.length());
-                final Properties properties = new Properties();
                 properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_LABEL);
                 properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_ICON);
-                storeButtonProperties(properties, outputStream, propertyKey, text, filePath);
+                storeButtonProperties(properties, propertyKey, text, filePath);
             }
             catch (IOException ex)
             {
@@ -1667,13 +1672,11 @@ public class TimeTracker extends Frame
         return text;
     }
 
-    private void storeButtonProperties(final Properties properties, final OutputStream outputStream, final String propertyKey, final String text,
-                                       final String filePath) throws IOException
+    private void storeButtonProperties(final Properties properties, final String propertyKey, final String text, final String filePath) throws IOException
     {
         properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_LABEL, text);
         properties.setProperty(propertyKey + TimeTrackerConstants.SUFFIX_ICON, filePath);
-        properties.store(outputStream, null);
-        outputStream.flush();
+        storeProperties(properties);
     }
 
     /**
@@ -1706,8 +1709,15 @@ public class TimeTracker extends Frame
                 return;
             }
 
-            final JButton button = createButton(text);
-            handleConfirmationDialog(button, text);
+            try
+            {
+                final JButton button = createButton(text);
+                handleConfirmationDialog(button, text);
+            }
+            catch (IOException ex)
+            {
+                Log.severe(ex.getMessage(), ex);
+            }
         }
 
         protected String createButtonText()
@@ -1715,22 +1725,24 @@ public class TimeTracker extends Frame
             return getTicketSummary(this.textInput);
         }
 
-        protected JButton createButton(final String text)
+        protected JButton createButton(final String text) throws IOException
         {
             final File file = this.icon == null ? null : this.icon.getSelectedFile();
             final String filePath = file == null ? TimeTrackerConstants.STRING_EMPTY : file.getPath();
-            final String counter = line < 10 ? "0" + line : Integer.toString(line);
+            final int missingNumber = getMissingNumber();
+            final String counter = missingNumber < 10 ? "0" + missingNumber : Integer.toString(missingNumber);
+
+            final Properties properties = new Properties();
+            try(final InputStream inputStream = getPropertiesInputStream(TimeTrackerConstants.PROPERTIES))
+            {
+                properties.load(inputStream);
+            }
 
             JButton button = null;
-            try (final OutputStream outputStream = getPropertiesOutputStream(TimeTrackerConstants.PROPERTIES))
+            try
             {
-                if(outputStream == null)
-                {
-                    return null;
-                }
                 final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + counter;
-                final Properties properties = new Properties();
-                storeButtonProperties(properties, outputStream, propertyKey, text, filePath);
+                storeButtonProperties(properties, propertyKey, text, filePath);
 
                 button = addButton(propertyKey, text, filePath);
                 updateGui(false);
@@ -1747,6 +1759,58 @@ public class TimeTracker extends Frame
                 frame.dispose();
             }
             return button;
+        }
+
+        /**
+         * Liefert alle internen IDs der Buttons
+         * @return interne IDs der Buttons
+         * @throws IOException Wenn beim Lesen der Properties etwas schief ging
+         */
+        private Set<Integer> getButtonIds() throws IOException
+        {
+            final Properties properties = new Properties();
+            try (final InputStream inputStream = getPropertiesInputStream(TimeTrackerConstants.PROPERTIES))
+            {
+                properties.load(inputStream);
+            }
+
+            final Set<Integer> buttonIds = new TreeSet<>();
+            for(String key : properties.stringPropertyNames())
+            {
+                if(!key.startsWith(TimeTrackerConstants.PREFIX_BUTTON))
+                {
+                    continue;
+                }
+                key = key.substring(TimeTrackerConstants.PREFIX_BUTTON.length());
+                buttonIds.add(Integer.parseInt(key.substring(0, key.indexOf('.'))));
+            }
+            return buttonIds;
+        }
+
+        /**
+         * Liefert eine fehlende oder die nächst höhere ID
+         * @return eine fehlende oder die nächst höhere ID
+         * @throws IOException Wenn beim Lesen der Properties etwas schief ging
+         */
+        private int getMissingNumber() throws IOException
+        {
+            final Set<Integer> buttonIds = getButtonIds();
+            if(buttonIds.isEmpty())
+            {
+                return 0;
+            }
+            int lastNumber = 0;
+            int missingNumber = -1;
+            for(final int id : buttonIds)
+            {
+                lastNumber = id;
+                if(id - missingNumber > 1)
+                {
+                    return ++missingNumber;
+                }
+                missingNumber = id;
+            }
+            return ++lastNumber;
         }
 
         /**
