@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -166,12 +167,99 @@ public class TimeTracker extends Frame
             add(this.panel);
             pack();
             restoreWindowPositionAndSize();
+            addTrayIcon();
         }
         catch (Exception e)
         {
             Log.severe(e.getMessage(), e);
             JOptionPane.showMessageDialog(this, e.getMessage());
         }
+    }
+
+    private void addTrayIcon() throws AWTException
+    {
+        if(SystemTray.isSupported())
+        {
+            final MenuItem aboutItem = new MenuItem("About");
+            final int year = LocalDateTime.now().getYear();
+            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this, "Version 0.0.1 Annaberg-Buchholz\n\nby Andreas Beyer\n© " + year));
+
+            final MenuItem openItem = new MenuItem(Resource.getString(PropertyConstants.LABEL_OPEN));
+            openItem.setEnabled(false);
+            openItem.addActionListener(e -> {
+                setVisible(true);
+                setExtendedState(JFrame.NORMAL);
+                openItem.setEnabled(false);
+            });
+
+            final ImageIcon imageIcon = new ImageIcon(TimeTracker.home + Icon.TIMETRACKER.getIcon());
+            final TrayIcon icon = new TrayIcon(imageIcon.getImage());
+            icon.setToolTip(getTitle());
+            icon.addMouseListener(new MouseListener()
+            {
+                @Override
+                public void mouseClicked(final MouseEvent e)
+                {
+                    if(!SwingUtilities.isLeftMouseButton(e))
+                    {
+                        return;
+                    }
+                    showFrame(openItem, !isVisible());
+                }
+
+                @Override
+                public void mousePressed(final MouseEvent e)
+                {
+
+                }
+
+                @Override
+                public void mouseReleased(final MouseEvent e)
+                {
+
+                }
+
+                @Override
+                public void mouseEntered(final MouseEvent e)
+                {
+
+                }
+
+                @Override
+                public void mouseExited(final MouseEvent e)
+                {
+
+                }
+            });
+
+
+            final MenuItem add = new MenuItem(Resource.getString(PropertyConstants.LABEL_ADD));
+            add.addActionListener(new ShowAddButtonAction());
+
+            final PopupMenu popup = new PopupMenu();
+            popup.add(aboutItem);
+            popup.add(openItem);
+            popup.add(add);
+            icon.setPopupMenu(popup);
+            SystemTray.getSystemTray().add(icon);
+
+            addWindowStateListener(e -> {
+                if(e.getNewState() == ICONIFIED || e.getNewState() == 7)
+                {
+                    showFrame(openItem, false);
+                }
+                else if(e.getNewState() == MAXIMIZED_BOTH || e.getNewState() == NORMAL)
+                {
+                    showFrame(openItem, true);
+                }
+            });
+        }
+    }
+
+    private void showFrame(final MenuItem openItem, final boolean show)
+    {
+        setVisible(show);
+        openItem.setEnabled(!show);
     }
 
     /**
@@ -509,6 +597,15 @@ public class TimeTracker extends Frame
         final JLabel label;
         String text;
         int duration = 0;
+
+        TimerAction()
+        {
+            super();
+            this.button = null;
+            this.timer = null;
+            this.label = null;
+            this.key = null;
+        }
 
         TimerAction(final JButton button)
         {
@@ -1025,6 +1122,13 @@ public class TimeTracker extends Frame
      */
     private Point getWindowLocation()
     {
+        if(!this.timeTrackerFrame.isShowing())
+        {
+            final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            final int x = screenSize.width / 2 - 125;
+            final int y = screenSize.height / 2 - 85;
+            return new Point(x, y);
+        }
         final Point location = this.timeTrackerFrame.getLocationOnScreen();
         final int x = location.x + (this.timeTrackerFrame.getWidth() / 2) - 125;
         final int y = location.y + (this.timeTrackerFrame.getHeight() / 2) - 85;
@@ -1372,6 +1476,11 @@ public class TimeTracker extends Frame
     {
         private static final long serialVersionUID = -2104627297533100111L;
 
+        ShowAddButtonAction()
+        {
+            super();
+        }
+
         ShowAddButtonAction(final JButton button)
         {
             super(button);
@@ -1419,7 +1528,7 @@ public class TimeTracker extends Frame
             labelField.setBackground(MANDATORY);
 
             final JButton ok = new JButton(Resource.getString(PropertyConstants.TEXT_OK));
-            final String name = this.button.getName();
+            final String name = this.button != null ? this.button.getName() : null;
             if(name != null && name.startsWith(TimeTrackerConstants.PREFIX_BUTTON))
             {
                 labelField.setText(this.button.getText());

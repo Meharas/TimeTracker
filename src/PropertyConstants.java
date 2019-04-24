@@ -36,6 +36,7 @@ final class PropertyConstants
     static final String LABEL_STOP = "button.label.stop";
     static final String LABEL_TICKET = "button.label.ticket";
     static final String LABEL_TIME = "button.label.time";
+    static final String LABEL_OPEN = "button.label.open";
 
     static final String TICKET_IN_PROGRESS = "ticket.inprogress";
     static final String TIME_SAVED = "time.saved";

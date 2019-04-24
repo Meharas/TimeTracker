@@ -16,7 +16,8 @@ public enum Icon
     EDIT("edit.png"),
     PROGRESS("progress.png"),
     FINISH("ok.png"),
-    STAR("star.png");
+    STAR("star.png"),
+    TIMETRACKER("timetracker.png");
 
     private String png;
     Icon(final String icon)
