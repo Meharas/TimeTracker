@@ -1986,6 +1986,8 @@ public class TimeTracker extends Frame
                 buttonPanel.add(okButton);
                 buttonPanel.add(cancelButton);
 
+                SwingUtilities.getRootPane(okButton).setDefaultButton(okButton);
+
                 dialog.pack();
                 dialog.setVisible(true);
             }
