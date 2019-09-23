@@ -108,33 +108,7 @@ public class TimeTracker extends Frame
             setButtonIcon(reset, Icon.STOP);
             reset.setAction(new ResetAction(reset));
 
-            final JButton openLog = new JButton();
-            openLog.setAction(new TextAction("Log")
-            {
-                private static final long serialVersionUID = 4641196350640457638L;
-
-                @Override
-                public void actionPerformed(final ActionEvent e)
-                {
-                    final File log = new File(TimeTracker.home + TimeTrackerConstants.LOGFILE_NAME);
-                    if (log.exists())
-                    {
-                        final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
-                        if (desktop != null && desktop.isSupported(Desktop.Action.OPEN))
-                        {
-                            try
-                            {
-                                desktop.open(log);
-                            }
-                            catch (IOException ex)
-                            {
-                                Log.severe(ex.getMessage(), ex);
-                            }
-                        }
-                    }
-                }
-            });
-            setButtonIcon(openLog, Icon.LOG);
+            final JButton openLog = getOpenLogButton();
 
             final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 3));
             globalActionsPanel.add(add);
@@ -169,11 +143,67 @@ public class TimeTracker extends Frame
             restoreWindowPositionAndSize();
             addTrayIcon();
         }
-        catch (Exception e)
+        catch (final Exception e)
         {
             Log.severe(e.getMessage(), e);
             JOptionPane.showMessageDialog(this, e.getMessage());
         }
+    }
+
+    private JButton getOpenLogButton()
+    {
+        final JButton openLog = new JButton();
+        openLog.setAction(new TextAction("Log")
+        {
+            private static final long serialVersionUID = 4641196350640457638L;
+
+            @Override
+            public void actionPerformed(final ActionEvent e)
+            {
+                final File log = new File(TimeTracker.home + TimeTrackerConstants.LOGFILE_NAME);
+                if (log.exists())
+                {
+                    final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+                    if (desktop != null && desktop.isSupported(Desktop.Action.OPEN))
+                    {
+                        try
+                        {
+                            desktop.open(log);
+                        }
+                        catch (final IOException ex)
+                        {
+                            Log.severe(ex.getMessage(), ex);
+                        }
+                    }
+                }
+            }
+        });
+        setButtonIcon(openLog, Icon.LOG);
+        return openLog;
+    }
+
+    @Override
+    public final synchronized void addWindowListener(final WindowListener l)
+    {
+        super.addWindowListener(l);
+    }
+
+    @Override
+    public final void setMinimumSize(final Dimension minimumSize)
+    {
+        super.setMinimumSize(minimumSize);
+    }
+
+    @Override
+    public final Component add(final Component comp)
+    {
+        return super.add(comp);
+    }
+
+    @Override
+    public final void pack()
+    {
+        super.pack();
     }
 
     private void addTrayIcon() throws AWTException
@@ -188,7 +218,7 @@ public class TimeTracker extends Frame
             openItem.setEnabled(false);
             openItem.addActionListener(e -> {
                 setVisible(true);
-                setExtendedState(JFrame.NORMAL);
+                setExtendedState(Frame.NORMAL);
                 openItem.setEnabled(false);
             });
 
@@ -210,25 +240,25 @@ public class TimeTracker extends Frame
                 @Override
                 public void mousePressed(final MouseEvent e)
                 {
-
+                    //doNothing
                 }
 
                 @Override
                 public void mouseReleased(final MouseEvent e)
                 {
-
+                    //doNothing
                 }
 
                 @Override
                 public void mouseEntered(final MouseEvent e)
                 {
-
+                    //doNothing
                 }
 
                 @Override
                 public void mouseExited(final MouseEvent e)
                 {
-
+                    //doNothing
                 }
             });
 
@@ -403,7 +433,7 @@ public class TimeTracker extends Frame
                 button.setBackground(Boolean.parseBoolean(value) ? Color.YELLOW : null);
             }
         }
-        catch (IOException e)
+        catch (final IOException e)
         {
             Log.severe(e.getMessage(), e);
         }
@@ -443,7 +473,7 @@ public class TimeTracker extends Frame
             });
             menu.add(inProgressItem);
         }
-        catch (URISyntaxException | IOException ex)
+        catch (final URISyntaxException | IOException ex)
         {
             Log.severe(ex.getMessage(), ex);
         }
@@ -512,13 +542,13 @@ public class TimeTracker extends Frame
                 }
             }
         }
-        catch (IOException e)
+        catch (final IOException e)
         {
             Log.severe(e.getMessage(), e);
         }
     }
 
-    void setButtonIcon(final AbstractButton button, final Icon icon)
+    final void setButtonIcon(final AbstractButton button, final Icon icon)
     {
         if (icon == null)
         {
@@ -550,7 +580,7 @@ public class TimeTracker extends Frame
                 }
             }
         }
-        catch (IOException e)
+        catch (final IOException e)
         {
             Log.severe(e.getMessage(), e);
         }
@@ -755,7 +785,7 @@ public class TimeTracker extends Frame
             this.button.setOpaque(false);
         }
 
-        private void saveDuration(boolean reset)
+        private void saveDuration(final boolean reset)
         {
             final String currentDuration = this.label.getText();
             saveSetting(reset ? TimeTrackerConstants.STRING_EMPTY : currentDuration, getDurationKey());
@@ -788,7 +818,7 @@ public class TimeTracker extends Frame
                 //properties.remove(this.key + TimeTrackerConstants.SUFFIX_DURATION_SAVED);
                 storeProperties(properties);
             }
-            catch (IOException ex)
+            catch (final IOException ex)
             {
                 Log.severe(ex.getMessage(), ex);
             }
@@ -989,8 +1019,8 @@ public class TimeTracker extends Frame
         private String getParsedTime(final String currentDuration)
         {
             final int[] timeUnits = getTimeUnits(currentDuration);
-            int currentHours = timeUnits[0];
-            int currentMinutes = timeUnits[1];
+            final int currentHours = timeUnits[0];
+            final int currentMinutes = timeUnits[1];
             return getParsedTime(Integer.toString(Math.max(0, currentHours)), Integer.toString(Math.max(1, currentMinutes)));
         }
 
@@ -1107,7 +1137,7 @@ public class TimeTracker extends Frame
                 }
                 logResponse(response);
             }
-            catch (URISyntaxException | IOException e)
+            catch (final URISyntaxException | IOException e)
             {
                 Log.severe(e.getMessage(), e);
             }
@@ -1182,7 +1212,7 @@ public class TimeTracker extends Frame
             {
                 requestUserID();
             }
-            catch (IOException | URISyntaxException ex)
+            catch (final IOException | URISyntaxException ex)
             {
                 Log.severe(ex.getMessage(), ex);
             }
@@ -1306,7 +1336,7 @@ public class TimeTracker extends Frame
         {
             portResolver.resolve(new HttpHost(this.host, this.port));
         }
-        catch (UnsupportedSchemeException e)
+        catch (final UnsupportedSchemeException e)
         {
             Log.severe(e.getMessage(), e);
             return;
@@ -1384,7 +1414,7 @@ public class TimeTracker extends Frame
                 updateGui(true);
                 --line;
             }
-            catch (IOException ex)
+            catch (final IOException ex)
             {
                 Log.severe(ex.getMessage(), ex);
             }
@@ -1457,7 +1487,7 @@ public class TimeTracker extends Frame
             private static final long serialVersionUID = 4056930123544439411L; //$NON-NLS-1$
 
             @Override
-            public void actionPerformed(ActionEvent e)
+            public void actionPerformed(final ActionEvent e)
             {
                 ((Window) window).dispose();
             }
@@ -1608,7 +1638,7 @@ public class TimeTracker extends Frame
                         }
                     }
                 }
-                catch (UnsupportedFlavorException | IOException ex)
+                catch (final UnsupportedFlavorException | IOException ex)
                 {
                     Log.severe(ex.getMessage(), ex);
                 }
@@ -1657,7 +1687,7 @@ public class TimeTracker extends Frame
             //Sollte der Nutzer was eigenes hingeschrieben haben, so sollte das nicht ersetzt werden
             return null;
         }
-        return getValueFromJson(ticket, TimeTrackerConstants.ISSUE_SUMMARY);
+        return getSummaryFromJson(ticket);
     }
 
     /**
@@ -1677,9 +1707,9 @@ public class TimeTracker extends Frame
         return getValueFromJson(MATCHER.group(1), TimeTrackerConstants.ISSUE_CUSTOM_FIELDS, TimeTrackerConstants.ISSUE_STATE);
     }
 
-    private String getValueFromJson(final String ticket, final String field) throws IOException, URISyntaxException
+    private String getSummaryFromJson(final String ticket) throws IOException, URISyntaxException
     {
-        return getValueFromJson(ticket, field, field);
+        return getValueFromJson(ticket, TimeTrackerConstants.ISSUE_SUMMARY, TimeTrackerConstants.ISSUE_SUMMARY);
     }
 
     private String getValueFromJson(final String ticket, final String fields, final String attribute) throws IOException, URISyntaxException
@@ -1729,7 +1759,7 @@ public class TimeTracker extends Frame
             {
                 properties.load(inputStream);
             }
-            catch (IOException ex)
+            catch (final IOException ex)
             {
                 Log.severe(ex.getMessage(), ex);
                 return;
@@ -1742,7 +1772,7 @@ public class TimeTracker extends Frame
                 properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_ICON);
                 storeButtonProperties(properties, propertyKey, text, filePath);
             }
-            catch (IOException ex)
+            catch (final IOException ex)
             {
                 Log.severe(ex.getMessage(), ex);
             }
@@ -1774,7 +1804,7 @@ public class TimeTracker extends Frame
                 return text + TimeTrackerConstants.STRING_SPACE + summary;
             }
         }
-        catch (URISyntaxException | IOException ex)
+        catch (final URISyntaxException | IOException ex)
         {
             Log.severe(ex.getMessage(), ex);
         }
@@ -1823,7 +1853,7 @@ public class TimeTracker extends Frame
                 final JButton button = createButton(text);
                 handleConfirmationDialog(button, text);
             }
-            catch (IOException ex)
+            catch (final IOException ex)
             {
                 Log.severe(ex.getMessage(), ex);
             }
@@ -1857,7 +1887,7 @@ public class TimeTracker extends Frame
                 updateGui(false);
                 ++line;
             }
-            catch (IOException ex)
+            catch (final IOException ex)
             {
                 Log.severe(ex.getMessage(), ex);
             }
@@ -1977,7 +2007,7 @@ public class TimeTracker extends Frame
                         dialog.dispose();
                         button.doClick();
                     }
-                    catch (URISyntaxException | IOException ex)
+                    catch (final URISyntaxException | IOException ex)
                     {
                         Log.severe(ex.getMessage(), ex);
                     }
@@ -2070,7 +2100,7 @@ public class TimeTracker extends Frame
 
                             dialog.dispose();
                         }
-                        catch (URISyntaxException | IOException ex)
+                        catch (final URISyntaxException | IOException ex)
                         {
                             Log.severe(ex.getMessage(), ex);
                         }
@@ -2178,7 +2208,7 @@ public class TimeTracker extends Frame
                 storeProperties(properties);
             }
         }
-        catch (IOException e)
+        catch (final IOException e)
         {
             Log.severe(e.getMessage(), e);
         }
@@ -2285,7 +2315,7 @@ public class TimeTracker extends Frame
                 }
             }
         }
-        catch (IOException e)
+        catch (final IOException e)
         {
             Log.severe(e.getMessage(), e);
         }
@@ -2304,7 +2334,7 @@ public class TimeTracker extends Frame
         {
             return properties;
         }
-        catch (IOException e)
+        catch (final IOException e)
         {
             Log.severe(e.getMessage(), e);
         }
@@ -2341,7 +2371,7 @@ public class TimeTracker extends Frame
                 propertyFile = file.toFile();
                 Log.info("Property file created: " + propertyFile.getAbsolutePath());
             }
-            catch (IOException | SecurityException | UnsupportedOperationException e)
+            catch (final IOException | SecurityException | UnsupportedOperationException e)
             {
                 Log.severe(e.getMessage(), e);
                 return null;
@@ -2365,23 +2395,6 @@ public class TimeTracker extends Frame
         }
         Log.fine("Property file found: {0}", propertyFile.getAbsolutePath());
         return new FileInputStream(propertyFile);
-    }
-
-    /**
-     * Liefert das Property-File als OutputStream
-     * @param propertyFileName Name des PropertyFiles
-     * @return OutputStream
-     * @throws FileNotFoundException wenn die Property-Datei nicht gefunden wurde
-     */
-    private static OutputStream getPropertiesOutputStream(final String propertyFileName) throws FileNotFoundException
-    {
-        final File propertyFile = getPropertyFile(propertyFileName);
-        if(propertyFile == null)
-        {
-            return null;
-        }
-        Log.fine("Property file found: {0}", propertyFile.getAbsolutePath());
-        return new FileOutputStream(propertyFile, true);
     }
 
     public static void main(final String[] args)
@@ -2414,75 +2427,85 @@ public class TimeTracker extends Frame
             final String lookAndFeel = properties.getProperty(PropertyConstants.LOOK_AND_FEEL, "javax.swing.plaf.nimbus.NimbusLookAndFeel");
             UIManager.setLookAndFeel(lookAndFeel);
         }
-        catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e)
+        catch (final ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e)
         {
             Log.severe(e.getMessage(), e);
         }
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> Log.severe(e.getMessage(), e));
 
-        final String token = properties.getProperty(TimeTrackerConstants.YOUTRACK_TOKEN);
-        if (token == null || token.isEmpty())
+        final boolean callTimeTracker = handleEmptyToken(properties);
+        if(callTimeTracker)
         {
-            final int frameWidth = 500;
-            final int frameHeight = 100;
-            final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-
-            final JFrame dialog = new JFrame("Your token please");
-            dialog.setMinimumSize(new Dimension(frameWidth, frameHeight));
-            dialog.setBounds((screenSize.width / 2) - (frameWidth / 2), (screenSize.height / 2) - (frameHeight / 2), frameWidth, frameHeight);
-            dialog.setResizable(false);
-            dialog.setLayout(new GridLayout(2, 1));
-
-            final JTextField tokenField = new JTextField(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX);
-            tokenField.setCaretPosition(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length());
-            tokenField.setBackground(MANDATORY);
-            dialog.add(tokenField);
-
-            final JButton button = new JButton();
-            button.setAction(new TextAction(Resource.getString(PropertyConstants.TEXT_OK))
-            {
-                private static final long serialVersionUID = 6877363378286790461L;
-
-                @Override
-                public void actionPerformed(final ActionEvent e)
-                {
-                    String localToken = tokenField.getText();
-                    if(localToken == null || localToken.isEmpty())
-                    {
-                        return;
-                    }
-
-                    if(!localToken.startsWith(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX))
-                    {
-                        localToken = TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX + localToken;
-                    }
-
-                    if(localToken.startsWith(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX + TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX))
-                    {
-                        localToken = localToken.substring(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length());
-                    }
-
-                    if(localToken.length() <= TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length())
-                    {
-                        return;
-                    }
-
-                    saveToken(localToken);
-
-                    properties.setProperty(TimeTrackerConstants.YOUTRACK_TOKEN, localToken);
-
-                    dialog.dispose();
-                    callTimeTracker(properties);
-                }
-            });
-            dialog.add(button);
-
-            dialog.pack();
-            dialog.setVisible(true);
-            return;
+            callTimeTracker(properties);
         }
-        callTimeTracker(properties);
+    }
+
+    private static boolean handleEmptyToken(final Properties properties)
+    {
+        final String token = properties.getProperty(TimeTrackerConstants.YOUTRACK_TOKEN);
+        if (token != null && !token.isEmpty())
+        {
+            return true;
+        }
+
+        final int frameWidth = 500;
+        final int frameHeight = 100;
+        final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+        final JFrame dialog = new JFrame("Your token please");
+        dialog.setMinimumSize(new Dimension(frameWidth, frameHeight));
+        dialog.setBounds((screenSize.width / 2) - (frameWidth / 2), (screenSize.height / 2) - (frameHeight / 2), frameWidth, frameHeight);
+        dialog.setResizable(false);
+        dialog.setLayout(new GridLayout(2, 1));
+
+        final JTextField tokenField = new JTextField(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX);
+        tokenField.setCaretPosition(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length());
+        tokenField.setBackground(MANDATORY);
+        dialog.add(tokenField);
+
+        final JButton button = new JButton();
+        button.setAction(new TextAction(Resource.getString(PropertyConstants.TEXT_OK))
+        {
+            private static final long serialVersionUID = 6877363378286790461L;
+
+            @Override
+            public void actionPerformed(final ActionEvent e)
+            {
+                String localToken = tokenField.getText();
+                if(localToken == null || localToken.isEmpty())
+                {
+                    return;
+                }
+
+                if(!localToken.startsWith(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX))
+                {
+                    localToken = TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX + localToken;
+                }
+
+                if(localToken.startsWith(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX + TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX))
+                {
+                    localToken = localToken.substring(TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length());
+                }
+
+                if(localToken.length() <= TimeTrackerConstants.YOUTRACK_TOKEN_PREFIX.length())
+                {
+                    return;
+                }
+
+                saveToken(localToken);
+
+                properties.setProperty(TimeTrackerConstants.YOUTRACK_TOKEN, localToken);
+
+                dialog.dispose();
+                callTimeTracker(properties);
+            }
+        });
+        dialog.add(button);
+
+        dialog.pack();
+        dialog.setVisible(true);
+        return false;
     }
 
     /**
@@ -2522,7 +2545,7 @@ public class TimeTracker extends Frame
             properties.put(key, value);
             storeProperties(properties);
         }
-        catch (IOException e)
+        catch (final IOException e)
         {
             Log.severe(e.getMessage(), e);
         }
@@ -2559,7 +2582,7 @@ public class TimeTracker extends Frame
                 {
                     outputStream.close();
                 }
-                catch (IOException e)
+                catch (final IOException e)
                 {
                     Log.severe(e.getMessage(), e);
                 }
@@ -2569,7 +2592,7 @@ public class TimeTracker extends Frame
 
     private static void store(final OutputStream out, final Map<String, String> map) throws IOException
     {
-        store(new BufferedWriter(new OutputStreamWriter(out, "8859_1")), map);
+        store(new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.ISO_8859_1)), map);
     }
 
     private static void store(final BufferedWriter bw, final Map<String, String> map) throws IOException
