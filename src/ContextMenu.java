@@ -35,7 +35,7 @@ public class ContextMenu
         copyItem.setBorder(BORDER);
         timeTracker.setButtonIcon(copyItem, Icon.COPY);
 
-        copyItem.addActionListener(e1 -> {
+        copyItem.addActionListener((final ActionEvent e) -> {
             final StringSelection stringSelection = new StringSelection(parent.getText());
             final Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
             cb.setContents(stringSelection, stringSelection);
@@ -63,7 +63,7 @@ public class ContextMenu
                         final URIBuilder builder = timeTracker.getURIBuilder(ServicePath.URL, ticket);
                         openWebpage(builder.build());
                     }
-                    catch (URISyntaxException ex)
+                    catch (final URISyntaxException ex)
                     {
                         Log.severe(ex.getMessage(), ex);
                     }
@@ -79,7 +79,7 @@ public class ContextMenu
                     {
                         desktop.browse(uri);
                     }
-                    catch (Exception e)
+                    catch (final Exception e)
                     {
                         Log.severe(e.getMessage(), e);
                     }

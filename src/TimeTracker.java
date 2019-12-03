@@ -24,7 +24,6 @@ import org.apache.http.message.BasicNameValuePair;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.text.TextAction;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -273,7 +272,7 @@ public class TimeTracker extends Frame
             icon.setPopupMenu(popup);
             SystemTray.getSystemTray().add(icon);
 
-            addWindowStateListener(e -> {
+            addWindowStateListener((final WindowEvent e) -> {
                 if(e.getNewState() == ICONIFIED || e.getNewState() == 7)
                 {
                     showFrame(openItem, false);
@@ -641,6 +640,15 @@ public class TimeTracker extends Frame
         {
             super(button.getText(), button.getIcon());
             this.button = button;
+            this.timer = null;
+            this.label = null;
+            this.key = null;
+        }
+
+        TimerAction(final String text)
+        {
+            super(text, null);
+            this.button = null;
             this.timer = null;
             this.label = null;
             this.key = null;
@@ -1523,35 +1531,7 @@ public class TimeTracker extends Frame
             chooser.setPreferredSize(new Dimension(600, 300));
             chooser.setMultiSelectionEnabled(true);
             chooser.setControlButtonsAreShown(false);
-            chooser.setFileFilter(new FileFilter()
-            {
-                @Override
-                public boolean accept(final File f)
-                {
-                    if (f == null)
-                    {
-                        return false;
-                    }
-                    if (f.isDirectory())
-                    {
-                        return true;
-                    }
-                    final String fileName = f.getName();
-                    final int dot = fileName.lastIndexOf('.');
-                    if (dot < 0)
-                    {
-                        return false;
-                    }
-                    final String suffix = fileName.substring(dot);
-                    return ".png".equalsIgnoreCase(suffix) || ".jpg".equalsIgnoreCase(suffix) || ".jpeg".equalsIgnoreCase(suffix);
-                }
-
-                @Override
-                public String getDescription()
-                {
-                    return ".jpg, .jpeg, .png";
-                }
-            });
+            chooser.setFileFilter(new IconFileFilter());
 
             final JTextField labelField = new JTextField();
             labelField.setPreferredSize(new Dimension(200, 25));
@@ -1785,7 +1765,7 @@ public class TimeTracker extends Frame
         }
     }
 
-    private String getTicketSummary(final JTextField textInput)
+    protected String getTicketSummary(final JTextField textInput)
     {
         String text = textInput == null ? null : textInput.getText();
         if(text != null)
@@ -1796,6 +1776,11 @@ public class TimeTracker extends Frame
         {
             return null;
         }
+        return getTicketSummary(text);
+    }
+
+    private String getTicketSummary(final String text)
+    {
         try
         {
             final String summary = getIssueSummary(text);
@@ -1818,10 +1803,16 @@ public class TimeTracker extends Frame
         storeProperties(properties);
     }
 
+    void showAddIssueDialog(final String text)
+    {
+        final AddAction action = new AddAction(Resource.getString(PropertyConstants.TEXT_OK));
+        action.handleConfirmationDialog(text, false);
+    }
+
     /**
      * Klasse zum Hinzufügen eines neuen Eintrags
      */
-    private class AddAction extends TimerAction
+    class AddAction extends TimerAction
     {
         private static final long serialVersionUID = 2109270279366930967L;
         private JTextField textInput;
@@ -1839,6 +1830,11 @@ public class TimeTracker extends Frame
             this.icon = icon;
         }
 
+        public AddAction(final String text)
+        {
+            super(text);
+        }
+
         @Override
         public void actionPerformed(final ActionEvent e)
         {
@@ -1847,16 +1843,7 @@ public class TimeTracker extends Frame
             {
                 return;
             }
-
-            try
-            {
-                final JButton button = createButton(text);
-                handleConfirmationDialog(button, text);
-            }
-            catch (final IOException ex)
-            {
-                Log.severe(ex.getMessage(), ex);
-            }
+            handleConfirmationDialog(text, true);
         }
 
         protected String createButtonText()
@@ -1869,7 +1856,7 @@ public class TimeTracker extends Frame
             final File file = this.icon == null ? null : this.icon.getSelectedFile();
             final String filePath = file == null ? TimeTrackerConstants.STRING_EMPTY : file.getPath();
             final int missingNumber = getMissingNumber();
-            final String counter = missingNumber < 10 ? "0" + missingNumber : Integer.toString(missingNumber);
+            final String counter = missingNumber < 10 ? ("0" + missingNumber) : Integer.toString(missingNumber);
 
             final Properties properties = new Properties();
             try(final InputStream inputStream = getPropertiesInputStream(TimeTrackerConstants.PROPERTIES))
@@ -1956,7 +1943,7 @@ public class TimeTracker extends Frame
          * Zeigt einen Dialog an, mit welchem ein Ticket in Bearbeitung genommen werden kann
          * @param text Text auf dem Button mit dem Issue
          */
-        private void handleConfirmationDialog(final JButton button, final String text)
+        private void handleConfirmationDialog(final String text, final boolean createButtonOnCancel)
         {
             MATCHER.reset(text);
             if (MATCHER.matches())
@@ -1975,10 +1962,23 @@ public class TimeTracker extends Frame
                 rows.add(buttonPanel);
 
                 final JButton cancelButton = new JButton(Resource.getString(PropertyConstants.TEXT_NO));
-                cancelButton.addActionListener(e1 -> dialog.dispose());
+                cancelButton.addActionListener((final ActionEvent event) -> {
+                    if (createButtonOnCancel)
+                    {
+                        try
+                        {
+                            createButton(text);
+                        }
+                        catch (final IOException ex)
+                        {
+                            Log.severe(ex.getMessage(), ex);
+                        }
+                    }
+                    dialog.dispose();
+                });
 
                 final JButton okButton = new JButton(Resource.getString(PropertyConstants.TEXT_YES));
-                okButton.addActionListener(e12 -> {
+                okButton.addActionListener((final ActionEvent event) -> {
                     try
                     {
                         final String issueID = getIssueID(ticket);
@@ -2005,6 +2005,8 @@ public class TimeTracker extends Frame
                         }
                         logResponse(response);
                         dialog.dispose();
+
+                        final JButton button = createButton(text);
                         button.doClick();
                     }
                     catch (final URISyntaxException | IOException ex)
@@ -2363,7 +2365,7 @@ public class TimeTracker extends Frame
         File propertyFile = new File(TimeTracker.home + propertyFileName);
         if(!propertyFile.exists())
         {
-            Log.warning("Property file {0} not found: {0}", propertyFile.getAbsolutePath());
+            Log.warning("Property file not found: {0}", propertyFile.getAbsolutePath());
             Log.info("Creating property file: {0}", propertyFile.getAbsolutePath());
             try
             {
@@ -2419,6 +2421,7 @@ public class TimeTracker extends Frame
         final Properties properties = getProperties();
         if (properties == null || properties.isEmpty())
         {
+            Log.severe("Empty properties!");
             return;
         }
 
@@ -2439,6 +2442,12 @@ public class TimeTracker extends Frame
         {
             callTimeTracker(properties);
         }
+    }
+
+    private static void initClipboardObserver(final TimeTracker tracker)
+    {
+        final ClipboardMonitor monitor = ClipboardMonitor.getMonitor(tracker);
+        monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));
     }
 
     private static boolean handleEmptyToken(final Properties properties)
@@ -2516,6 +2525,7 @@ public class TimeTracker extends Frame
     {
         SwingUtilities.invokeLater(() -> {
             final TimeTracker timer = new TimeTracker(properties);
+            initClipboardObserver(timer);
             timer.setVisible(true);
         });
     }
