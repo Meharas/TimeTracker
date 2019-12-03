@@ -59,12 +59,13 @@ public class TimeTracker extends Frame
     private static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
 
     static String home = TimeTrackerConstants.STRING_EMPTY;
+    private static TimeTracker timeTracker;
+    private static final Object syncObject = new Object();
 
     private static final ListCellRenderer RENDERER = new TypeRenderer();
 
     private int line;
     private JPanel panel;
-    private final Frame timeTrackerFrame;
     private final String token;
     private String userId;
     private final String host;
@@ -87,9 +88,7 @@ public class TimeTracker extends Frame
             }
         });
 
-        this.timeTrackerFrame = this;
         this.panel = new JPanel(new GridLayout(0, 1));
-
         this.scheme = properties.getProperty(TimeTrackerConstants.YOUTRACK_SCHEME, TimeTrackerConstants.DEFAULT_SCHEME);
         this.host = properties.getProperty(TimeTrackerConstants.YOUTRACK_HOST, TimeTrackerConstants.DEFAULT_HOST);
         this.port = Integer.parseInt(properties.getProperty(TimeTrackerConstants.YOUTRACK_PORT, TimeTrackerConstants.DEFAULT_PORT));
@@ -914,7 +913,7 @@ public class TimeTracker extends Frame
         {
             final Point location = getWindowLocation();
 
-            final JDialog dialog = new JDialog(timeTrackerFrame, "Burning time", true);
+            final JDialog dialog = new JDialog(timeTracker, "Burning time", true);
             dialog.setBounds(location.x, location.y, 250, 200);
             dialog.setResizable(false);
 
@@ -1121,8 +1120,8 @@ public class TimeTracker extends Frame
 
             if (token == null || token.isEmpty())
             {
-                JOptionPane.showMessageDialog(timeTrackerFrame, String.format("Authorization token not found! Please create a token in youtrack and enter it in the " +
-                                                                              "%s with the key %s", PROPERTIES, TimeTrackerConstants.YOUTRACK_TOKEN));
+                JOptionPane.showMessageDialog(timeTracker, String.format("Authorization token not found! Please create a token in youtrack and enter it in the " +
+                                                                         "%s with the key %s", PROPERTIES, TimeTrackerConstants.YOUTRACK_TOKEN));
                 return false;
             }
 
@@ -1160,16 +1159,16 @@ public class TimeTracker extends Frame
      */
     private Point getWindowLocation()
     {
-        if(!this.timeTrackerFrame.isShowing())
+        if(!timeTracker.isShowing())
         {
             final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
             final int x = screenSize.width / 2 - 125;
             final int y = screenSize.height / 2 - 85;
             return new Point(x, y);
         }
-        final Point location = this.timeTrackerFrame.getLocationOnScreen();
-        final int x = location.x + (this.timeTrackerFrame.getWidth() / 2) - 125;
-        final int y = location.y + (this.timeTrackerFrame.getHeight() / 2) - 85;
+        final Point location = timeTracker.getLocationOnScreen();
+        final int x = location.x + (timeTracker.getWidth() / 2) - 125;
+        final int y = location.y + (timeTracker.getHeight() / 2) - 85;
         return new Point(x, y);
     }
 
@@ -1590,7 +1589,7 @@ public class TimeTracker extends Frame
             final Frame topMostFrame = getParentFrame(this.button);
             if(topMostFrame != null)
             {
-                frame.setLocation(topMostFrame.getX() - ((frame.getWidth() - topMostFrame.getWidth()) / 2), TimeTracker.this.timeTrackerFrame.getY());
+                frame.setLocation(topMostFrame.getX() - ((frame.getWidth() - topMostFrame.getWidth()) / 2), timeTracker.getY());
             }
         }
 
@@ -1803,10 +1802,10 @@ public class TimeTracker extends Frame
         storeProperties(properties);
     }
 
-    void showAddIssueDialog(final String text)
+    boolean showAddIssueDialog(final String text)
     {
         final AddAction action = new AddAction(Resource.getString(PropertyConstants.TEXT_OK));
-        action.handleConfirmationDialog(text, false);
+        return action.handleConfirmationDialog(text, false);
     }
 
     /**
@@ -1943,86 +1942,89 @@ public class TimeTracker extends Frame
          * Zeigt einen Dialog an, mit welchem ein Ticket in Bearbeitung genommen werden kann
          * @param text Text auf dem Button mit dem Issue
          */
-        private void handleConfirmationDialog(final String text, final boolean createButtonOnCancel)
+        private boolean handleConfirmationDialog(final String text, final boolean createButtonOnCancel)
         {
             MATCHER.reset(text);
-            if (MATCHER.matches())
+            if (!MATCHER.matches())
             {
-                final String ticket = MATCHER.group(1);
-                final JDialog dialog = getDialog(250);
+                return false;
+            }
 
-                final JPanel rows = new JPanel(new GridLayout(2, 1));
-                rows.setBorder(new EmptyBorder(10, 10, 10, 10));
-                dialog.add(rows);
+            final String ticket = MATCHER.group(1);
+            final JDialog dialog = getDialog(250);
 
-                rows.add(new JLabel(Resource.getString(PropertyConstants.TICKET_IN_PROGRESS, ticket)));
+            final JPanel rows = new JPanel(new GridLayout(2, 1));
+            rows.setBorder(new EmptyBorder(10, 10, 10, 10));
+            dialog.add(rows);
 
-                final JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
-                buttonPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-                rows.add(buttonPanel);
+            rows.add(new JLabel(Resource.getString(PropertyConstants.TICKET_IN_PROGRESS, ticket)));
 
-                final JButton cancelButton = new JButton(Resource.getString(PropertyConstants.TEXT_NO));
-                cancelButton.addActionListener((final ActionEvent event) -> {
-                    if (createButtonOnCancel)
-                    {
-                        try
-                        {
-                            createButton(text);
-                        }
-                        catch (final IOException ex)
-                        {
-                            Log.severe(ex.getMessage(), ex);
-                        }
-                    }
-                    dialog.dispose();
-                });
+            final JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
+            buttonPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+            rows.add(buttonPanel);
 
-                final JButton okButton = new JButton(Resource.getString(PropertyConstants.TEXT_YES));
-                okButton.addActionListener((final ActionEvent event) -> {
+            final JButton cancelButton = new JButton(Resource.getString(PropertyConstants.TEXT_NO));
+            cancelButton.addActionListener((final ActionEvent event) -> {
+                if (createButtonOnCancel)
+                {
                     try
                     {
-                        final String issueID = getIssueID(ticket);
-                        if (issueID == null)
-                        {
-                            Log.severe("Issue id of " + ticket + " not found");
-                            return;
-                        }
-
-                        final URIBuilder builder = getCommandURIBuilder();
-                        if(builder == null)
-                        {
-                            return;
-                        }
-
-                        final HttpPost request = new HttpPost(builder.build());
-                        request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMAND, TimeTrackerConstants.ISSUE_STATE,
-                                                                         TimeTrackerConstants.ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
-
-                        final HttpResponse response = executeRequest(request);
-                        if (response == null)
-                        {
-                            return;
-                        }
-                        logResponse(response);
-                        dialog.dispose();
-
-                        final JButton button = createButton(text);
-                        button.doClick();
+                        createButton(text);
                     }
-                    catch (final URISyntaxException | IOException ex)
+                    catch (final IOException ex)
                     {
                         Log.severe(ex.getMessage(), ex);
                     }
-                });
+                }
+                dialog.dispose();
+            });
 
-                buttonPanel.add(okButton);
-                buttonPanel.add(cancelButton);
+            final JButton okButton = new JButton(Resource.getString(PropertyConstants.TEXT_YES));
+            okButton.addActionListener((final ActionEvent event) -> {
+                try
+                {
+                    final String issueID = getIssueID(ticket);
+                    if (issueID == null)
+                    {
+                        Log.severe("Issue id of " + ticket + " not found");
+                        return;
+                    }
 
-                SwingUtilities.getRootPane(okButton).setDefaultButton(okButton);
+                    final URIBuilder builder = getCommandURIBuilder();
+                    if(builder == null)
+                    {
+                        return;
+                    }
 
-                dialog.pack();
-                dialog.setVisible(true);
-            }
+                    final HttpPost request = new HttpPost(builder.build());
+                    request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMAND, TimeTrackerConstants.ISSUE_STATE,
+                                                                     TimeTrackerConstants.ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
+
+                    final HttpResponse response = executeRequest(request);
+                    if (response == null)
+                    {
+                        return;
+                    }
+                    logResponse(response);
+                    dialog.dispose();
+
+                    final JButton button = createButton(text);
+                    button.doClick();
+                }
+                catch (final URISyntaxException | IOException ex)
+                {
+                    Log.severe(ex.getMessage(), ex);
+                }
+            });
+
+            buttonPanel.add(okButton);
+            buttonPanel.add(cancelButton);
+
+            SwingUtilities.getRootPane(okButton).setDefaultButton(okButton);
+
+            dialog.pack();
+            dialog.setVisible(true);
+            return true;
         }
     }
 
@@ -2123,7 +2125,7 @@ public class TimeTracker extends Frame
     private JDialog getDialog(final int width)
     {
         final Point location = getWindowLocation();
-        final JDialog dialog = new JDialog(timeTrackerFrame, Resource.getString(PropertyConstants.TEXT_CONFIRMATION), true);
+        final JDialog dialog = new JDialog(timeTracker, Resource.getString(PropertyConstants.TEXT_CONFIRMATION), true);
         dialog.setBounds(location.x, location.y, width, 200);
         dialog.setResizable(false);
         dialog.getContentPane().setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
@@ -2444,9 +2446,9 @@ public class TimeTracker extends Frame
         }
     }
 
-    private static void initClipboardObserver(final TimeTracker tracker)
+    private static void initClipboardObserver()
     {
-        final ClipboardMonitor monitor = ClipboardMonitor.getMonitor(tracker);
+        final ClipboardMonitor monitor = ClipboardMonitor.getMonitor();
         monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));
     }
 
@@ -2524,10 +2526,18 @@ public class TimeTracker extends Frame
     private static void callTimeTracker(final Properties properties)
     {
         SwingUtilities.invokeLater(() -> {
-            final TimeTracker timer = new TimeTracker(properties);
-            initClipboardObserver(timer);
-            timer.setVisible(true);
+            synchronized (syncObject)
+            {
+                timeTracker = new TimeTracker(properties);
+                timeTracker.setVisible(true);
+                initClipboardObserver();
+            }
         });
+    }
+
+    public static TimeTracker getTimeTracker()
+    {
+        return timeTracker;
     }
 
     /**

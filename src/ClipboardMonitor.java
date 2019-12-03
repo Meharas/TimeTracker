@@ -8,11 +8,9 @@ import java.util.Observable;
 public class ClipboardMonitor extends Observable implements ClipboardOwner
 {
     private static ClipboardMonitor monitor;
-    private final TimeTracker tracker;
 
-    private ClipboardMonitor(final TimeTracker tracker)
+    private ClipboardMonitor()
     {
-        this.tracker = tracker;
         gainOwnership();
     }
 
@@ -26,8 +24,10 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner
             if(transferData instanceof String && !((String) transferData).isEmpty())
             {
                 Log.info("String content detected");
-                this.tracker.showAddIssueDialog((String) transferData);
-                flushClipboard();
+                if(TimeTracker.getTimeTracker().showAddIssueDialog((String) transferData))
+                {
+                    flushClipboard();
+                }
             }
             else
             {
@@ -70,11 +70,11 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner
         throw new CloneNotSupportedException("There can be only one instance of this monitor!");
     }
 
-    static ClipboardMonitor getMonitor(final TimeTracker tracker)
+    static ClipboardMonitor getMonitor()
     {
         if (monitor == null)
         {
-            monitor = new ClipboardMonitor(tracker);
+            monitor = new ClipboardMonitor();
         }
         return monitor;
     }
