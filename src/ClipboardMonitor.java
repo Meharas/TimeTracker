@@ -8,6 +8,7 @@ import java.util.Observable;
 public class ClipboardMonitor extends Observable implements ClipboardOwner
 {
     private static ClipboardMonitor monitor;
+    private final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
     private ClipboardMonitor()
     {
@@ -16,10 +17,9 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner
 
     private void gainOwnership()
     {
-        final Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
         try
         {
-            final Transferable content = clip.getContents(null);
+            final Transferable content = this.clipboard.getContents(null);
             final Object transferData = content.getTransferData(DataFlavor.stringFlavor);
             if(transferData instanceof String && !((String) transferData).isEmpty())
             {
@@ -31,7 +31,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner
             }
             else
             {
-                clip.setContents(content, this);
+                this.clipboard.setContents(content, this);
             }
             setChanged();
             notifyObservers(content);
@@ -61,7 +61,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner
 
     private void flushClipboard()
     {
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(""), this);
+        this.clipboard.setContents(new StringSelection(""), this);
     }
 
     @Override
