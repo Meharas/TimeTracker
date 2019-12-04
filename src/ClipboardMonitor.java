@@ -15,7 +15,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
     {
     }
 
-    private void gainOwnership(Transferable content)
+    private void gainOwnership(final Transferable content)
     {
         Log.info("gain ownership...");
         try
@@ -24,11 +24,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
             if(transferData instanceof String && !((String) transferData).isEmpty())
             {
                 Log.info("String content detected");
-                if(TimeTracker.getTimeTracker().showAddIssueDialog((String) transferData))
-                {
-                    Log.info((String) transferData);
-                    content = new StringSelection("");
-                }
+                TimeTracker.getTimeTracker().showAddIssueDialog((String) transferData);
             }
             clipboard.setContents(content, this);
         }

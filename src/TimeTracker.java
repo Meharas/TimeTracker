@@ -1654,8 +1654,7 @@ public class TimeTracker extends Frame
      */
     private String getIssueSummary(String text) throws URISyntaxException, IOException
     {
-        MATCHER.reset(text);
-        if (!MATCHER.matches())
+        if (!matches(text))
         {
             return null;
         }
@@ -1678,8 +1677,7 @@ public class TimeTracker extends Frame
      */
     private String getIssueState(final String text) throws URISyntaxException, IOException
     {
-        MATCHER.reset(text);
-        if (!MATCHER.matches())
+        if (!matches(text))
         {
             return null;
         }
@@ -1802,10 +1800,20 @@ public class TimeTracker extends Frame
         storeProperties(properties);
     }
 
-    boolean showAddIssueDialog(final String text)
+    void showAddIssueDialog(final String text)
     {
+        if(!matches(text))
+        {
+            return;
+        }
         final AddAction action = new AddAction(Resource.getString(PropertyConstants.TEXT_OK));
-        return action.handleConfirmationDialog(text, false, true);
+        action.handleConfirmationDialog(text, false, true);
+    }
+
+    private boolean matches(final String text)
+    {
+        MATCHER.reset(text);
+        return MATCHER.matches();
     }
 
     /**
@@ -1951,13 +1959,14 @@ public class TimeTracker extends Frame
          * Zeigt einen Dialog an, mit welchem ein Ticket in Bearbeitung genommen werden kann
          * @param text Text auf dem Button mit dem Issue
          */
-        private boolean handleConfirmationDialog(final String text, final boolean createButtonOnCancel, final boolean getIssueSummary)
+        private void handleConfirmationDialog(final String text, final boolean createButtonOnCancel, final boolean getIssueSummary)
         {
-            MATCHER.reset(text);
-            if (!MATCHER.matches())
+            if (!matches(text))
             {
-                return false;
+                return;
             }
+
+            Log.info(text);
 
             final String ticket = MATCHER.group(1);
             final JDialog dialog = getDialog(250);
@@ -2033,7 +2042,6 @@ public class TimeTracker extends Frame
 
             dialog.pack();
             dialog.setVisible(true);
-            return true;
         }
     }
 
