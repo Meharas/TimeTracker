@@ -464,7 +464,7 @@ public class TimeTracker extends Frame
                 }
 
                 @Override
-                protected JButton createButton(final String text)
+                protected JButton createButton(final String text, final boolean getSummary)
                 {
                     return button;
                 }
@@ -487,7 +487,7 @@ public class TimeTracker extends Frame
         final JMenuItem redoItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_REDO));
         redoItem.setBorder(BORDER);
         setButtonIcon(redoItem, Icon.STOP);
-        redoItem.addActionListener(el -> {
+        redoItem.addActionListener((final ActionEvent event) -> {
             final Action a = button.getAction();
             ((TimerAction) a).reset();
         });
@@ -1805,7 +1805,7 @@ public class TimeTracker extends Frame
     boolean showAddIssueDialog(final String text)
     {
         final AddAction action = new AddAction(Resource.getString(PropertyConstants.TEXT_OK));
-        return action.handleConfirmationDialog(text, false);
+        return action.handleConfirmationDialog(text, false, true);
     }
 
     /**
@@ -1842,7 +1842,7 @@ public class TimeTracker extends Frame
             {
                 return;
             }
-            handleConfirmationDialog(text, true);
+            handleConfirmationDialog(text, true, false);
         }
 
         protected String createButtonText()
@@ -1850,8 +1850,17 @@ public class TimeTracker extends Frame
             return getTicketSummary(this.textInput);
         }
 
-        protected JButton createButton(final String text) throws IOException
+        protected JButton createButton(String text, final boolean getSummary) throws IOException
         {
+            if(getSummary)
+            {
+                text = getTicketSummary(text);
+                if(text == null)
+                {
+                    return null;
+                }
+            }
+
             final File file = this.icon == null ? null : this.icon.getSelectedFile();
             final String filePath = file == null ? TimeTrackerConstants.STRING_EMPTY : file.getPath();
             final int missingNumber = getMissingNumber();
@@ -1942,7 +1951,7 @@ public class TimeTracker extends Frame
          * Zeigt einen Dialog an, mit welchem ein Ticket in Bearbeitung genommen werden kann
          * @param text Text auf dem Button mit dem Issue
          */
-        private boolean handleConfirmationDialog(final String text, final boolean createButtonOnCancel)
+        private boolean handleConfirmationDialog(final String text, final boolean createButtonOnCancel, final boolean getIssueSummary)
         {
             MATCHER.reset(text);
             if (!MATCHER.matches())
@@ -1969,7 +1978,7 @@ public class TimeTracker extends Frame
                 {
                     try
                     {
-                        createButton(text);
+                        createButton(text, getIssueSummary);
                     }
                     catch (final IOException ex)
                     {
@@ -2008,7 +2017,7 @@ public class TimeTracker extends Frame
                     logResponse(response);
                     dialog.dispose();
 
-                    final JButton button = createButton(text);
+                    final JButton button = createButton(text, getIssueSummary);
                     button.doClick();
                 }
                 catch (final URISyntaxException | IOException ex)
