@@ -1,67 +1,61 @@
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.util.Observable;
+import java.util.Scanner;
 
 /**
  * Überwacht das Clipboard auf Youtrack-Issues
  */
-public class ClipboardMonitor extends Observable implements ClipboardOwner
+public class ClipboardMonitor extends Observable implements ClipboardOwner, Runnable
 {
     private static ClipboardMonitor monitor;
-    private final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
     private ClipboardMonitor()
     {
-        gainOwnership();
     }
 
-    private void gainOwnership()
+    private void gainOwnership(Transferable content)
     {
+        Log.info("gain ownership...");
         try
         {
-            final Transferable content = this.clipboard.getContents(null);
             final Object transferData = content.getTransferData(DataFlavor.stringFlavor);
             if(transferData instanceof String && !((String) transferData).isEmpty())
             {
                 Log.info("String content detected");
                 if(TimeTracker.getTimeTracker().showAddIssueDialog((String) transferData))
                 {
-                    flushClipboard();
+                    Log.info((String) transferData);
+                    content = new StringSelection("");
                 }
             }
-            else
-            {
-                this.clipboard.setContents(content, this);
-            }
-            setChanged();
-            notifyObservers(content);
+            clipboard.setContents(content, this);
         }
         catch (final Exception e)
         {
             Log.severe(e.getMessage(), e);
         }
     }
+    private void setBuffer(final String buffer)
+    {
+        gainOwnership(new StringSelection(buffer));
+    }
 
     @Override
     public void lostOwnership(final Clipboard clipboard, final Transferable contents)
     {
         Log.info("Ownership lost ...");
-        new Thread(() -> {
-            try
-            {
-                Thread.sleep(200);
-                gainOwnership();
-            }
-            catch (final Exception e)
-            {
-                Log.severe(e.getMessage(), e);
-            }
-        }).start();
-    }
 
-    private void flushClipboard()
-    {
-        this.clipboard.setContents(new StringSelection(""), this);
+        try
+        {
+            Thread.sleep(50);
+        }
+        catch (final Exception e)
+        {
+            Log.severe(e.getMessage(), e);
+        }
+        gainOwnership(clipboard.getContents(this));
     }
 
     @Override
@@ -75,7 +69,25 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner
         if (monitor == null)
         {
             monitor = new ClipboardMonitor();
+            EventQueue.invokeLater(monitor);
+
+            final Scanner scanner = new Scanner(System.in);
+            while (scanner.hasNextLine())
+            {
+                final String buffer = scanner.nextLine();
+                if (!buffer.trim().isEmpty())
+                {
+                    monitor.setBuffer(buffer);
+                }
+            }
         }
         return monitor;
+    }
+
+    @Override
+    public void run()
+    {
+        final Transferable contents = clipboard.getContents(this);
+        gainOwnership(contents);
     }
 }
