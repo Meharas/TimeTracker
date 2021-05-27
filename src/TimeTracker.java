@@ -13,6 +13,7 @@ import org.apache.http.conn.SchemePortResolver;
 import org.apache.http.conn.UnsupportedSchemeException;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -21,6 +22,9 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -37,6 +41,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1339,7 +1346,7 @@ public class TimeTracker extends Frame
         return this.client.execute(request);
     }
 
-    private void initHttpClient()
+    private void initHttpClient() throws IOException
     {
         if(this.client != null)
         {
@@ -1349,14 +1356,7 @@ public class TimeTracker extends Frame
         final SchemePortResolver portResolver = new DefaultSchemePortResolver();
         try
         {
-            if(this.port == -1)
-            {
-                portResolver.resolve(new HttpHost(this.host));
-            }
-            else
-            {
-                portResolver.resolve(new HttpHost(this.host, this.port));
-            }
+            portResolver.resolve(new HttpHost(this.host, this.port, this.scheme));
         }
         catch (final UnsupportedSchemeException e)
         {
@@ -1365,7 +1365,15 @@ public class TimeTracker extends Frame
         }
 
         final RegistryBuilder<ConnectionSocketFactory> registryBuilder = RegistryBuilder.create();
-        registryBuilder.register(this.scheme, PlainConnectionSocketFactory.getSocketFactory());
+        if("https".equalsIgnoreCase(this.scheme))
+        {
+            final SSLContext sslContext = createSSLContext();
+            registryBuilder.register(this.scheme, new SSLConnectionSocketFactory(sslContext));
+        }
+        else
+        {
+            registryBuilder.register(this.scheme, PlainConnectionSocketFactory.getSocketFactory());
+        }
 
         final RequestConfig requestConfig = RequestConfig.custom()
                 .setExpectContinueEnabled(true)
@@ -1391,6 +1399,60 @@ public class TimeTracker extends Frame
                                                  new BasicHeader(HttpHeaders.CACHE_CONTROL, TimeTrackerConstants.NO_CACHE)));
         this.client = httpClient.build();
     }
+
+    private SSLContext createSSLContext() throws IOException
+    {
+        final String certFileName = Optional.ofNullable(getProperties()).map(props -> props.getProperty(TimeTrackerConstants.YOUTRACK_CERT)).orElse(null);
+        if(certFileName == null || certFileName.isEmpty())
+        {
+            final String msg = String.format("Value of property %s missing.", TimeTrackerConstants.YOUTRACK_CERT);
+            JOptionPane.showMessageDialog(this, msg);
+            throw new IOException(msg);
+        }
+
+        final File certificate = new File(TimeTracker.home + "security\\" + certFileName);
+        if(!certificate.exists())
+        {
+            final String msg = "Certificate file missing.";
+            JOptionPane.showMessageDialog(this, msg);
+            throw new IOException(msg);
+        }
+
+        final SSLContext sslContext;
+        try
+        {
+            final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+            final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            trustStore.load(null);
+
+            try(final FileInputStream inputStream = new FileInputStream(certificate))
+            {
+                final X509Certificate cert = (X509Certificate) certificateFactory.generateCertificate(inputStream);
+                final String alias = cert.getSubjectX500Principal().getName();
+                trustStore.setCertificateEntry(alias, cert);
+            }
+
+            final TrustManagerFactory tmf = TrustManagerFactory.getInstance("X509");
+            tmf.init(trustStore);
+
+            final TrustManager[] trustManagers = tmf.getTrustManagers();
+            sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustManagers, null);
+        }
+        catch (final IOException e)
+        {
+            throw e;
+        }
+        catch (final Exception e)
+        {
+            final String msg = e.getClass().getSimpleName() + ": " + Optional.ofNullable(e.getMessage()).orElse(e.getCause().getMessage());
+            System.err.println(msg);
+            JOptionPane.showMessageDialog(this, msg);
+            throw new IOException(msg, e.getCause());
+        }
+        return sslContext;
+    }
+
 
     DeleteButtonAction createDeleteButtonAction(final JButton button, final String key)
     {

@@ -70,7 +70,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
             monitor = new ClipboardMonitor();
             EventQueue.invokeLater(monitor);
 
-            final Scanner scanner = new Scanner(System.in);
+            /*final Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine())
             {
                 final String buffer = scanner.nextLine();
@@ -78,7 +78,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
                 {
                     monitor.setBuffer(buffer);
                 }
-            }
+            }*/
         }
         return monitor;
     }

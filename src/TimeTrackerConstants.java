@@ -42,6 +42,7 @@ final class TimeTrackerConstants
     static final String YOUTRACK_HOST = "youtrack.host";
     static final String YOUTRACK_USERID = "youtrack.userid";
     static final String YOUTRACK_TOKEN = "youtrack.token";
+    static final String YOUTRACK_CERT = "youtrack.cert";
     static final String YOUTRACK_TOKEN_PREFIX = "perm:";
 
     static final String DEFAULT_HOST = "youtrack";
