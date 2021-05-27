@@ -65,7 +65,7 @@ public class TimeTracker extends Frame
     private static final ListCellRenderer RENDERER = new TypeRenderer();
 
     private int line;
-    private JPanel panel;
+    private final JPanel panel;
     private final String token;
     private String userId;
     private final String host;
@@ -73,7 +73,7 @@ public class TimeTracker extends Frame
     private final int port;
     private transient HttpClient client;
 
-    private TimeTracker(final Properties properties)
+    private TimeTracker(final Properties properties) throws Exception
     {
         super("Time Tracker");
         setMinimumSize(new Dimension(575, 0));
@@ -91,7 +91,9 @@ public class TimeTracker extends Frame
         this.panel = new JPanel(new GridLayout(0, 1));
         this.scheme = properties.getProperty(TimeTrackerConstants.YOUTRACK_SCHEME, TimeTrackerConstants.DEFAULT_SCHEME);
         this.host = properties.getProperty(TimeTrackerConstants.YOUTRACK_HOST, TimeTrackerConstants.DEFAULT_HOST);
-        this.port = Integer.parseInt(properties.getProperty(TimeTrackerConstants.YOUTRACK_PORT, TimeTrackerConstants.DEFAULT_PORT));
+
+        final String p = properties.getProperty(TimeTrackerConstants.YOUTRACK_PORT);
+        this.port = p == null || p.isEmpty() ? -1 : Integer.parseInt(p);
         this.token = properties.getProperty(TimeTrackerConstants.YOUTRACK_TOKEN);
 
         try
@@ -143,8 +145,10 @@ public class TimeTracker extends Frame
         }
         catch (final Exception e)
         {
-            Log.severe(e.getMessage(), e);
-            JOptionPane.showMessageDialog(this, e.getMessage());
+            final String msg = Optional.ofNullable(e.getMessage()).orElse(e.getCause().getMessage());
+            Log.severe(msg, e);
+            JOptionPane.showMessageDialog(this, msg);
+            throw e;
         }
     }
 
@@ -338,7 +342,7 @@ public class TimeTracker extends Frame
      */
     private URIBuilder getUserURIBuilder()
     {
-        return getURIBuilder(ServicePath.USER, null);
+        return getURIBuilder(ServicePath.USER, null, new BasicNameValuePair("fields", "id"));
     }
 
     private JButton addButton(final String key, final String label, final String icon)
@@ -1189,7 +1193,11 @@ public class TimeTracker extends Frame
 
         builder.setScheme(this.scheme);
         builder.setHost(this.host);
-        builder.setPort(this.port);
+
+        if(this.port != -1)
+        {
+            builder.setPort(this.port);
+        }
 
         if (ticket == null)
         {
@@ -1341,7 +1349,14 @@ public class TimeTracker extends Frame
         final SchemePortResolver portResolver = new DefaultSchemePortResolver();
         try
         {
-            portResolver.resolve(new HttpHost(this.host, this.port));
+            if(this.port == -1)
+            {
+                portResolver.resolve(new HttpHost(this.host));
+            }
+            else
+            {
+                portResolver.resolve(new HttpHost(this.host, this.port));
+            }
         }
         catch (final UnsupportedSchemeException e)
         {
@@ -2545,9 +2560,17 @@ public class TimeTracker extends Frame
         SwingUtilities.invokeLater(() -> {
             synchronized (syncObject)
             {
-                timeTracker = new TimeTracker(properties);
-                timeTracker.setVisible(true);
-                initClipboardObserver();
+                try
+                {
+                    timeTracker = new TimeTracker(properties);
+                    timeTracker.setVisible(true);
+                    initClipboardObserver();
+                }
+                catch (final Exception e)
+                {
+                    System.err.println(Optional.ofNullable(e.getMessage()).orElse(e.getCause().getMessage()));
+                    System.exit(0);
+                }
             }
         });
     }
