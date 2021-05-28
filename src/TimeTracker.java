@@ -909,8 +909,8 @@ public class TimeTracker extends Frame
     {
         private static final long serialVersionUID = -2092965435624779543L;
         final JButton button;
-        private JLabel label;
-        private String key;
+        private final JLabel label;
+        private final String key;
 
         BurnButtonAction(final JButton button, final JLabel label, final String key)
         {
@@ -960,7 +960,7 @@ public class TimeTracker extends Frame
             rows.add(new JLabel(Resource.getString(PropertyConstants.LABEL_TIME)));
             rows.add(timeField);
 
-            final JComboBox typeField = new JComboBox();
+            final JComboBox<String[]> typeField = new JComboBox<>();
             timeField.setBackground(MANDATORY);
 
             final String type = loadSetting(this.key, TimeTrackerConstants.SUFFIX_TYPE);
@@ -974,7 +974,6 @@ public class TimeTracker extends Frame
 
             for (final String[] item : items)
             {
-                //noinspection unchecked
                 typeField.addItem(item);
                 if (item[0].equalsIgnoreCase(type))
                 {
@@ -1094,7 +1093,7 @@ public class TimeTracker extends Frame
          * @param textArea Feld mit dem Kommentar
          * @return <code>true</code>, wenn erfolgreich, sonst <code>false</code>
          */
-        private boolean burnTime(final JTextField ticketField, final JTextField timeField, final JComboBox typeField, final JTextArea textArea)
+        private boolean burnTime(final JTextField ticketField, final JTextField timeField, final JComboBox<String[]> typeField, final JTextArea textArea)
         {
             final String ticket = ticketField.getText();
             final String spentTime = timeField.getText();
@@ -1786,9 +1785,9 @@ public class TimeTracker extends Frame
     private class EditAction extends TimerAction
     {
         private static final long serialVersionUID = -7024916220743619039L;
-        private JButton issueButton;
-        private JTextField textInput;
-        private JFileChooser icon;
+        private final JButton issueButton;
+        private final JTextField textInput;
+        private final JFileChooser icon;
 
         EditAction(final JButton okButton, final JButton issueButton, final JTextField textInput, final JFileChooser icon)
         {
@@ -2250,7 +2249,7 @@ public class TimeTracker extends Frame
             response.getEntity().writeTo(outputStream);
             outputStream.flush();
 
-            final String msg = new String(outputStream.toByteArray());
+            final String msg = outputStream.toString();
             if (status == HttpStatus.SC_OK)
             {
                 Log.info(msg);
