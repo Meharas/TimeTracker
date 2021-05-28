@@ -221,7 +221,7 @@ public class TimeTracker extends Frame
         {
             final MenuItem aboutItem = new MenuItem("About");
             final int year = LocalDateTime.now().getYear();
-            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this, "Version 0.0.1 Annaberg-Buchholz\n\nby Andreas Beyer\n© " + year));
+            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this, "Version 0.0.1 Leipzig\n\nby Andreas Beyer\n© " + year));
 
             final MenuItem openItem = new MenuItem(Resource.getString(PropertyConstants.LABEL_OPEN));
             openItem.setEnabled(false);
