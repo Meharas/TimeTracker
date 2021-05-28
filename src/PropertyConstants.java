@@ -15,6 +15,7 @@ final class PropertyConstants
     static final String TEXT_NO = "text.no";
     static final String TEXT_YES = "text.yes";
     static final String TEXT_CONFIRMATION = "text.confirmation";
+    static final String TEXT_RESET = "text.reset";
 
     static final String MENU_ITEM_COPY = "menu.item.copy";
     static final String MENU_ITEM_EDIT = "menu.item.edit";

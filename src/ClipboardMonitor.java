@@ -1,15 +1,16 @@
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.util.Observable;
-import java.util.Scanner;
 
 /**
  * Überwacht das Clipboard auf Youtrack-Issues
  */
 public class ClipboardMonitor extends Observable implements ClipboardOwner, Runnable
 {
-    private static ClipboardMonitor monitor;
+    private static final ClipboardMonitor monitor = new ClipboardMonitor();
     private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+
+    static boolean disabled = false;
 
     private ClipboardMonitor()
     {
@@ -20,7 +21,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
         Log.info("gain ownership...");
         try
         {
-            if (content.isDataFlavorSupported(DataFlavor.stringFlavor))
+            if (!ClipboardMonitor.disabled && content != null && content.isDataFlavorSupported(DataFlavor.stringFlavor))
             {
                 final Object transferData = content.getTransferData(DataFlavor.stringFlavor);
                 if(transferData instanceof String && !((String) transferData).isEmpty())
@@ -29,6 +30,8 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
                     TimeTracker.getTimeTracker().showAddIssueDialog((String) transferData);
                 }
             }
+
+            ClipboardMonitor.disabled = false;
             clipboard.setContents(content, this);
         }
         catch (final Exception e)
@@ -65,28 +68,23 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
 
     static ClipboardMonitor getMonitor()
     {
-        if (monitor == null)
-        {
-            monitor = new ClipboardMonitor();
-            EventQueue.invokeLater(monitor);
+        EventQueue.invokeLater(monitor);
 
-            /*final Scanner scanner = new Scanner(System.in);
-            while (scanner.hasNextLine())
+        /*final Scanner scanner = new Scanner(System.in);
+        while (scanner.hasNextLine())
+        {
+            final String buffer = scanner.nextLine();
+            if (!buffer.trim().isEmpty())
             {
-                final String buffer = scanner.nextLine();
-                if (!buffer.trim().isEmpty())
-                {
-                    monitor.setBuffer(buffer);
-                }
-            }*/
-        }
+                monitor.setBuffer(buffer);
+            }
+        }*/
         return monitor;
     }
 
     @Override
     public void run()
     {
-        final Transferable contents = clipboard.getContents(this);
-        gainOwnership(contents);
+        setBuffer("");
     }
 }

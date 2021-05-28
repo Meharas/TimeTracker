@@ -38,6 +38,7 @@ public class ContextMenu
         copyItem.addActionListener((final ActionEvent e) -> {
             final StringSelection stringSelection = new StringSelection(parent.getText());
             final Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+            ClipboardMonitor.disabled = true;
             cb.setContents(stringSelection, stringSelection);
         });
 

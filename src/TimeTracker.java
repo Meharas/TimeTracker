@@ -925,7 +925,7 @@ public class TimeTracker extends Frame
             final Point location = getWindowLocation();
 
             final JDialog dialog = new JDialog(timeTracker, "Burning time", true);
-            dialog.setBounds(location.x, location.y, 250, 200);
+            dialog.setBounds(location.x, location.y, 400, 200);
             dialog.setResizable(false);
 
             addEscapeEvent(dialog);
@@ -1022,7 +1022,7 @@ public class TimeTracker extends Frame
             });
 
             final JPanel okBtnPanel = new JPanel();
-            okBtnPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+            okBtnPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
             okBtnPanel.add(ok);
             dialog.add(okBtnPanel);
             dialog.setVisible(true);
@@ -1555,7 +1555,53 @@ public class TimeTracker extends Frame
         @Override
         public void actionPerformed(final ActionEvent e)
         {
-            resetTimers();
+
+            final JFrame frame = new JFrame(Resource.getString(PropertyConstants.TEXT_CONFIRMATION));
+            frame.setAlwaysOnTop(true);
+            frame.setLocation(100, 100);
+            frame.setResizable(false);
+            frame.setPreferredSize(new Dimension(350, 100));
+
+            addEscapeEvent(frame);
+
+            final JPanel addButtonPanel = new JPanel();
+            addButtonPanel.setLayout(new BoxLayout(addButtonPanel, BoxLayout.Y_AXIS));
+            addButtonPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+            frame.add(addButtonPanel);
+
+            final JPanel labelPanel = new JPanel();
+            labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
+            labelPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
+            addButtonPanel.add(labelPanel);
+
+            final JButton ok = new JButton(Resource.getString(PropertyConstants.TEXT_YES));
+            ok.addActionListener(e1 -> {
+                resetTimers();
+                frame.dispose();
+            });
+
+            final JButton cancel = new JButton(Resource.getString(PropertyConstants.TEXT_NO));
+            cancel.addActionListener(e1 -> frame.dispose());
+
+            final JPanel btnPanel = new JPanel();
+            btnPanel.setBorder(new EmptyBorder(10, 10, 20, 10));
+            btnPanel.add(ok);
+            btnPanel.add(cancel);
+            addButtonPanel.add(btnPanel);
+
+            final JLabel label = new JLabel(Resource.getString(PropertyConstants.TEXT_RESET));
+            label.setPreferredSize(new Dimension(200, 25));
+            labelPanel.add(label);
+
+            frame.pack();
+            frame.setVisible(true);
+            frame.setAlwaysOnTop(true);
+
+            final Frame topMostFrame = getParentFrame(this.button);
+            if(topMostFrame != null)
+            {
+                frame.setLocation(topMostFrame.getX() - ((frame.getWidth() - topMostFrame.getWidth()) / 2), timeTracker.getY());
+            }
         }
     }
 
@@ -1883,7 +1929,7 @@ public class TimeTracker extends Frame
             return;
         }
         final AddAction action = new AddAction(Resource.getString(PropertyConstants.TEXT_OK));
-        action.handleConfirmationDialog(text, false, true);
+        action.handleConfirmationDialog(text, true, true);
     }
 
     private boolean matches(final String text)
