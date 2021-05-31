@@ -1,17 +1,15 @@
+package timetracker;
+
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
  * Zugriff auf das ResourceBundle
- *
- * @author $Author: beyera $ &copy; forcont business technology gmbh 2001-2019
- * @version $Revision: 1.0 $ $Date: 08.02.2019 10:55 $
- * @since 7.0
  */
 public final class Resource
 {
-    private static final ResourceBundle bundle = ResourceBundle.getBundle("TimeTracker", new Locale((String) System.getProperties().get("user.language")));
+    private static final ResourceBundle bundle = ResourceBundle.getBundle("timetracker.TimeTracker", new Locale((String) System.getProperties().get("user.language")));
 
     private Resource()
     {
@@ -33,7 +31,7 @@ public final class Resource
      * @param args Argumente
      * @return String aus dem ResourceBundle
      */
-    static String getString(final String key, final String... args)
+    public static String getString(final String key, final String... args)
     {
         final String value = bundle.getString(key);
         if (args == null)

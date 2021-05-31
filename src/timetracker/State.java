@@ -1,12 +1,10 @@
+package timetracker;
+
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Abbildung der Zustände
- *
- * @author $Author: beyera $ &copy; forcont business technology gmbh 2001-2019
- * @version $Revision: 1.0 $ $Date: 04.02.2019 13:00 $
- * @since 7.0
  */
 public enum State
 {

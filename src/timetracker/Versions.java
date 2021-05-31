@@ -1,3 +1,7 @@
+package timetracker;
+
+import timetracker.log.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -6,12 +10,8 @@ import java.util.TreeMap;
 
 /**
  * Liefert die Versionen
- *
- * @author $Author: beyera $ &copy; forcont business technology gmbh 2001-2019
- * @version $Revision: 1.0 $ $Date: 04.02.2019 10:02 $
- * @since 7.0
  */
-final class Versions
+public final class Versions
 {
     private Versions()
     {
@@ -22,7 +22,7 @@ final class Versions
     private static final Map<String, String> VERSION_MAP = new TreeMap<>();
     static
     {
-        try(final InputStream versions = TimeTracker.class.getResourceAsStream("Versions.properties"))
+        try(final InputStream versions = TimeTracker.class.getResourceAsStream("timetracker/Versions.properties"))
         {
             final Properties versionProperties = new Properties();
             versionProperties.load(versions);
@@ -41,18 +41,18 @@ final class Versions
                 }
             }
         }
-        catch (IOException ex)
+        catch (final IOException ex)
         {
             Log.severe(ex.getMessage(), ex);
         }
     }
 
-    static Map<String, String> get()
+    public static Map<String, String> get()
     {
         return VERSION_MAP;
     }
 
-    static String getSelectedVersion()
+    public static String getSelectedVersion()
     {
         return selectedVersion;
     }

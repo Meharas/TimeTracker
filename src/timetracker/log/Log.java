@@ -1,4 +1,7 @@
-package log;
+package timetracker.log;
+
+import timetracker.TimeTracker;
+import timetracker.TimeTrackerConstants;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,7 +42,7 @@ public class Log
 
             super.setLevel(Level.INFO);
 
-            final File logFile = new File(TimeTracker.home + TimeTrackerConstants.LOGFILE_NAME);
+            final File logFile = new File(TimeTracker.getHome() + TimeTrackerConstants.LOGFILE_NAME);
             System.out.println("Log file: " + logFile.getAbsolutePath());
             if (!logFile.exists())
             {
@@ -55,7 +58,7 @@ public class Log
                 }
             }
 
-            try (final InputStream inputStream = new FileInputStream(new File(TimeTracker.home + TimeTrackerConstants.DEFAULT_PROPERTIES)))
+            try (final InputStream inputStream = new FileInputStream(new File(TimeTracker.getHome() + TimeTrackerConstants.DEFAULT_PROPERTIES)))
             {
                 final LogManager manager = LogManager.getLogManager();
                 manager.readConfiguration(inputStream);
@@ -71,92 +74,92 @@ public class Log
         }
     }
 
-    static void log(final Level level, final String msg)
+    public static void log(final Level level, final String msg)
     {
         logger.log(level, msg);
     }
 
-    static void log(final Level level, final String msg, final Object param)
+    public static void log(final Level level, final String msg, final Object param)
     {
         logger.log(level, msg, param);
     }
 
-    static void log(final Level level, final String msg, final Object[] params)
+    public static void log(final Level level, final String msg, final Object[] params)
     {
         logger.log(level, msg, params);
     }
 
-    static void log(final Level level, final String msg, final Throwable thrown)
+    public static void log(final Level level, final String msg, final Throwable thrown)
     {
         logger.log(level, msg, thrown);
     }
 
-    static void severe(final String msg)
+    public static void severe(final String msg)
     {
         logger.severe(msg);
     }
 
-    static void severe(final String msg, final Throwable thrown)
+    public static void severe(final String msg, final Throwable thrown)
     {
         logger.log(Level.SEVERE, msg, thrown);
     }
 
-    static void severe(final String msg, final Object param)
+    public static void severe(final String msg, final Object param)
     {
         logger.log(Level.SEVERE, msg, param);
     }
 
-    static void warning(final String msg)
+    public static void warning(final String msg)
     {
         logger.warning(msg);
     }
 
-    static void warning(final String msg, final Object param)
+    public static void warning(final String msg, final Object param)
     {
         logger.log(Level.WARNING, msg, param);
     }
 
-    static void warning(final String msg, final Object[] params)
+    public static void warning(final String msg, final Object[] params)
     {
         logger.log(Level.WARNING, msg, params);
     }
 
-    static void info(final String msg)
+    public static void info(final String msg)
     {
         logger.info(msg);
     }
 
-    static void info(final String msg, final Object param)
+    public static void info(final String msg, final Object param)
     {
         logger.log(Level.INFO, msg, param);
     }
 
-    static void info(final String msg, final Object[] params)
+    public static void info(final String msg, final Object[] params)
     {
         logger.log(Level.INFO, msg, params);
     }
 
-    static void fine(final String msg)
+    public static void fine(final String msg)
     {
         logger.fine(msg);
     }
 
-    static void fine(final String msg, final Object param)
+    public static void fine(final String msg, final Object param)
     {
         logger.log(Level.FINE, msg, param);
     }
 
-    static void finer(final String msg)
+    public static void finer(final String msg)
     {
         logger.finer(msg);
     }
 
-    static void finest(final String msg)
+    public static void finest(final String msg)
     {
         logger.finest(msg);
     }
 
-    static void setLevel(final Level newLevel)
+    public static void setLevel(final Level newLevel)
     {
         logger.setLevel(newLevel);
     }

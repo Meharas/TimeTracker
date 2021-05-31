@@ -1,4 +1,4 @@
-package log;
+package timetracker.log;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
