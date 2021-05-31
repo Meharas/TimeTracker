@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * L?scht eine komplette Zeile.
+ * Löscht eine komplette Zeile.
  */
 public class DeleteButtonAction extends BaseAction
 {

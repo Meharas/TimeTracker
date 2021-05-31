@@ -44,7 +44,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 
 /**
- * Http-Client f?r die Anfragen an Youtrack
+ * Http-Client für die Anfragen an Youtrack
  */
 public class Client
 {
@@ -99,7 +99,7 @@ public class Client
     }
 
     /**
-     * Liefert die interne ID eines Issues. F?r manche Operationen, z.b. Commands, kann nicht mit dem Issue gearbeitet werden
+     * Liefert die interne ID eines Issues. Für manche Operationen, z.b. Commands, kann nicht mit dem Issue gearbeitet werden
      * @param ticket Issue
      * @return Interne ID des Issues
      * @throws URISyntaxException Wenn das Parsen als URI-Referenz schief ging
@@ -137,7 +137,7 @@ public class Client
     /**
      * Liefert den Wert eines "id"-Feldes aus dem Response
      * @param response Response
-     * @param saveWithKey Schl?ssel, unter welchem die ermittelte ID abgespeichert werden soll
+     * @param saveWithKey Schlüssel, unter welchem die ermittelte ID abgespeichert werden soll
      * @return ID als String
      * @throws IOException I/O Error beim Schreiben in den Outputstream
      */
@@ -231,7 +231,7 @@ public class Client
     /**
      * Liefert einen Wert aus dem Json
      * @param response Response
-     * @param key Schl?ssel im Json, dessen Wert ermittelt werden soll
+     * @param key Schlüssel im Json, dessen Wert ermittelt werden soll
      * @return Wert aus dem Json
      * @throws IOException I/O Error
      */
@@ -267,11 +267,11 @@ public class Client
     }
 
     /**
-     * Liefert den Wert zum ?bergebenen Schl?ssel
+     * Liefert den Wert zum übergebenen Schlüssel
      * @param parser JsonParser
-     * @param key Schl?ssel
+     * @param key Schlüssel
      * @param isCustomField <code>true</code>, wenn es sich um ein CustomField handelt. Dann steht der Wert woanders. Sonst <code>false</code>
-     * @return Wert zum ?bergebenen Schl?ssel
+     * @return Wert zum übergebenen Schlüssel
      * @throws IOException I/O Error
      */
     private static String getValueFromParser(final JsonParser parser, final String key, final boolean isCustomField) throws IOException
@@ -428,7 +428,7 @@ public class Client
     }
 
     /**
-     * Liefert den URI-Builder f?r Commands
+     * Liefert den URI-Builder für Commands
      * @return URIBuilder
      */
     public static URIBuilder getCommandURIBuilder()

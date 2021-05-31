@@ -328,9 +328,9 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * F?gt den Men?eintrag "In Bearbeitung nehmen" hinzu. Dabei wird gepr?ft, ob das Ticket nicht schon in Bearbeitung ist. Ausserdem ist diese Aktion
-     * f?r die Standardaktionen nicht vorgesehen
-     * @param menu Men?
+     * Fügt den Menüeintrag "In Bearbeitung nehmen" hinzu. Dabei wird geprüft, ob das Ticket nicht schon in Bearbeitung ist. Ausserdem ist diese Aktion
+     * für die Standardaktionen nicht vorgesehen
+     * @param menu Menü
      * @param button Issue-Button
      * @param id Id
      */
@@ -368,8 +368,8 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * F?gt den Men?eintrag "Zur?cksetzen" hinzu
-     * @param menu Men?
+     * Fügt den Menüeintrag "Zurücksetzen" hinzu
+     * @param menu Menü
      * @param button Issue-Button
      */
     public void addRedoItem(final JPopupMenu menu, final JButton button)
@@ -454,9 +454,9 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * Liefert den Schl?ssel zum Speichern der Zeitdauer
-     * @param key Schl?ssel f?r das Label
-     * @return Schl?ssel f?r die Zeitdauer
+     * Liefert den Schlüssel zum Speichern der Zeitdauer
+     * @param key Schlüssel für das Label
+     * @return Schlüssel für die Zeitdauer
      */
     private String getDurationKey(final String key)
     {
@@ -465,7 +465,7 @@ public class TimeTracker extends Frame
 
     /**
      * Liefert das Ticket zu einem Button. Entweder, wenn es schon gespeichert ist oder geparst aus dem Titel
-     * @param key Schl?ssel mit der Button-ID
+     * @param key Schlüssel mit der Button-ID
      * @param button Button mit dem Titel des Tickets
      * @return Ticket-ID zum Button
      */
@@ -489,8 +489,8 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * L?dt eine Einstellung aus den Properties
-     * @param key Schl?ssel (Label des Buttons)
+     * Lädt eine Einstellung aus den Properties
+     * @param key Schlüssel (Label des Buttons)
      * @param setting Einstellung
      * @return Wert
      */
@@ -527,8 +527,8 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * F?gt an der ?bergebenen Komponente ein Escape-Event hinzu
-     * @param window Fenster, welchem ein Escape-Event hinzuf?gt
+     * Fügt an der übergebenen Komponente ein Escape-Event hinzu
+     * @param window Fenster, welchem ein Escape-Event hinzufügt
      */
     public final void addEscapeEvent(final RootPaneContainer window)
     {
@@ -582,9 +582,9 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * Liefert einen kleinen R?ckfragedialog
+     * Liefert einen kleinen Rückfragedialog
      * @param width Breite des Dialogs
-     * @return R?ckfragedialog
+     * @return Rückfragedialog
      */
     public JDialog getDialog(final int width)
     {
@@ -597,9 +597,9 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * Liefet den ?bergeordneten JFrame
-     * @param component Komponente, dessen ?bergeordneter Frame ermittelt werden soll
-     * @return ?bergeordneter Frame
+     * Liefet den übergeordneten JFrame
+     * @param component Komponente, dessen übergeordneter Frame ermittelt werden soll
+     * @return übergeordneter Frame
      */
     public Frame getParentFrame(final Container component)
     {
@@ -616,7 +616,7 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * Speichert die Fenstergr??e und -position
+     * Speichert die Fenstergröße und -position
      */
     private void saveWindowPositionAndSize()
     {
@@ -718,7 +718,7 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * Stellt die Fenstergr??e und -position aus den Properties wieder her
+     * Stellt die Fenstergröße und -position aus den Properties wieder her
      */
     private void restoreWindowPositionAndSize()
     {
@@ -773,7 +773,7 @@ public class TimeTracker extends Frame
     }
 
     /**
-     * L?dt Properties. Der Stream als R?ckgabe muss selbst geschlossen werden.
+     * Lädt Properties. Der Stream als Rückgabe muss selbst geschlossen werden.
      * @param properties Properties, welche erweitert werden
      * @param propertyFileName Name des Property-Files, welches ausgelesen werden soll
      * @return InputStream
@@ -988,7 +988,7 @@ public class TimeTracker extends Frame
     /**
      * Speichert einen Wert in den Properties
      * @param value Wert
-     * @param key Schl?ssel
+     * @param key Schlüssel
      */
     public static void saveSetting(final String value, final String key)
     {

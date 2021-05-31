@@ -140,8 +140,8 @@ public class AddAction extends BaseAction
     }
 
     /**
-     * Liefert eine fehlende oder die n?chst h?here ID
-     * @return eine fehlende oder die n?chst h?here ID
+     * Liefert eine fehlende oder die nächst höhere ID
+     * @return eine fehlende oder die nächst höhere ID
      * @throws IOException Wenn beim Lesen der Properties etwas schief ging
      */
     private int getMissingNumber() throws IOException
