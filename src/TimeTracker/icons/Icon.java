@@ -1,8 +1,7 @@
+package timetracker.icons;
+
 /**
  * Icons
- *
- * @author $Author: beyera $ © forcont business technology gmbh 2001-2019
- * @version $Revision: 1.0 $$Date: 01.02.2019 14:39 $
  */
 public enum Icon
 {
@@ -19,13 +18,13 @@ public enum Icon
     STAR("star.png"),
     TIMETRACKER("timetracker.png");
 
-    private String png;
+    private final String png;
     Icon(final String icon)
     {
         this.png = icon;
     }
 
-    String getIcon()
+    public String getIcon()
     {
         return "icons//" + this.png;
     }

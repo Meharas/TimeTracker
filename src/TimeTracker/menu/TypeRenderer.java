@@ -1,12 +1,10 @@
+package timetracker.menu;
+
 import javax.swing.*;
 import java.awt.*;
 
 /**
  * Renderer für die Combobox
- *
- * @author $Author: beyera $ &copy; forcont business technology gmbh 2001-2019
- * @version $Revision: 1.0 $ $Date: 01.02.2019 11:02 $
- * @since 7.0
  */
 public class TypeRenderer extends DefaultListCellRenderer
 {

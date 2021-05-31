@@ -1,3 +1,13 @@
+package timetracker.menu;
+
+import timetracker.*;
+import timetracker.actions.DeleteButtonAction;
+import timetracker.actions.ShowAddButtonAction;
+import timetracker.client.Client;
+import timetracker.icons.Icon;
+import timetracker.actions.BaseAction;
+import timetracker.log.Log;
+import timetracker.utils.ClipboardMonitor;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
@@ -26,14 +36,14 @@ public class ContextMenu
     {
     }
 
-    static JPopupMenu create(final TimeTracker timeTracker, final JButton parent, final int id, final String key)
+    public static JPopupMenu create(final TimeTracker timeTracker, final JButton parent, final int id, final String key)
     {
         final JPopupMenu menu = new JPopupMenu();
         menu.setBorder(MENU_BORDER);
 
         final JMenuItem copyItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_COPY));
         copyItem.setBorder(BORDER);
-        timeTracker.setButtonIcon(copyItem, Icon.COPY);
+        BaseAction.setButtonIcon(copyItem, Icon.COPY);
 
         copyItem.addActionListener((final ActionEvent e) -> {
             final StringSelection stringSelection = new StringSelection(parent.getText());
@@ -44,8 +54,8 @@ public class ContextMenu
 
         final JMenuItem editItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_EDIT));
         editItem.setBorder(BORDER);
-        editItem.addActionListener(timeTracker.createShowAddButtonAction(parent));
-        timeTracker.setButtonIcon(editItem, Icon.EDIT);
+        editItem.addActionListener(new ShowAddButtonAction(parent));
+        BaseAction.setButtonIcon(editItem, Icon.EDIT);
 
         final JMenuItem openItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_OPEN));
         openItem.setBorder(BORDER);
@@ -61,7 +71,7 @@ public class ContextMenu
                 {
                     try
                     {
-                        final URIBuilder builder = timeTracker.getURIBuilder(ServicePath.URL, ticket);
+                        final URIBuilder builder = Client.getURIBuilder(ServicePath.URL, ticket);
                         openWebpage(builder.build());
                     }
                     catch (final URISyntaxException ex)
@@ -87,7 +97,7 @@ public class ContextMenu
                 }
             }
         });
-        timeTracker.setButtonIcon(openItem, Icon.OPEN);
+        BaseAction.setButtonIcon(openItem, Icon.OPEN);
 
         menu.add(openItem);
         timeTracker.addStarItem(menu, parent, key, id);
@@ -100,8 +110,8 @@ public class ContextMenu
         final JMenuItem deleteItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_DELETE));
         deleteItem.setBorder(BORDER);
         deleteItem.setEnabled(id > 3);
-        timeTracker.setButtonIcon(deleteItem, Icon.REMOVE);
-        deleteItem.addActionListener(timeTracker.createDeleteButtonAction(parent, key));
+        BaseAction.setButtonIcon(deleteItem, Icon.REMOVE);
+        deleteItem.addActionListener(new DeleteButtonAction(parent, key));
         menu.add(deleteItem);
         return menu;
     }

@@ -1,3 +1,8 @@
+package timetracker.utils;
+
+import timetracker.TimeTracker;
+import timetracker.log.Log;
+
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.util.Observable;
@@ -10,7 +15,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
     private static final ClipboardMonitor monitor = new ClipboardMonitor();
     private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-    static boolean disabled = false;
+    public static boolean disabled = false;
 
     private ClipboardMonitor()
     {
@@ -66,7 +71,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
         throw new CloneNotSupportedException("There can be only one instance of this monitor!");
     }
 
-    static ClipboardMonitor getMonitor()
+    public static ClipboardMonitor getMonitor()
     {
         EventQueue.invokeLater(monitor);
 

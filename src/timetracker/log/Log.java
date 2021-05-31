@@ -1,3 +1,5 @@
+package log;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -8,10 +10,6 @@ import java.util.logging.*;
 
 /**
  * Logger
- *
- * @author $Author: beyera $ &copy; forcont business technology gmbh 2001-2019
- * @version $Revision: 1.0 $ $Date: 01.02.2019 10:49 $
- * @since 7.0
  */
 public class Log
 {
