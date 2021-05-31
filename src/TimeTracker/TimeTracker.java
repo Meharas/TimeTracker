@@ -5,7 +5,6 @@ import timetracker.client.Client;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.ContextMenu;
-import timetracker.menu.TypeRenderer;
 import timetracker.utils.ClipboardMonitor;
 import timetracker.utils.TrayIcon;
 
