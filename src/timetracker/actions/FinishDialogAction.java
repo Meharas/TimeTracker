@@ -10,6 +10,7 @@ import timetracker.client.Client;
 import timetracker.log.Log;
 import timetracker.menu.ComboBoxFixVersions;
 import timetracker.menu.ComboBoxStates;
+import timetracker.utils.EscapeEvent;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -37,29 +38,56 @@ public class FinishDialogAction extends BaseAction
         TimeTracker.MATCHER.reset(button.getText());
         if (TimeTracker.MATCHER.matches())
         {
-            final JDialog dialog = this.timeTracker.getDialog(200);
-            final JPanel rows = new JPanel();
-            rows.setBorder(new EmptyBorder(10, 10, 10, 10));
-            dialog.add(rows);
+            final Point location = this.timeTracker.getWindowLocation();
 
-            rows.add(new JLabel(Resource.getString(PropertyConstants.LABEL_STATE)));
-            final JComboBox<String> statesBox = new ComboBoxStates();
-            rows.add(statesBox);
+            final JDialog dialog = new JDialog(this.timeTracker, "Burning time", true);
+            dialog.setBounds(location.x, location.y, 400, 300);
+            dialog.setResizable(false);
+            EscapeEvent.add(dialog);
 
-            rows.add(new JLabel(Resource.getString(PropertyConstants.LABEL_VERSION)));
-            final JComboBox<String> versionsBox = new ComboBoxFixVersions();
-            rows.add(versionsBox);
+            final JPanel globalPanel = new JPanel();
+            globalPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+            globalPanel.setLayout(new BoxLayout(globalPanel, BoxLayout.Y_AXIS));
+
+            final ComboBoxStates statesBox = new ComboBoxStates();
+            statesBox.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
+
+            final ComboBoxFixVersions versionsBox = new ComboBoxFixVersions();
+            versionsBox.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
+
+            final JPanel panel = new JPanel();
+            panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+            panel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_STATE)));
+            panel.add(statesBox);
+            panel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_VERSION)));
+            panel.add(versionsBox);
+            globalPanel.add(panel);
+
+            final JTextArea textArea = new JTextArea(5, 30);
+            textArea.setLineWrap(true);
+            textArea.setWrapStyleWord(true);
+            textArea.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
 
             final JPanel commentPanel = new JPanel();
             commentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-            dialog.add(commentPanel);
+            commentPanel.setMinimumSize(new Dimension(200, 100));
+            commentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
+            commentPanel.setLayout(new BoxLayout(commentPanel, BoxLayout.Y_AXIS));
+            commentPanel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_TEXT)));
 
-            commentPanel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_COMMENT)));
-            final JTextArea comment = new JTextArea(1, 5);
-            comment.setLineWrap(true);
-            comment.setWrapStyleWord(true);
-            comment.setPreferredSize(new Dimension(300, 100));
-            commentPanel.add(comment);
+            final JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setMaximumSize(new Dimension(525, 50));
+            scrollPane.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
+            commentPanel.add(scrollPane);
+            globalPanel.add(commentPanel);
+
+            final Action action = this.button.getAction();
+            final BaseAction timerAction = action instanceof BaseAction ? (BaseAction) action : null;
+            if (timerAction != null && timerAction.timer != null && timerAction.timer.isRunning())
+            {
+                timerAction.stopWithoutSave();
+            }
 
             final JButton okButton = new JButton(Resource.getString(PropertyConstants.TEXT_OK));
             okButton.addActionListener(new TextAction(Resource.getString(PropertyConstants.TEXT_OK))
@@ -85,7 +113,7 @@ public class FinishDialogAction extends BaseAction
                         response = Client.executeRequest(request);
                         Client.logResponse(response);
 
-                        final String commentText = comment.getText();
+                        final String commentText = textArea.getText();
                         if (commentText != null && !commentText.isEmpty())
                         {
                             builder = Client.getURIBuilder(ServicePath.COMMENT, issueID);
@@ -104,8 +132,12 @@ public class FinishDialogAction extends BaseAction
                     }
                 }
             });
-            dialog.add(okButton);
-            dialog.pack();
+
+            final JPanel okBtnPanel = new JPanel();
+            okBtnPanel.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
+            okBtnPanel.add(okButton);
+            globalPanel.add(okBtnPanel);
+            dialog.add(globalPanel);
             dialog.setVisible(true);
         }
     }

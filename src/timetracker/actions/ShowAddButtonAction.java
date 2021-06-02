@@ -1,8 +1,12 @@
 package timetracker.actions;
 
-import timetracker.*;
+import timetracker.Constants;
+import timetracker.PropertyConstants;
+import timetracker.Resource;
+import timetracker.TimeTracker;
 import timetracker.icons.IconFileFilter;
 import timetracker.log.Log;
+import timetracker.utils.EscapeEvent;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -67,7 +71,7 @@ public class ShowAddButtonAction extends BaseAction
         frame.setAlwaysOnTop(true);
         frame.setLocation(100, 100);
 
-        this.timeTracker.addEscapeEvent(frame);
+        EscapeEvent.add(frame);
 
         final JPanel addButtonPanel = new JPanel();
         addButtonPanel.setLayout(new BoxLayout(addButtonPanel, BoxLayout.Y_AXIS));

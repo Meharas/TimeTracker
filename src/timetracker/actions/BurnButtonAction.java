@@ -12,6 +12,7 @@ import timetracker.data.Type;
 import timetracker.db.Backend;
 import timetracker.log.Log;
 import timetracker.menu.TypeRenderer;
+import timetracker.utils.EscapeEvent;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -44,7 +45,7 @@ public class BurnButtonAction extends BaseAction
         final JDialog dialog = new JDialog(this.timeTracker, "Burning time", true);
         dialog.setBounds(location.x, location.y, 400, 350);
         dialog.setResizable(false);
-        this.timeTracker.addEscapeEvent(dialog);
+        EscapeEvent.add(dialog);
 
         final JTextField ticketField = new JTextField();
         ticketField.setMargin(new Insets(0, 5, 0, 5));

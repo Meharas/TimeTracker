@@ -22,7 +22,7 @@ public final class Versions
     private static final Map<String, String> VERSION_MAP = new TreeMap<>();
     static
     {
-        try(final InputStream versions = TimeTracker.class.getResourceAsStream("timetracker/Versions.properties"))
+        try(final InputStream versions = TimeTracker.class.getResourceAsStream("Versions.properties"))
         {
             final Properties versionProperties = new Properties();
             versionProperties.load(versions);

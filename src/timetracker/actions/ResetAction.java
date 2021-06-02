@@ -2,6 +2,7 @@ package timetracker.actions;
 
 import timetracker.PropertyConstants;
 import timetracker.Resource;
+import timetracker.utils.EscapeEvent;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -29,7 +30,7 @@ public class ResetAction extends BaseAction
         frame.setResizable(false);
         frame.setPreferredSize(new Dimension(350, 120));
 
-        this.timeTracker.addEscapeEvent(frame);
+        EscapeEvent.add(frame);
 
         final JPanel addButtonPanel = new JPanel();
         addButtonPanel.setLayout(new BoxLayout(addButtonPanel, BoxLayout.Y_AXIS));
