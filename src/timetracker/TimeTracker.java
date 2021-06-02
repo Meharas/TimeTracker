@@ -410,8 +410,12 @@ public class TimeTracker extends Frame
 
     private void setTime(final JLabel label, final Issue issue)
     {
-        final String value = issue.getDuration();
-        if (value != null)
+        String value = issue.getDuration();
+        if(value == null || value.isEmpty())
+        {
+            value = issue.getDurationSaved();
+        }
+        if (value != null && !value.isEmpty())
         {
             label.setText(value);
         }
