@@ -30,6 +30,13 @@ public class Log
             init();
         }
 
+        @Override
+        public void log(final Level level, final String msg)
+        {
+            System.out.println(msg);
+            super.log(level, msg);
+        }
+
         private void init()
         {
             // suppress the logging output to the console

@@ -763,57 +763,6 @@ public class TimeTracker extends Frame
         return new FileInputStream(propertyFile);
     }
 
-    public static void main(final String[] args)
-    {
-        if(args != null && args.length > 0)
-        {
-            for(final String arg : args)
-            {
-                if(arg.startsWith("-h"))
-                {
-                    final StringBuilder sb = new StringBuilder(arg.substring(2));
-                    if(!TimeTracker.home.endsWith("\\"))
-                    {
-                        sb.append("\\");
-                    }
-                    TimeTracker.home = sb.toString();
-                    Log.info("Home = {0}", TimeTracker.home);
-                }
-            }
-        }
-
-        final Properties properties = getProperties();
-        if (properties == null || properties.isEmpty())
-        {
-            Log.severe("Empty properties!");
-            return;
-        }
-
-        try
-        {
-            final String lookAndFeel = properties.getProperty(PropertyConstants.LOOK_AND_FEEL, "javax.swing.plaf.nimbus.NimbusLookAndFeel");
-            UIManager.setLookAndFeel(lookAndFeel);
-        }
-        catch (final ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e)
-        {
-            Log.severe(e.getMessage(), e);
-        }
-
-        Thread.setDefaultUncaughtExceptionHandler((t, e) -> Log.severe(e.getMessage(), e));
-
-        final boolean callTimeTracker = handleEmptyToken(properties);
-        if(callTimeTracker)
-        {
-            callTimeTracker(properties);
-        }
-    }
-
-    private static void initClipboardObserver()
-    {
-        final ClipboardMonitor monitor = ClipboardMonitor.getMonitor();
-        monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));
-    }
-
     private static boolean handleEmptyToken(final Properties properties)
     {
         final String token = properties.getProperty(Constants.YOUTRACK_TOKEN);
@@ -878,42 +827,6 @@ public class TimeTracker extends Frame
         dialog.pack();
         dialog.setVisible(true);
         return false;
-    }
-
-    /**
-     * Startet den TimeTracker
-     * @param properties alle Properties
-     */
-    private static void callTimeTracker(final Properties properties)
-    {
-        SwingUtilities.invokeLater(() -> {
-            synchronized (syncObject)
-            {
-                try
-                {
-                    timeTracker = new TimeTracker();
-                    timeTracker.init(properties);
-                    timeTracker.setVisible(true);
-                    TrayIcon.addTrayIcon();
-                    initClipboardObserver();
-                }
-                catch (final Throwable e)
-                {
-                    final String msg = getMessage(e);
-                    System.err.println(msg);
-                    if(timeTracker != null)
-                    {
-                        JOptionPane.showMessageDialog(timeTracker, msg);
-                    }
-                    System.exit(0);
-                }
-            }
-        });
-    }
-
-    public static TimeTracker getTimeTracker()
-    {
-        return timeTracker;
     }
 
     /**
@@ -1006,5 +919,93 @@ public class TimeTracker extends Frame
             bw.write(entry.getKey() + "=" + entry.getValue());
         }
         bw.flush();
+    }
+
+    public static void main(final String[] args)
+    {
+        System.out.println("Starting TimeTracker");
+        if(args != null && args.length > 0)
+        {
+            for(final String arg : args)
+            {
+                if(arg.startsWith("-h"))
+                {
+                    final StringBuilder sb = new StringBuilder(arg.substring(2));
+                    if(!TimeTracker.home.endsWith("\\"))
+                    {
+                        sb.append("\\");
+                    }
+                    TimeTracker.home = sb.toString();
+                    Log.info("Home = {0}", TimeTracker.home);
+                }
+            }
+        }
+
+        final Properties properties = getProperties();
+        if (properties == null || properties.isEmpty())
+        {
+            Log.severe("Empty properties!");
+            return;
+        }
+
+        try
+        {
+            final String lookAndFeel = properties.getProperty(PropertyConstants.LOOK_AND_FEEL, "javax.swing.plaf.nimbus.NimbusLookAndFeel");
+            UIManager.setLookAndFeel(lookAndFeel);
+        }
+        catch (final ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e)
+        {
+            Log.severe(e.getMessage(), e);
+        }
+
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> Log.severe(e.getMessage(), e));
+
+        final boolean callTimeTracker = handleEmptyToken(properties);
+        if(callTimeTracker)
+        {
+            callTimeTracker(properties);
+        }
+    }
+
+    private static void initClipboardObserver()
+    {
+        final ClipboardMonitor monitor = ClipboardMonitor.getMonitor();
+        monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));
+    }
+
+    /**
+     * Startet den TimeTracker
+     * @param properties alle Properties
+     */
+    private static void callTimeTracker(final Properties properties)
+    {
+        SwingUtilities.invokeLater(() -> {
+            synchronized (syncObject)
+            {
+                try
+                {
+                    timeTracker = new TimeTracker();
+                    timeTracker.init(properties);
+                    timeTracker.setVisible(true);
+                    TrayIcon.addTrayIcon();
+                    initClipboardObserver();
+                }
+                catch (final Throwable e)
+                {
+                    final String msg = getMessage(e);
+                    System.err.println(msg);
+                    if(timeTracker != null)
+                    {
+                        JOptionPane.showMessageDialog(timeTracker, msg);
+                    }
+                    System.exit(0);
+                }
+            }
+        });
+    }
+
+    public static TimeTracker getTimeTracker()
+    {
+        return timeTracker;
     }
 }
