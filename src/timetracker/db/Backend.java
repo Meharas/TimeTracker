@@ -42,7 +42,7 @@ public class Backend
                                                             TN_ISSUES, CN_ID, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON, CN_DELETABLE, CN_MARKED) +
                                                             "(%d, '%s', '%s', '%s', '%s', '%s', '%s', %s, %s)";
     private static final String DELETE_STMT = String.format("DELETE FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s'";
-    private static final String MAX_ID_STMT = "SELECT MAX(ID) FROM ISSUES";
+    private static final String MAX_ID_STMT = String.format("SELECT MAX(%s) FROM %s", CN_ID, TN_ISSUES);
     private static final String UPDATE_STMT = "UPDATE " + TN_ISSUES + " SET " + CN_ISSUE + UPDATE_VALUE + CN_LABEL + UPDATE_VALUE + CN_TYPE + UPDATE_VALUE +
                                               CN_DURATION + UPDATE_VALUE + CN_DURATION_SAVED + UPDATE_VALUE + CN_ICON + UPDATE_VALUE +
                                               CN_DELETABLE + UPDATE_VALUE + CN_MARKED + "=%s WHERE " + CN_ID + "=%d";
@@ -175,10 +175,10 @@ public class Backend
         stmt.executeUpdate(sqlTable.toString());
         Log.info("Table created: " + TN_ISSUES);
 
-        insertIssue(Constants.STRING_EMPTY, "Support", Type.SUPPORT.getId(), Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false);
-        insertIssue(Constants.STRING_EMPTY, "Telefonat", Constants.STRING_EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, "\\icons\\phone.png", false, false);
-        insertIssue(Constants.STRING_EMPTY, "Meeting", Type.MEETING.getId(), Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false);
-        insertIssue(Constants.STRING_EMPTY, "Pause", Constants.STRING_EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, "\\icons\\pause.png", false, false);
+        insertIssue(new Issue(Constants.STRING_EMPTY, "Support", Type.SUPPORT, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false));
+        insertIssue(new Issue(Constants.STRING_EMPTY, "Telefonat", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, "\\icons\\phone.png", false, false));
+        insertIssue(new Issue(Constants.STRING_EMPTY, "Meeting", Type.MEETING, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
+        insertIssue(new Issue(Constants.STRING_EMPTY, "Pause", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, "\\icons\\pause.png", false, false));
 
         return false;
     }
@@ -186,34 +186,15 @@ public class Backend
     /**
      * Fügt das übergebene Issue als Datensatz ein
      * @param issue Issue
-     * @return Anzahl eingefügter Datensätze... sollte 1 sein
      * @throws Throwable database access error or other errors
      */
-    public int insertIssue(final Issue issue) throws Throwable
-    {
-        return insertIssue(issue.getTicket(), issue.getLabel(), issue.getType().getId(), issue.getDuration(), issue.getDurationSaved(), issue.getIcon(),
-                           issue.isDeletable(), issue.isMarked());
-    }
-
-    /**
-     * Fügt die übergebenen Issues als Datensatz ein
-     * @param issue Ticket
-     * @param label Titel
-     * @param type interne ID für den Typ der Zeiterfassung (Development, Meeting...)
-     * @param duration Dauer
-     * @param durationSaved gespeicherte Dauer
-     * @param icon Icon
-     * @param deletable {@code true}, wenn das issue löschbar ist, sonst {@code false}
-     * @param marked {@code true}, wenn das issue markiert wurde, sonst {@code false}
-     * @return Anzahl eingefügter Datensätze
-     * @throws Throwable database access error or other errors
-     */
-    private int insertIssue(final String issue, final String label, final String type, final String duration, final String durationSaved, final String icon, final boolean deletable,
-                            final boolean marked) throws Throwable
+    public void insertIssue(final Issue issue) throws Throwable
     {
         initTable();
-        deleteIssue(issue);
-        return executeUpdate(String.format(INSERT_STMT, getId(), issue, label, type, duration, durationSaved, icon, deletable, marked));
+        final int id = getId();
+        executeUpdate(String.format(INSERT_STMT, id, issue.getTicket(), issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(null),
+                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked()));
+        issue.setId(id);
     }
 
     private int getId() throws Throwable
@@ -248,30 +229,6 @@ public class Backend
             close(rs);
         }
         return 0;
-    }
-
-    /**
-     * Löscht die Issues zu einem Benutzer
-     * @param issue Ticket
-     * @return Anzahl gelöschter Datensätze
-     * @throws Throwable database access error or other errors
-     */
-    public int deleteIssue(final String issue) throws Throwable
-    {
-        if(issue == null || issue.isEmpty())
-        {
-            Log.severe("Issue is null or empty");
-            return -1;
-        }
-        try
-        {
-            initTable();
-        }
-        catch (final SQLException e)
-        {
-            Log.severe("Could not create table", e);
-        }
-        return executeUpdate(String.format(DELETE_STMT, issue));
     }
 
     /**

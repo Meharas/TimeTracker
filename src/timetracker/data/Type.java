@@ -1,10 +1,13 @@
 package timetracker.data;
 
+import timetracker.Constants;
+
 /**
  * Enum für den Typ eines Tickets, Development oder Meeting
  */
 public enum Type
 {
+    EMPTY(Constants.STRING_EMPTY, Constants.STRING_EMPTY),
     DEVELOPMENT ("136-0", "Development"),
     TESTING ("136-1", "Testing"),
     DOCUMENTATION ("136-2", "Documentation"),

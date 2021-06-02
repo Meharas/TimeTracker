@@ -10,7 +10,7 @@ import java.util.Optional;
  */
 public class Issue
 {
-    private final int id;
+    private int id = -1;
     private String ticket;
     private String label;
     private Type type;
@@ -56,6 +56,14 @@ public class Issue
     public int getId()
     {
         return this.id;
+    }
+
+    public void setId(final int id)
+    {
+        if(this.id == -1)
+        {
+            this.id = id;
+        }
     }
 
     public String getTicket()

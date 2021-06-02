@@ -425,17 +425,22 @@ public class TimeTracker extends Frame
     {
         if (removeLine)
         {
-            final GridLayout layout = (GridLayout) this.panel.getLayout();
-            layout.setRows(layout.getRows() - 1);
+            updateRows(false);
         }
         pack();
     }
 
     private void addToPanel(final JComponent button)
     {
-        final GridLayout layout = (GridLayout) this.panel.getLayout();
-        layout.setRows(layout.getRows() + 1);
+        updateRows(true);
         this.panel.add(button, this.line);
+    }
+
+    private void updateRows(final boolean addRow)
+    {
+        final GridLayout layout = (GridLayout) this.panel.getLayout();
+        final int op = addRow ? 1 : -1;
+        layout.setRows(layout.getRows() + op);
     }
 
     public void setLabelTooltip(final String savedDuration, final JLabel timeLabel)
