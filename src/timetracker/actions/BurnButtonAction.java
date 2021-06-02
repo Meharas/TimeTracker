@@ -7,6 +7,9 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import timetracker.*;
 import timetracker.client.Client;
+import timetracker.data.Issue;
+import timetracker.data.Type;
+import timetracker.db.Backend;
 import timetracker.log.Log;
 import timetracker.menu.TypeRenderer;
 
@@ -16,7 +19,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Klasse zum Burnen von Zeiten
@@ -25,9 +31,9 @@ public class BurnButtonAction extends BaseAction
 {
     private static final long serialVersionUID = -2092965435624779543L;
 
-    public BurnButtonAction(final JButton button, final JLabel label, final String key)
+    public BurnButtonAction(final JButton button, final JLabel label, final Issue issue)
     {
-        super(button, key, label);
+        super(button, issue, label);
     }
 
     @Override
@@ -54,7 +60,7 @@ public class BurnButtonAction extends BaseAction
         }
         else
         {
-            final String ticket = this.timeTracker.loadSetting(this.key, TimeTrackerConstants.SUFFIX_TICKET);
+            final String ticket = this.issue.getTicket();
             ticketField.setText(ticket);
         }
 
@@ -70,14 +76,8 @@ public class BurnButtonAction extends BaseAction
         typeField.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
         typeField.setRenderer(new TypeRenderer());
 
-        final String type = this.timeTracker.loadSetting(this.key, TimeTrackerConstants.SUFFIX_TYPE);
-        final LinkedList<String[]> items = new LinkedList<>();
-        items.add(new String[]{"136-0", "Development"});
-        items.add(new String[]{"136-1", "Testing"});
-        items.add(new String[]{"136-2", "Documentation"});
-        items.add(new String[]{"136-3", "Meeting"});
-        items.add(new String[]{"136-4", "Support"});
-        items.add(new String[]{"136-6", "Design"});
+        final String type = Optional.ofNullable(this.issue.getType()).map(Type::getId).orElse(null);
+        final LinkedList<String[]> items = Arrays.stream(Type.values()).map(t -> new String[]{t.getId(), t.getLabel()}).collect(Collectors.toCollection(LinkedList::new));
 
         for (final String[] item : items)
         {
@@ -142,7 +142,7 @@ public class BurnButtonAction extends BaseAction
                         timerAction.reset();
                     }
 
-                    final String savedDuration = BurnButtonAction.this.timeTracker.loadSetting(key, TimeTrackerConstants.SUFFIX_DURATION_SAVED);
+                    final String savedDuration = BurnButtonAction.this.issue.getDurationSaved();
                     BurnButtonAction.this.timeTracker.setLabelTooltip(savedDuration, label);
                     dialog.dispose();
                 }
@@ -234,14 +234,14 @@ public class BurnButtonAction extends BaseAction
         }
 
         final String type = ((String[]) selectedItem)[0];
-        TimeTracker.saveSetting(ticket, this.key + TimeTrackerConstants.SUFFIX_TICKET);
-        TimeTracker.saveSetting(type, this.key + TimeTrackerConstants.SUFFIX_TYPE);
+        this.issue.setTicket(ticket);
+        this.issue.setType(Type.getType(type));
 
         final int[] spentTimeUnits = getTimeUnits(spentTime);
         int spentHours = spentTimeUnits[0];
         int spentMinutes = spentTimeUnits[1];
 
-        final String savedDuration = this.timeTracker.loadSetting(this.key, TimeTrackerConstants.SUFFIX_DURATION_SAVED);
+        final String savedDuration = this.issue.getDurationSaved();
         final int[] savedTimeUnits = getTimeUnits(savedDuration);
         final int savedHours = savedTimeUnits[0];
         int savedMinutes = savedTimeUnits[1];
@@ -255,26 +255,36 @@ public class BurnButtonAction extends BaseAction
         spentHours += spentMinutes / 60;
         spentMinutes = spentMinutes % 60;
 
-        TimeTracker.saveSetting(getParsedTime(Integer.toString(spentHours), Integer.toString(spentMinutes)), this.key + TimeTrackerConstants.SUFFIX_DURATION_SAVED);
+        final String parsedTime = getParsedTime(Integer.toString(spentHours), Integer.toString(spentMinutes));
+        this.issue.setDurationSaved(parsedTime);
+
+        try
+        {
+            Backend.getInstance().updateIssue(this.issue);
+        }
+        catch (final Throwable t)
+        {
+            TimeTracker.handleException(t);
+        }
 
         if (!Client.hasToken())
         {
             JOptionPane.showMessageDialog(timeTracker, String.format("Authorization token not found! Please create a token in youtrack and enter it in the " +
-                                                                     "TimeTracker.properties with the key %s", TimeTrackerConstants.YOUTRACK_TOKEN));
+                                                                     "TimeTracker.properties with the key %s", Constants.YOUTRACK_TOKEN));
             return false;
         }
 
         String text = textArea.getText();
         if (text == null)
         {
-            text = TimeTrackerConstants.STRING_EMPTY;
+            text = Constants.STRING_EMPTY;
         }
 
         try
         {
             final URIBuilder builder = Client.getURIBuilder(ServicePath.WORKITEM, ticket);
             final HttpPost request = new HttpPost(builder.build());
-            request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ENTITY, System.currentTimeMillis(), Client.getUserId(), spentTime, type, text), ContentType.APPLICATION_JSON));
+            request.setEntity(new StringEntity(String.format(Constants.ENTITY, System.currentTimeMillis(), Client.getUserId(), spentTime, type, text), ContentType.APPLICATION_JSON));
 
             final HttpResponse response = Client.executeRequest(request);
             if (response == null)

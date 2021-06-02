@@ -8,8 +8,10 @@ import org.apache.http.entity.StringEntity;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
-import timetracker.TimeTrackerConstants;
+import timetracker.Constants;
 import timetracker.client.Client;
+import timetracker.data.Issue;
+import timetracker.db.Backend;
 import timetracker.log.Log;
 
 import javax.swing.*;
@@ -18,13 +20,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
-
-import static timetracker.TimeTracker.getPropertiesInputStream;
+import java.util.Optional;
 
 /**
  * Aktion zum Hinzufügen eines Tickets
@@ -80,29 +77,28 @@ public class AddAction extends BaseAction
         }
 
         final File file = this.icon == null ? null : this.icon.getSelectedFile();
-        final String filePath = file == null ? TimeTrackerConstants.STRING_EMPTY : file.getPath();
-        final int missingNumber = getMissingNumber();
-        final String counter = missingNumber < 10 ? ("0" + missingNumber) : Integer.toString(missingNumber);
+        final String filePath = file == null ? Constants.STRING_EMPTY : file.getPath();
 
-        final Properties properties = new Properties();
-        try(final InputStream inputStream = getPropertiesInputStream(TimeTrackerConstants.PROPERTIES))
+        String ticket = null;
+        TimeTracker.MATCHER.reset(text);
+        if(TimeTracker.MATCHER.matches())
         {
-            properties.load(inputStream);
+            ticket = TimeTracker.MATCHER.group(1);
         }
 
+        final Issue issue = new Issue(ticket, text, null, null, null, filePath, true, false); //ToDo
         JButton button = null;
         try
         {
-            final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + counter;
-            this.timeTracker.storeButtonProperties(properties, propertyKey, text, filePath);
+            Backend.getInstance().insertIssue(issue);
 
-            button = this.timeTracker.addButton(propertyKey, text, filePath);
+            button = this.timeTracker.addButton(issue);
             this.timeTracker.updateGui(false);
             this.timeTracker.increaseLine();
         }
-        catch (final IOException ex)
+        catch (final Throwable t)
         {
-            Log.severe(ex.getMessage(), ex);
+            TimeTracker.handleException(t);
         }
 
         final Frame frame = this.timeTracker.getParentFrame(this.button);
@@ -111,58 +107,6 @@ public class AddAction extends BaseAction
             frame.dispose();
         }
         return button;
-    }
-
-    /**
-     * Liefert alle internen IDs der Buttons
-     * @return interne IDs der Buttons
-     * @throws IOException Wenn beim Lesen der Properties etwas schief ging
-     */
-    private Set<Integer> getButtonIds() throws IOException
-    {
-        final Properties properties = new Properties();
-        try (final InputStream inputStream = getPropertiesInputStream(TimeTrackerConstants.PROPERTIES))
-        {
-            properties.load(inputStream);
-        }
-
-        final Set<Integer> buttonIds = new TreeSet<>();
-        for(String key : properties.stringPropertyNames())
-        {
-            if(!key.startsWith(TimeTrackerConstants.PREFIX_BUTTON))
-            {
-                continue;
-            }
-            key = key.substring(TimeTrackerConstants.PREFIX_BUTTON.length());
-            buttonIds.add(Integer.parseInt(key.substring(0, key.indexOf('.'))));
-        }
-        return buttonIds;
-    }
-
-    /**
-     * Liefert eine fehlende oder die nächst höhere ID
-     * @return eine fehlende oder die nächst höhere ID
-     * @throws IOException Wenn beim Lesen der Properties etwas schief ging
-     */
-    private int getMissingNumber() throws IOException
-    {
-        final Set<Integer> buttonIds = getButtonIds();
-        if(buttonIds.isEmpty())
-        {
-            return 0;
-        }
-        int lastNumber = 0;
-        int missingNumber = -1;
-        for(final int id : buttonIds)
-        {
-            lastNumber = id;
-            if(id - missingNumber > 1)
-            {
-                return ++missingNumber;
-            }
-            missingNumber = id;
-        }
-        return ++lastNumber;
     }
 
     /**
@@ -220,8 +164,8 @@ public class AddAction extends BaseAction
 
                 final URIBuilder builder = Client.getCommandURIBuilder();
                 final HttpPost request = new HttpPost(builder.build());
-                request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMAND, TimeTrackerConstants.ISSUE_STATE,
-                                                                 TimeTrackerConstants.ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
+                request.setEntity(new StringEntity(String.format(Constants.ISSUE_COMMAND, Constants.ISSUE_STATE,
+                                                                 Constants.ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
 
                 final HttpResponse response = Client.executeRequest(request);
                 if (response == null)
@@ -232,7 +176,7 @@ public class AddAction extends BaseAction
                 dialog.dispose();
 
                 final JButton button = createButton(text, getIssueSummary);
-                button.doClick();
+                Optional.ofNullable(button).ifPresent(AbstractButton::doClick);
             }
             catch (final URISyntaxException | IOException ex)
             {

@@ -22,7 +22,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import timetracker.ServicePath;
 import timetracker.TimeTracker;
-import timetracker.TimeTrackerConstants;
+import timetracker.Constants;
 import timetracker.log.Log;
 
 import javax.net.ssl.SSLContext;
@@ -55,7 +55,7 @@ public class Client
     private static int port;
     private static HttpClient httpClient;
 
-    private static final Matcher USER_ID_MATCHER = TimeTrackerConstants.USER_ID_PATTERN.matcher(TimeTrackerConstants.STRING_EMPTY);
+    private static final Matcher USER_ID_MATCHER = Constants.USER_ID_PATTERN.matcher(Constants.STRING_EMPTY);
 
     private Client()
     {
@@ -69,7 +69,7 @@ public class Client
      */
     public static void setUserID(final Properties properties) throws URISyntaxException, IOException
     {
-        Client.userId = properties != null ? properties.getProperty(TimeTrackerConstants.YOUTRACK_USERID) : null;
+        Client.userId = properties != null ? properties.getProperty(Constants.YOUTRACK_USERID) : null;
         if (Client.userId != null && !Client.userId.isEmpty())
         {
             USER_ID_MATCHER.reset(Client.userId);
@@ -94,7 +94,7 @@ public class Client
         {
             return;
         }
-        final String userId = getID(response, TimeTrackerConstants.YOUTRACK_USERID);
+        final String userId = getID(response, Constants.YOUTRACK_USERID);
         setUserID(userId);
     }
 
@@ -119,7 +119,7 @@ public class Client
 
     public static String getValueFromJson(final String ticket, final String fields, final String attribute) throws IOException, URISyntaxException
     {
-        final URIBuilder builder = getURIBuilder(ServicePath.ISSUE, ticket, new BasicNameValuePair(TimeTrackerConstants.FIELDS, fields));
+        final URIBuilder builder = getURIBuilder(ServicePath.ISSUE, ticket, new BasicNameValuePair(Constants.FIELDS, fields));
         final HttpResponse response = execute(builder);
         if (response == null)
         {
@@ -130,7 +130,7 @@ public class Client
         {
             return null;
         }
-        final boolean isCustomField = TimeTrackerConstants.ISSUE_CUSTOM_FIELDS.equalsIgnoreCase(fields);
+        final boolean isCustomField = Constants.ISSUE_CUSTOM_FIELDS.equalsIgnoreCase(fields);
         return getValueFromJson(response, attribute, isCustomField);
     }
 
@@ -368,18 +368,18 @@ public class Client
                 .setDefaultRequestConfig(requestConfig)
                 .setSchemePortResolver(portResolver)
                 .setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.AUTHORIZATION, "Bearer " + Client.getToken()),
-                                                 new BasicHeader(HttpHeaders.ACCEPT, TimeTrackerConstants.MIMETYPE_JSON),
-                                                 new BasicHeader(HttpHeaders.CONTENT_TYPE, TimeTrackerConstants.MIMETYPE_JSON),
-                                                 new BasicHeader(HttpHeaders.CACHE_CONTROL, TimeTrackerConstants.NO_CACHE)));
+                                                 new BasicHeader(HttpHeaders.ACCEPT, Constants.MIMETYPE_JSON),
+                                                 new BasicHeader(HttpHeaders.CONTENT_TYPE, Constants.MIMETYPE_JSON),
+                                                 new BasicHeader(HttpHeaders.CACHE_CONTROL, Constants.NO_CACHE)));
         setClient(httpClient.build());
     }
 
     private static SSLContext createSSLContext() throws IOException
     {
-        final String certFileName = Optional.ofNullable(TimeTracker.getProperties()).map(props -> props.getProperty(TimeTrackerConstants.YOUTRACK_CERT)).orElse(null);
+        final String certFileName = Optional.ofNullable(TimeTracker.getProperties()).map(props -> props.getProperty(Constants.YOUTRACK_CERT)).orElse(null);
         if(certFileName == null || certFileName.isEmpty())
         {
-            final String msg = String.format("Value of property %s missing.", TimeTrackerConstants.YOUTRACK_CERT);
+            final String msg = String.format("Value of property %s missing.", Constants.YOUTRACK_CERT);
             JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
             throw new IOException(msg);
         }
@@ -419,10 +419,8 @@ public class Client
         }
         catch (final Exception e)
         {
-            final String msg = TimeTracker.getMessage(e);
-            System.err.println(msg);
-            JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
-            throw new IOException(msg, e.getCause());
+            TimeTracker.handleException(e);
+            throw new IOException(TimeTracker.getMessage(e), e.getCause());
         }
         return sslContext;
     }
@@ -471,7 +469,7 @@ public class Client
             final String summary = getIssueSummary(text);
             if(summary != null)
             {
-                return text + TimeTrackerConstants.STRING_SPACE + summary;
+                return text + Constants.STRING_SPACE + summary;
             }
         }
         catch (final URISyntaxException | IOException ex)
@@ -495,7 +493,7 @@ public class Client
             return null;
         }
         final String ticket = TimeTracker.MATCHER.group(1);
-        text = text.replace(ticket, TimeTrackerConstants.STRING_EMPTY);
+        text = text.replace(ticket, Constants.STRING_EMPTY);
         if(!text.trim().isEmpty())
         {
             //Sollte der Nutzer was eigenes hingeschrieben haben, so sollte das nicht ersetzt werden
@@ -517,12 +515,12 @@ public class Client
         {
             return null;
         }
-        return Client.getValueFromJson(TimeTracker.MATCHER.group(1), TimeTrackerConstants.ISSUE_CUSTOM_FIELDS, TimeTrackerConstants.ISSUE_STATE);
+        return Client.getValueFromJson(TimeTracker.MATCHER.group(1), Constants.ISSUE_CUSTOM_FIELDS, Constants.ISSUE_STATE);
     }
 
     private static String getSummaryFromJson(final String ticket) throws IOException, URISyntaxException
     {
-        return Client.getValueFromJson(ticket, TimeTrackerConstants.ISSUE_SUMMARY, TimeTrackerConstants.ISSUE_SUMMARY);
+        return Client.getValueFromJson(ticket, Constants.ISSUE_SUMMARY, Constants.ISSUE_SUMMARY);
     }
 
     public static String getToken()

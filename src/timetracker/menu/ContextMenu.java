@@ -4,6 +4,7 @@ import timetracker.*;
 import timetracker.actions.DeleteButtonAction;
 import timetracker.actions.ShowAddButtonAction;
 import timetracker.client.Client;
+import timetracker.data.Issue;
 import timetracker.icons.Icon;
 import timetracker.actions.BaseAction;
 import timetracker.log.Log;
@@ -32,7 +33,7 @@ public class ContextMenu
     {
     }
 
-    public static JPopupMenu create(final TimeTracker timeTracker, final JButton parent, final int id, final String key)
+    public static JPopupMenu create(final TimeTracker timeTracker, final JButton parent, final Issue issue)
     {
         final JPopupMenu menu = new JPopupMenu();
         menu.setBorder(MENU_BORDER);
@@ -55,14 +56,14 @@ public class ContextMenu
 
         final JMenuItem openItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_OPEN));
         openItem.setBorder(BORDER);
-        openItem.addActionListener(new TextAction(TimeTrackerConstants.STRING_EMPTY)
+        openItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
         {
             private static final long serialVersionUID = -8597151290962363254L;
 
             @Override
             public void actionPerformed(final ActionEvent e)
             {
-                final String ticket = timeTracker.getTicket(key, parent);
+                final String ticket = issue.getTicket();
                 if (ticket != null && !ticket.isEmpty())
                 {
                     try
@@ -96,18 +97,18 @@ public class ContextMenu
         BaseAction.setButtonIcon(openItem, Icon.OPEN);
 
         menu.add(openItem);
-        timeTracker.addStarItem(menu, parent, key, id);
+        timeTracker.addStarItem(menu, parent, issue);
         menu.add(copyItem);
         menu.add(editItem);
-        timeTracker.addInProgressItem(menu, parent, id);
+        timeTracker.addInProgressItem(menu, parent, issue);
         timeTracker.addRedoItem(menu, parent);
         menu.addSeparator();
 
         final JMenuItem deleteItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_DELETE));
         deleteItem.setBorder(BORDER);
-        deleteItem.setEnabled(id > 3);
+        deleteItem.setEnabled(issue.isDeletable());
         BaseAction.setButtonIcon(deleteItem, Icon.REMOVE);
-        deleteItem.addActionListener(new DeleteButtonAction(parent, key));
+        deleteItem.addActionListener(new DeleteButtonAction(parent, issue));
         menu.add(deleteItem);
         return menu;
     }

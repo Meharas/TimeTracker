@@ -1,7 +1,7 @@
 package timetracker.log;
 
 import timetracker.TimeTracker;
-import timetracker.TimeTrackerConstants;
+import timetracker.Constants;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,7 +33,7 @@ public class Log
         private void init()
         {
             // suppress the logging output to the console
-            final Logger rootLogger = Logger.getLogger(TimeTrackerConstants.STRING_EMPTY);
+            final Logger rootLogger = Logger.getLogger(Constants.STRING_EMPTY);
             final Handler[] handlers = rootLogger.getHandlers();
             if (handlers[0] instanceof ConsoleHandler)
             {
@@ -42,7 +42,7 @@ public class Log
 
             super.setLevel(Level.INFO);
 
-            final File logFile = new File(TimeTracker.getHome() + TimeTrackerConstants.LOGFILE_NAME);
+            final File logFile = new File(TimeTracker.getHome() + Constants.LOGFILE_NAME);
             System.out.println("Log file: " + logFile.getAbsolutePath());
             if (!logFile.exists())
             {
@@ -58,7 +58,7 @@ public class Log
                 }
             }
 
-            try (final InputStream inputStream = new FileInputStream(new File(TimeTracker.getHome() + TimeTrackerConstants.DEFAULT_PROPERTIES)))
+            try (final InputStream inputStream = new FileInputStream(new File(TimeTracker.getHome() + Constants.DEFAULT_PROPERTIES)))
             {
                 final LogManager manager = LogManager.getLogManager();
                 manager.readConfiguration(inputStream);

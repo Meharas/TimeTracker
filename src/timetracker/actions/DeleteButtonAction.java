@@ -1,17 +1,12 @@
 package timetracker.actions;
 
 import timetracker.TimeTracker;
-import timetracker.TimeTrackerConstants;
-import timetracker.log.Log;
+import timetracker.data.Issue;
+import timetracker.db.Backend;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * Löscht eine komplette Zeile.
@@ -20,39 +15,26 @@ public class DeleteButtonAction extends BaseAction
 {
     private static final long serialVersionUID = -2092965435624779543L;
 
-    public DeleteButtonAction(final JButton button, final String key)
+    public DeleteButtonAction(final JButton button, final Issue issue)
     {
-        super(button, key, null);
+        super(button, issue, null);
     }
 
     @Override
     public void actionPerformed(final ActionEvent e)
     {
-        try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(TimeTrackerConstants.PROPERTIES))
+        try
         {
-            final Properties properties = new Properties();
-            properties.load(inputStream);
-
-            final String prefix = this.key + ".";
-            for (final Iterator<Map.Entry<Object, Object>> iter = properties.entrySet().iterator(); iter.hasNext(); )
-            {
-                final Map.Entry<Object, Object> entry = iter.next();
-                final String propKey = (String) entry.getKey();
-                if (propKey.startsWith(prefix))
-                {
-                    iter.remove();
-                }
-            }
-            TimeTracker.storeProperties(properties);
-
-            remove();
-            this.timeTracker.updateGui(true);
-            this.timeTracker.decreaseLine();
+            Backend.getInstance().deleteIssue(this.issue);
         }
-        catch (final IOException ex)
+        catch (final Throwable t)
         {
-            Log.severe(ex.getMessage(), ex);
+            TimeTracker.handleException(t);
         }
+
+        remove();
+        this.timeTracker.updateGui(true);
+        this.timeTracker.decreaseLine();
     }
 
     /**

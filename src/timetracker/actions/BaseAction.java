@@ -1,8 +1,10 @@
 package timetracker.actions;
 
-import timetracker.icons.Icon;
+import timetracker.Constants;
 import timetracker.TimeTracker;
-import timetracker.TimeTrackerConstants;
+import timetracker.data.Issue;
+import timetracker.db.Backend;
+import timetracker.icons.Icon;
 import timetracker.log.Log;
 
 import javax.swing.*;
@@ -14,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -27,7 +28,7 @@ public class BaseAction extends AbstractAction
     protected final TimeTracker timeTracker = TimeTracker.getTimeTracker();
     public final Timer timer;
     protected final JButton button;
-    final String key;
+    final Issue issue;
     final JLabel label;
     String text;
     int duration = 0;
@@ -39,17 +40,17 @@ public class BaseAction extends AbstractAction
         this.button = null;
         this.timer = null;
         this.label = null;
-        this.key = null;
+        this.issue = null;
     }
 
     protected BaseAction(final JButton button)
     {
-        super(button.getText(), button.getIcon());
+        this(button, null);
+    }
 
-        this.button = button;
-        this.timer = null;
-        this.label = null;
-        this.key = null;
+    protected BaseAction(final JButton button, final Issue issue)
+    {
+        this(button, issue, null);
     }
 
     protected BaseAction(final String text)
@@ -59,15 +60,15 @@ public class BaseAction extends AbstractAction
         this.button = null;
         this.timer = null;
         this.label = null;
-        this.key = null;
+        this.issue = null;
     }
 
-    public BaseAction(final JButton button, final String key, final JLabel label)
+    public BaseAction(final JButton button, final Issue issue, final JLabel label)
     {
         super(button.getText(), button.getIcon());
 
         this.button = button;
-        this.key = key;
+        this.issue = issue;
         this.label = label;
         this.text = button.getText();
 
@@ -116,12 +117,22 @@ public class BaseAction extends AbstractAction
             stop();
             return;
         }
-        stopTimers();
-        formatTime(0);
-        this.timer.start();
-        this.button.setBackground(Color.GREEN);
-        TimeTracker.saveSetting(Boolean.toString(false), this.key + TimeTrackerConstants.SUFFIX_MARKED);
-        this.button.setOpaque(true);
+
+        try
+        {
+            this.issue.setMarked(false);
+            Backend.getInstance().updateIssue(this.issue);
+
+            stopTimers();
+            formatTime(0);
+            this.timer.start();
+            this.button.setBackground(Color.GREEN);
+            this.button.setOpaque(true);
+        }
+        catch (final Throwable t)
+        {
+            TimeTracker.handleException(t);
+        }
     }
 
     void stopTimers()
@@ -163,7 +174,7 @@ public class BaseAction extends AbstractAction
             if (c instanceof JButton)
             {
                 final Action action = ((JButton) c).getAction();
-                if (action instanceof BaseAction)
+                if (action instanceof BaseAction && ((BaseAction) action).issue != null)
                 {
                     ((BaseAction) action).reset();
                 }
@@ -204,7 +215,15 @@ public class BaseAction extends AbstractAction
     private void saveDuration(final boolean reset)
     {
         final String currentDuration = this.label.getText();
-        TimeTracker.saveSetting(reset ? TimeTrackerConstants.STRING_EMPTY : currentDuration, getDurationKey());
+        this.issue.setDuration(reset ? Constants.STRING_EMPTY : currentDuration);
+        try
+        {
+            Backend.getInstance().updateIssue(this.issue);
+        }
+        catch (final Throwable t)
+        {
+            TimeTracker.handleException(t);
+        }
     }
 
     public void reset()
@@ -213,36 +232,21 @@ public class BaseAction extends AbstractAction
         this.duration = 0;
         if (this.label != null)
         {
-            this.label.setText(TimeTrackerConstants.STRING_EMPTY);
+            this.label.setText(Constants.STRING_EMPTY);
         }
-        removeDuration();
-    }
-
-    private void removeDuration()
-    {
-        if (this.key == null)
+        try
         {
-            return;
+            removeDuration();
         }
-
-        try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(TimeTrackerConstants.PROPERTIES))
+        catch (final Throwable t)
         {
-
-            final Properties properties = new Properties();
-            properties.load(inputStream);
-            properties.remove(this.key + TimeTrackerConstants.SUFFIX_DURATION);
-            //properties.remove(this.key + TimeTrackerConstants.SUFFIX_DURATION_SAVED);
-            TimeTracker.storeProperties(properties);
-        }
-        catch (final IOException ex)
-        {
-            Log.severe(ex.getMessage(), ex);
+            TimeTracker.handleException(t);
         }
     }
 
-    private String getDurationKey()
+    private void removeDuration() throws Throwable
     {
-        return this.key + TimeTrackerConstants.SUFFIX_DURATION;
+        Backend.getInstance().removeDuration(this.issue);
     }
 
     public static void setButtonIcon(final AbstractButton button, final Icon icon)

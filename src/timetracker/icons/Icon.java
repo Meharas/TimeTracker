@@ -16,6 +16,8 @@ public enum Icon
     PROGRESS("progress.png"),
     FINISH("ok.png"),
     STAR("star.png"),
+    SUPPORT("support.png"),
+    MEETING("meeting.png"),
     TIMETRACKER("timetracker.png");
 
     private final String png;

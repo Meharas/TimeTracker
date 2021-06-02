@@ -46,7 +46,7 @@ public class ShowAddButtonAction extends BaseAction
 
         final JButton ok = new JButton(Resource.getString(PropertyConstants.TEXT_OK));
         final String name = this.button != null ? this.button.getName() : null;
-        if(name != null && name.startsWith(TimeTrackerConstants.PREFIX_BUTTON))
+        if(name != null && name.startsWith(Constants.PREFIX_BUTTON))
         {
             labelField.setText(this.button.getText());
             ok.setAction(new EditAction(ok, this.button, labelField, chooser));

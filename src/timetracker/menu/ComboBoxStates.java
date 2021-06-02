@@ -1,6 +1,6 @@
 package timetracker.menu;
 
-import timetracker.State;
+import timetracker.data.State;
 
 import javax.swing.*;
 import java.util.Set;

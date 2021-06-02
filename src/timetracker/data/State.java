@@ -1,4 +1,4 @@
-package timetracker;
+package timetracker.data;
 
 import java.util.HashSet;
 import java.util.Set;

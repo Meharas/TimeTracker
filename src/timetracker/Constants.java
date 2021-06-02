@@ -5,9 +5,9 @@ import java.util.regex.Pattern;
 /**
  * Konstanten
  */
-public final class TimeTrackerConstants
+public final class Constants
 {
-    private TimeTrackerConstants()
+    private Constants()
     {
     }
 

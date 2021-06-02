@@ -1,16 +1,13 @@
 package timetracker.actions;
 
 import timetracker.TimeTracker;
-import timetracker.TimeTrackerConstants;
-import timetracker.log.Log;
+import timetracker.Constants;
+import timetracker.db.Backend;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 
 /**
  * Action zum Bearbeiten eins Tickets
@@ -34,34 +31,22 @@ public class EditAction extends BaseAction
     public void actionPerformed(final ActionEvent e)
     {
         final File file = this.icon.getSelectedFile();
-        final String filePath = file == null ? TimeTrackerConstants.STRING_EMPTY : file.getPath();
+        final String filePath = file == null ? Constants.STRING_EMPTY : file.getPath();
         final String text = TimeTracker.getTicketSummary(this.textInput);
+
+        this.issue.setLabel(text);
+        this.issue.setIcon(filePath);
+        try
+        {
+            Backend.getInstance().updateIssue(this.issue);
+        }
+        catch (final Throwable t)
+        {
+            TimeTracker.handleException(t);
+        }
 
         this.issueButton.setText(text);
         setButtonIcon(this.issueButton, filePath);
-
-        final Properties properties = new Properties();
-        try(final InputStream inputStream = TimeTracker.getPropertiesInputStream(TimeTrackerConstants.PROPERTIES))
-        {
-            properties.load(inputStream);
-        }
-        catch (final IOException ex)
-        {
-            Log.severe(ex.getMessage(), ex);
-            return;
-        }
-
-        try
-        {
-            final String propertyKey = TimeTrackerConstants.PREFIX_BUTTON + this.issueButton.getName().substring(TimeTrackerConstants.PREFIX_BUTTON.length());
-            properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_LABEL);
-            properties.remove(propertyKey + TimeTrackerConstants.SUFFIX_ICON);
-            this.timeTracker.storeButtonProperties(properties, propertyKey, text, filePath);
-        }
-        catch (final IOException ex)
-        {
-            Log.severe(ex.getMessage(), ex);
-        }
 
         final Frame frame = this.timeTracker.getParentFrame(this.button);
         if(frame != null)

@@ -75,12 +75,12 @@ public class FinishDialogAction extends BaseAction
 
                         URIBuilder builder = Client.getCommandURIBuilder();
                         HttpPost request = new HttpPost(builder.build());
-                        request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMAND, TimeTrackerConstants.ISSUE_FIX_VERSIONS,
+                        request.setEntity(new StringEntity(String.format(Constants.ISSUE_COMMAND, Constants.ISSUE_FIX_VERSIONS,
                                                                          versionsBox.getSelectedItem(), issueID), ContentType.APPLICATION_JSON));
                         HttpResponse response = Client.executeRequest(request);
                         Client.logResponse(response);
 
-                        request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMAND, TimeTrackerConstants.ISSUE_STATE,
+                        request.setEntity(new StringEntity(String.format(Constants.ISSUE_COMMAND, Constants.ISSUE_STATE,
                                                                          statesBox.getSelectedItem(), issueID), ContentType.APPLICATION_JSON));
                         response = Client.executeRequest(request);
                         Client.logResponse(response);
@@ -90,7 +90,7 @@ public class FinishDialogAction extends BaseAction
                         {
                             builder = Client.getURIBuilder(ServicePath.COMMENT, issueID);
                             request = new HttpPost(builder.build());
-                            request.setEntity(new StringEntity(String.format(TimeTrackerConstants.ISSUE_COMMENT, commentText), ContentType.APPLICATION_JSON));
+                            request.setEntity(new StringEntity(String.format(Constants.ISSUE_COMMENT, commentText), ContentType.APPLICATION_JSON));
 
                             response = Client.executeRequest(request);
                             Client.logResponse(response);
