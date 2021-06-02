@@ -27,7 +27,7 @@ public class ResetAction extends BaseAction
         frame.setAlwaysOnTop(true);
         frame.setLocation(100, 100);
         frame.setResizable(false);
-        frame.setPreferredSize(new Dimension(350, 100));
+        frame.setPreferredSize(new Dimension(350, 120));
 
         this.timeTracker.addEscapeEvent(frame);
 
