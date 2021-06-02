@@ -127,11 +127,6 @@ public class TimeTracker extends Frame
         return home;
     }
 
-    public static void setHome(final String home)
-    {
-        TimeTracker.home = home;
-    }
-
     public void increaseLine()
     {
         this.line++;
@@ -914,7 +909,7 @@ public class TimeTracker extends Frame
 
     public static void main(final String[] args)
     {
-        System.out.println("Starting TimeTracker");
+        Log.info("Starting TimeTracker");
         if(args != null && args.length > 0)
         {
             for(final String arg : args)
@@ -984,7 +979,7 @@ public class TimeTracker extends Frame
                 catch (final Throwable e)
                 {
                     final String msg = getMessage(e);
-                    System.err.println(msg);
+                    Log.severe(msg);
                     if(timeTracker != null)
                     {
                         JOptionPane.showMessageDialog(timeTracker, msg);
