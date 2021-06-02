@@ -42,7 +42,7 @@ public class Log
 
             super.setLevel(Level.INFO);
 
-            final File logFile = new File(TimeTracker.getHome() + Constants.LOGFILE_NAME);
+            final File logFile = new File(TimeTracker.getHome() + "log\\" + Constants.LOGFILE_NAME);
             System.out.println("Log file: " + logFile.getAbsolutePath());
             if (!logFile.exists())
             {
