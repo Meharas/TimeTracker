@@ -53,6 +53,7 @@ public class TrayIcon
                         return;
                     }
                     timeTracker.showFrame(openItem, !timeTracker.isVisible());
+                    timeTracker.setExtendedState(Frame.NORMAL);
                 }
 
                 @Override
