@@ -18,6 +18,8 @@ public enum Icon
     STAR("star.png"),
     SUPPORT("support.png"),
     MEETING("meeting.png"),
+    PHONE("phone.png"),
+    PAUSE("pause.png"),
     TIMETRACKER("timetracker.png");
 
     private final String png;
