@@ -877,7 +877,6 @@ public class TimeTracker extends Frame
 
     public static void main(final String[] args)
     {
-        Log.info("Starting TimeTracker");
         if(args != null && args.length > 0)
         {
             for(final String arg : args)
@@ -894,6 +893,7 @@ public class TimeTracker extends Frame
                 }
             }
         }
+        Log.info("Starting TimeTracker");
 
         final Properties properties = getProperties();
         if (properties == null || properties.isEmpty())
