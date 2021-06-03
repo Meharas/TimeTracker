@@ -7,6 +7,7 @@ import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.ContextMenu;
+import timetracker.menu.MiscMenuBar;
 import timetracker.utils.ClipboardMonitor;
 import timetracker.utils.TrayIcon;
 
@@ -40,7 +41,7 @@ public class TimeTracker extends Frame
     public static final Color MANDATORY = new Color(200, 221, 242);
     public static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
 
-    private static String home = Constants.STRING_EMPTY;
+    public static String home = Constants.STRING_EMPTY;
     private static TimeTracker timeTracker;
     private static final Object syncObject = new Object();
 
@@ -73,6 +74,8 @@ public class TimeTracker extends Frame
         Client.setPort(p == null || p.isEmpty() ? -1 : Integer.parseInt(p));
         Client.setToken(properties.getProperty(Constants.YOUTRACK_TOKEN));
 
+        setMenuBar(new MiscMenuBar());
+
         try
         {
             Client.setUserID(properties);
@@ -88,12 +91,9 @@ public class TimeTracker extends Frame
             BaseAction.setButtonIcon(reset, timetracker.icons.Icon.STOP);
             reset.setAction(new ResetAction(reset));
 
-            final JButton openLog = getOpenLogButton();
-
-            final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 3));
+            final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 2));
             globalActionsPanel.add(add);
             globalActionsPanel.add(reset);
-            globalActionsPanel.add(openLog);
             addToPanel(globalActionsPanel);
             increaseLine();
             addToPanel(new JPanel()); //Spacer
@@ -161,38 +161,6 @@ public class TimeTracker extends Frame
         final String msg = getMessage(t);
         Log.severe(msg, t);
         JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
-    }
-
-    private JButton getOpenLogButton()
-    {
-        final JButton openLog = new JButton();
-        openLog.setAction(new TextAction("Log")
-        {
-            private static final long serialVersionUID = 4641196350640457638L;
-
-            @Override
-            public void actionPerformed(final ActionEvent e)
-            {
-                final File log = new File(TimeTracker.home + Constants.LOGFILE_NAME);
-                if (log.exists())
-                {
-                    final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
-                    if (desktop != null && desktop.isSupported(Desktop.Action.OPEN))
-                    {
-                        try
-                        {
-                            desktop.open(log);
-                        }
-                        catch (final IOException ex)
-                        {
-                            Log.severe(ex.getMessage(), ex);
-                        }
-                    }
-                }
-            }
-        });
-        BaseAction.setButtonIcon(openLog, timetracker.icons.Icon.LOG);
-        return openLog;
     }
 
     @Override

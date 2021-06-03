@@ -42,7 +42,7 @@ public enum Type
                 return type;
             }
         }
-        return null;
+        return EMPTY;
     }
 
     @Override
