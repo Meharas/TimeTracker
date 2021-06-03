@@ -34,16 +34,23 @@ public class ShowDatabaseContent extends AbstractAction
             return;
         }
 
-        final Point location = timeTracker.getWindowLocation();
+        final Dimension size = new Dimension(1150, 500);
+        final Point location = getWindowLocation(size);
 
         final JDialog dialog = new JDialog(timeTracker, "Database content", true);
-        final Dimension size = new Dimension(1150, 500);
         dialog.setBounds(location.x, location.y, size.width, size.height);
         dialog.setResizable(false);
         EscapeEvent.add(dialog);
 
         final Object[][] rowData = issuesToData(issues);
-        final JTable table = new JTable(rowData, COLUMN_HEADERS);
+        final JTable table = new JTable(rowData, COLUMN_HEADERS)
+        {
+            @Override
+            public boolean isCellEditable(final int row, final int column)
+            {
+                return false;
+            }
+        };
         table.setPreferredScrollableViewportSize(size);
 
         final TableColumnModel columnModel = table.getColumnModel();
@@ -60,6 +67,14 @@ public class ShowDatabaseContent extends AbstractAction
         final JScrollPane scrollPane = new JScrollPane(table);
         dialog.add(scrollPane);
         dialog.setVisible(true);
+    }
+
+    private Point getWindowLocation(final Dimension dimension)
+    {
+        final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        final int x = (screenSize.width / 2) - (dimension.width /2);
+        final int y = (screenSize.height / 2) - (dimension.height) / 2;
+        return new Point(x, y);
     }
 
     private Object[][] issuesToData(final List<Issue> issues)
