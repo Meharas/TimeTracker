@@ -4,6 +4,7 @@ import timetracker.TimeTracker;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.utils.EscapeEvent;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import javax.swing.table.TableColumnModel;
@@ -35,7 +36,7 @@ public class ShowDatabaseContent extends AbstractAction
         }
 
         final Dimension size = new Dimension(1150, 500);
-        final Point location = getWindowLocation(size);
+        final Point location = Util.getWindowLocation(size);
 
         final JDialog dialog = new JDialog(timeTracker, "Database content", true);
         dialog.setBounds(location.x, location.y, size.width, size.height);
@@ -67,14 +68,6 @@ public class ShowDatabaseContent extends AbstractAction
         final JScrollPane scrollPane = new JScrollPane(table);
         dialog.add(scrollPane);
         dialog.setVisible(true);
-    }
-
-    private Point getWindowLocation(final Dimension dimension)
-    {
-        final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        final int x = (screenSize.width / 2) - (dimension.width /2);
-        final int y = (screenSize.height / 2) - (dimension.height) / 2;
-        return new Point(x, y);
     }
 
     private Object[][] issuesToData(final List<Issue> issues)

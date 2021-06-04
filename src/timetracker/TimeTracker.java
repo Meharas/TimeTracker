@@ -8,7 +8,6 @@ import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.ContextMenu;
 import timetracker.menu.MiscMenuBar;
-import timetracker.utils.ClipboardMonitor;
 import timetracker.utils.TrayIcon;
 
 import javax.swing.*;
@@ -84,15 +83,20 @@ public class TimeTracker extends Frame
             db.initTable();
 
             final JButton add = new JButton(Resource.getString(PropertyConstants.LABEL_ADD));
-            BaseAction.setButtonIcon(add, timetracker.icons.Icon.ADD);
+            BaseAction.setButtonIcon(add, Icon.ADD);
             add.setAction(new ShowAddButtonAction(add));
 
+            final JButton addClipboard = new JButton(Resource.getString(PropertyConstants.LABEL_ADD_FROM_CLIPBOARD));
+            BaseAction.setButtonIcon(addClipboard, Icon.ADD);
+            addClipboard.setAction(new AddClipboardAction(addClipboard));
+
             final JButton reset = new JButton(Resource.getString(PropertyConstants.LABEL_STOP));
-            BaseAction.setButtonIcon(reset, timetracker.icons.Icon.STOP);
+            BaseAction.setButtonIcon(reset, Icon.STOP);
             reset.setAction(new ResetAction(reset));
 
-            final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 2));
+            final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 3));
             globalActionsPanel.add(add);
+            globalActionsPanel.add(addClipboard);
             globalActionsPanel.add(reset);
             addToPanel(globalActionsPanel);
             increaseLine();
@@ -259,10 +263,10 @@ public class TimeTracker extends Frame
         final JPanel actionsPanel = new JPanel();
         actionsPanel.setLayout(new BoxLayout(actionsPanel, BoxLayout.X_AXIS));
 
-        final JButton burnAction = addAction(actionsPanel, Resource.getString(PropertyConstants.TOOLTIP_BURN), timetracker.icons.Icon.BURN);
+        final JButton burnAction = addAction(actionsPanel, Resource.getString(PropertyConstants.TOOLTIP_BURN), Icon.BURN);
         burnAction.addActionListener(new BurnButtonAction(button, timeLabel, issue));
 
-        final JButton action = addAction(actionsPanel, Resource.getString(PropertyConstants.LABEL_FINISH), timetracker.icons.Icon.FINISH);
+        final JButton action = addAction(actionsPanel, Resource.getString(PropertyConstants.LABEL_FINISH), Icon.FINISH);
         action.addActionListener(new FinishDialogAction(button));
         action.setEnabled(issue.getId() > 4);
 
@@ -291,7 +295,7 @@ public class TimeTracker extends Frame
             final JMenuItem inProgressItem = new JMenuItem(Resource.getString(PropertyConstants.LABEL_IN_PROGRESS));
             inProgressItem.setBorder(BORDER);
             inProgressItem.setEnabled(issueState != null && !Constants.ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));
-            BaseAction.setButtonIcon(inProgressItem, timetracker.icons.Icon.PROGRESS);
+            BaseAction.setButtonIcon(inProgressItem, Icon.PROGRESS);
             inProgressItem.addActionListener(new AddAction(button)
             {
                 private static final long serialVersionUID = 922056815591098770L;
@@ -303,7 +307,7 @@ public class TimeTracker extends Frame
                 }
 
                 @Override
-                protected JButton createButton(final String text, final boolean getSummary)
+                protected JButton createButton(final String text)
                 {
                     return button;
                 }
@@ -325,7 +329,7 @@ public class TimeTracker extends Frame
     {
         final JMenuItem redoItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_REDO));
         redoItem.setBorder(BORDER);
-        BaseAction.setButtonIcon(redoItem, timetracker.icons.Icon.STOP);
+        BaseAction.setButtonIcon(redoItem, Icon.STOP);
         redoItem.addActionListener((final ActionEvent event) -> {
             final Action a = button.getAction();
             ((BaseAction) a).reset();
@@ -356,7 +360,7 @@ public class TimeTracker extends Frame
                 }
             }
         });
-        BaseAction.setButtonIcon(starItem, timetracker.icons.Icon.STAR);
+        BaseAction.setButtonIcon(starItem, Icon.STAR);
         starItem.setEnabled(issue.getId() > 4);
         menu.add(starItem);
     }
@@ -446,35 +450,10 @@ public class TimeTracker extends Frame
         return Client.getTicketSummary(text);
     }
 
-    public void showAddIssueDialog(final String text)
-    {
-        if(!matches(text))
-        {
-            return;
-        }
-        final AddAction action = new AddAction(Resource.getString(PropertyConstants.TEXT_OK));
-        action.handleConfirmationDialog(text, true, true);
-    }
-
     public static boolean matches(final String text)
     {
         MATCHER.reset(text);
         return MATCHER.matches();
-    }
-
-    /**
-     * Liefert einen kleinen Rückfragedialog
-     * @param width Breite des Dialogs
-     * @return Rückfragedialog
-     */
-    public JDialog getDialog(final int width)
-    {
-        final Point location = getWindowLocation();
-        final JDialog dialog = new JDialog(this, Resource.getString(PropertyConstants.TEXT_CONFIRMATION), true);
-        dialog.setBounds(location.x, location.y, width, 200);
-        dialog.setResizable(false);
-        dialog.getContentPane().setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
-        return dialog;
     }
 
     /**
@@ -548,7 +527,7 @@ public class TimeTracker extends Frame
                     final String currentTime = ((JLabel) component).getText();
                     try
                     {
-                        Backend.getInstance().saveDuration(id, currentTime);
+                        Backend.getInstance().saveCurrentDuration(id, currentTime);
                     }
                     catch (final Throwable t)
                     {
@@ -923,8 +902,8 @@ public class TimeTracker extends Frame
 
     private static void initClipboardObserver()
     {
-        final ClipboardMonitor monitor = ClipboardMonitor.getMonitor();
-        monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));
+        /*final ClipboardMonitor monitor = ClipboardMonitor.getMonitor();
+        monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));*/
     }
 
     /**

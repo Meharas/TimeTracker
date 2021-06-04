@@ -6,6 +6,7 @@ import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.config.ConnectionConfig;
@@ -15,6 +16,8 @@ import org.apache.http.conn.UnsupportedSchemeException;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.DefaultSchemePortResolver;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -423,6 +426,65 @@ public class Client
             throw new IOException(TimeTracker.getMessage(e), e.getCause());
         }
         return sslContext;
+    }
+
+    /**
+     * Überträgt die getrackte Zeit
+     * @param ticket Ticket
+     * @param spentTime Zeit
+     * @param type Typ
+     * @param text Kommentar
+     * @return {@code true}, wenn das Übertragen erfolgreich war und ein Response erhalten wurde, sonst {@code false}
+     * @throws URISyntaxException Fehler beim Erzeugen der URL
+     * @throws IOException Fehler beim Absetzen des Requests
+     */
+    public static boolean setSpentTime(final String ticket, final String spentTime, final String type, final String text) throws URISyntaxException, IOException
+    {
+        final URIBuilder builder = Client.getURIBuilder(ServicePath.WORKITEM, ticket);
+        final HttpPost request = new HttpPost(builder.build());
+        request.setEntity(new StringEntity(String.format(Constants.ENTITY, System.currentTimeMillis(), Client.getUserId(), spentTime, type, text), ContentType.APPLICATION_JSON));
+
+        final HttpResponse response = Client.executeRequest(request);
+        if (response == null)
+        {
+            return false;
+        }
+        Client.logResponse(response);
+        return true;
+    }
+
+    /**
+     * Setzt ein Ticket auf "In Bearbeitung"
+     * @param ticket Ticket
+     * @return {@code true}, wenn die Aktion erfolgreich war, sonst {@code false}
+     * @throws IOException Fehler beim Absetzen des Requests
+     * @throws URISyntaxException Fehler beim Erzeugen der URL
+     */
+    public static boolean setInProgress(String ticket) throws IOException, URISyntaxException
+    {
+        if(TimeTracker.matches(ticket))
+        {
+            ticket = TimeTracker.MATCHER.group(1);
+        }
+        final String issueID = Client.getIssueID(ticket);
+        if (issueID == null)
+        {
+            Log.severe("Issue id of " + ticket + " not found");
+            return false;
+        }
+
+        final URIBuilder builder = Client.getCommandURIBuilder();
+        final HttpPost request = new HttpPost(builder.build());
+        request.setEntity(new StringEntity(String.format(Constants.ISSUE_COMMAND, Constants.ISSUE_STATE,
+                                                         Constants.ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
+
+        final HttpResponse response = Client.executeRequest(request);
+        if (response == null)
+        {
+            return false;
+        }
+        Client.logResponse(response);
+        return true;
     }
 
     /**

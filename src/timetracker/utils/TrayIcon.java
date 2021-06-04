@@ -30,7 +30,7 @@ public class TrayIcon
             final TimeTracker timeTracker = TimeTracker.getTimeTracker();
             final MenuItem aboutItem = new MenuItem("About");
             final int year = LocalDateTime.now().getYear();
-            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(timeTracker, "Version 0.0.1 Leipzig\n\nby Andreas Beyer\n©" + year));
+            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(timeTracker, "Version 0.5 Leipzig\n\nby Andreas Beyer\n©" + year));
 
             final MenuItem openItem = new MenuItem(Resource.getString(PropertyConstants.LABEL_OPEN));
             openItem.setEnabled(false);

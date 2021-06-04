@@ -1,5 +1,6 @@
 package timetracker.data;
 
+import timetracker.Constants;
 import timetracker.db.Backend;
 
 import java.util.Map;
@@ -30,12 +31,12 @@ public class Issue
                  final boolean deletable, final boolean marked)
     {
         this.id = id;
-        this.ticket = ticket;
-        this.label = label;
+        this.ticket = getString(ticket);
+        this.label = getString(label);
         this.type = type;
-        this.duration = duration;
-        this.durationSaved = durationSaved;
-        this.icon = icon;
+        this.duration = getString(duration);
+        this.durationSaved = getString(durationSaved);
+        this.icon = getString(icon);
         this.deletable = deletable;
         this.marked = marked;
     }
@@ -43,14 +44,19 @@ public class Issue
     public Issue(final Map<String, String> data)
     {
         this.id = Optional.ofNullable(data.get(Backend.CN_ID)).map(Integer::parseInt).orElse(-1);
-        this.ticket = data.get(Backend.CN_ISSUE);
-        this.label = data.get(Backend.CN_LABEL);
+        this.ticket = getString(data.get(Backend.CN_ISSUE));
+        this.label = getString(data.get(Backend.CN_LABEL));
         this.type = Type.getType(data.get(Backend.CN_TYPE));
-        this.duration = data.get(Backend.CN_DURATION);
-        this.durationSaved = data.get(Backend.CN_DURATION_SAVED);
-        this.icon = data.get(Backend.CN_ICON);
+        this.duration = getString(data.get(Backend.CN_DURATION));
+        this.durationSaved = getString(data.get(Backend.CN_DURATION_SAVED));
+        this.icon = getString(data.get(Backend.CN_ICON));
         this.deletable = Boolean.parseBoolean(data.get(Backend.CN_DELETABLE));
         this.marked = Boolean.parseBoolean(data.get(Backend.CN_MARKED));
+    }
+
+    private String getString(final String string)
+    {
+        return Optional.ofNullable(string).orElse(Constants.STRING_EMPTY);
     }
 
     public int getId()
@@ -73,7 +79,7 @@ public class Issue
 
     public void setTicket(final String ticket)
     {
-        this.ticket = ticket;
+        this.ticket = getString(ticket);
     }
 
     public String getLabel()
@@ -83,7 +89,7 @@ public class Issue
 
     public void setLabel(final String label)
     {
-        this.label = label;
+        this.label = getString(label);
     }
 
     public Type getType()
@@ -93,7 +99,7 @@ public class Issue
 
     public void setType(final Type type)
     {
-        this.type = type;
+        this.type = Optional.ofNullable(type).orElse(Type.EMPTY);
     }
 
     public String getDuration()
@@ -103,7 +109,7 @@ public class Issue
 
     public void setDuration(final String duration)
     {
-        this.duration = duration;
+        this.duration = getString(duration);
     }
 
     public String getDurationSaved()
@@ -113,7 +119,7 @@ public class Issue
 
     public void setDurationSaved(final String duration)
     {
-        this.durationSaved = duration;
+        this.durationSaved = getString(duration);
     }
 
     public String getIcon()
@@ -123,7 +129,7 @@ public class Issue
 
     public void setIcon(final String icon)
     {
-        this.icon = icon;
+        this.icon = getString(icon);
     }
 
     public boolean isDeletable()

@@ -6,20 +6,21 @@ package timetracker.icons;
 public enum Icon
 {
     ADD("add.png"),
-    STOP("stop.png"),
-    LOG("log.png"),
-    REMOVE("delete_grey.png"),
     BURN("burn.png"),
-    OPEN("link.png"),
+    CLIPBOARD("clipboard.png"),
     COPY("copy.png"),
     EDIT("edit.png"),
-    PROGRESS("progress.png"),
     FINISH("ok.png"),
-    STAR("star.png"),
-    SUPPORT("support.png"),
+    LOG("log.png"),
     MEETING("meeting.png"),
-    PHONE("phone.png"),
+    OPEN("link.png"),
     PAUSE("pause.png"),
+    PHONE("phone.png"),
+    PROGRESS("progress.png"),
+    REMOVE("delete_grey.png"),
+    STAR("star.png"),
+    STOP("stop.png"),
+    SUPPORT("support.png"),
     TIMETRACKER("timetracker.png");
 
     private final String png;

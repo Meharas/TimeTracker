@@ -11,7 +11,7 @@ public final class Constants
     {
     }
 
-    public static final Pattern PATTERN = Pattern.compile("([SEP-|DEV-|FS-|DC-]+[0-9]+).*");
+    public static final Pattern PATTERN = Pattern.compile("(^[SEP|DEV|FS|DC]+-[0-9]+).*");
     public static final Pattern TIME_PATTERN = Pattern.compile(".*([0-9]+)h ([0-9]+)min ([0-9]+)s");
     public static final Pattern BURN_PATTERN = Pattern.compile(".*([0-9]+)h ([0-9]+)m");
     public static final Pattern DURATION_PATTERN = Pattern.compile("(\\d{2})h (\\d{2})min (\\d{2})s");
@@ -21,13 +21,6 @@ public final class Constants
     public static final String DEFAULT_PROPERTIES = TimeTracker.class.getSimpleName() + ".default.properties";
     public static final String LOGFILE_NAME = "TimeTracker.log";
     public static final String PREFIX_BUTTON = "button.";
-    public static final String SUFFIX_LABEL = ".label";
-    public static final String SUFFIX_ICON = ".icon";
-    public static final String SUFFIX_TICKET = ".ticket";
-    public static final String SUFFIX_MARKED = ".marked";
-    public static final String SUFFIX_TYPE = ".type";
-    public static final String SUFFIX_DURATION = ".duration";
-    public static final String SUFFIX_DURATION_SAVED = ".duration.saved";
     public static final String ACTIONMAP_KEY_CANCEL = "Cancel";
     public static final String ISSUE_SUMMARY = "summary";
     public static final String ISSUE_STATE = "State";
@@ -45,7 +38,6 @@ public final class Constants
 
     public static final String DEFAULT_HOST = "youtrack";
     public static final String DEFAULT_SCHEME = "http";
-    public static final String DEFAULT_PORT = "80";
 
     public static final String STRING_EMPTY = "";
     public static final String STRING_SPACE = " ";

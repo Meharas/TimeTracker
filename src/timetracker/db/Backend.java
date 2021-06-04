@@ -317,6 +317,20 @@ public class Backend
      * @param duration Zeitdauer
      * @throws Throwable database access error or other errors
      */
+    public void saveCurrentDuration(final String issueId, final String duration) throws Throwable
+    {
+        final List<Issue> issues = executeSelect(String.format(QUERY_STMT, issueId));
+        final Issue issue = issues.iterator().next();
+        issue.setDuration(duration);
+        updateIssue(issue);
+    }
+
+    /**
+     * Speichert die Zeitdauer für ein bestimmtes Issue
+     * @param issueId Id des Issues
+     * @param duration Zeitdauer
+     * @throws Throwable database access error or other errors
+     */
     public void saveDuration(final String issueId, final String duration) throws Throwable
     {
         final List<Issue> issues = executeSelect(String.format(QUERY_STMT, issueId));

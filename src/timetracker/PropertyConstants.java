@@ -14,6 +14,7 @@ public final class PropertyConstants
     public static final String TEXT_YES = "text.yes";
     public static final String TEXT_CONFIRMATION = "text.confirmation";
     public static final String TEXT_RESET = "text.reset";
+    public static final String TEXT_CANCEL = "text.cancel";
 
     public static final String MENU_ITEM_COPY = "menu.item.copy";
     public static final String MENU_ITEM_EDIT = "menu.item.edit";
@@ -28,10 +29,10 @@ public final class PropertyConstants
     public static final String LABEL_FINISH = "button.label.finish";
     public static final String LABEL_STATE = "button.label.state";
     public static final String LABEL_VERSION = "button.label.version";
-    public static final String LABEL_COMMENT = "button.label.comment";
     public static final String LABEL_TYPE = "button.label.type";
     public static final String LABEL_TEXT = "button.label.text";
     public static final String LABEL_ADD = "button.label.add";
+    public static final String LABEL_ADD_FROM_CLIPBOARD = "button.label.add.clipboard";
     public static final String LABEL_STOP = "button.label.stop";
     public static final String LABEL_TICKET = "button.label.ticket";
     public static final String LABEL_TIME = "button.label.time";

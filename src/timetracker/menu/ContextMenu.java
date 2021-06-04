@@ -51,7 +51,7 @@ public class ContextMenu
 
         final JMenuItem editItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_EDIT));
         editItem.setBorder(BORDER);
-        editItem.addActionListener(new ShowAddButtonAction(parent));
+        editItem.addActionListener(new ShowAddButtonAction(parent, issue));
         BaseAction.setButtonIcon(editItem, Icon.EDIT);
 
         final JMenuItem openItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_OPEN));

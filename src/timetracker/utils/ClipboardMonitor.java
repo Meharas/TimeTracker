@@ -1,6 +1,7 @@
 package timetracker.utils;
 
 import timetracker.TimeTracker;
+import timetracker.dialogs.ClipboardDialog;
 import timetracker.log.Log;
 
 import java.awt.*;
@@ -21,7 +22,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
     {
     }
 
-    private void gainOwnership(final Transferable content)
+    private static void gainOwnership(final Transferable content)
     {
         Log.info("gain ownership...");
         try
@@ -32,43 +33,38 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
                 if(transferData instanceof String && !((String) transferData).isEmpty())
                 {
                     Log.info("String content detected");
-                    TimeTracker.getTimeTracker().showAddIssueDialog((String) transferData);
+
+                    if(TimeTracker.matches((String) transferData))
+                    {
+                        final ClipboardDialog dialog = new ClipboardDialog((String) transferData);
+                        dialog.setVisible(true);
+                    }
                 }
             }
 
             ClipboardMonitor.disabled = false;
-            clipboard.setContents(content, this);
+            clipboard.setContents(content, monitor);
         }
         catch (final Exception e)
         {
             Log.severe(e.getMessage(), e);
         }
-    }
-    private void setBuffer(final String buffer)
-    {
-        gainOwnership(new StringSelection(buffer));
     }
 
     @Override
     public void lostOwnership(final Clipboard clipboard, final Transferable contents)
     {
-        Log.info("Ownership lost ...");
-
-        try
-        {
-            Thread.sleep(50);
-        }
-        catch (final Exception e)
-        {
-            Log.severe(e.getMessage(), e);
-        }
-        gainOwnership(clipboard.getContents(this));
     }
 
     @Override
     public Object clone() throws CloneNotSupportedException
     {
         throw new CloneNotSupportedException("There can be only one instance of this monitor!");
+    }
+
+    public static void resetClipboard()
+    {
+        gainOwnership(new StringSelection(""));
     }
 
     public static ClipboardMonitor getMonitor()
@@ -90,6 +86,6 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
     @Override
     public void run()
     {
-        setBuffer("");
+        resetClipboard();
     }
 }

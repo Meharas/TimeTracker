@@ -155,10 +155,15 @@ public class BaseAction extends AbstractAction
 
     public void resetTimers()
     {
-        resetTimers(this.button.getParent().getParent().getComponents());
+        resetTimers(this.button);
     }
 
-    void resetTimers(final Component[] components)
+    public static void resetTimers(final JButton button)
+    {
+        resetTimers(button.getParent().getParent().getComponents());
+    }
+
+    private static void resetTimers(final Component[] components)
     {
         if (components == null)
         {

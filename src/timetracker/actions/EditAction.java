@@ -2,6 +2,7 @@ package timetracker.actions;
 
 import timetracker.TimeTracker;
 import timetracker.Constants;
+import timetracker.data.Issue;
 import timetracker.db.Backend;
 
 import javax.swing.*;
@@ -19,9 +20,9 @@ public class EditAction extends BaseAction
     private final JTextField textInput;
     private final JFileChooser icon;
 
-    public EditAction(final JButton okButton, final JButton issueButton, final JTextField textInput, final JFileChooser icon)
+    public EditAction(final Issue issue, final JButton okButton, final JButton issueButton, final JTextField textInput, final JFileChooser icon)
     {
-        super(okButton);
+        super(okButton, issue);
         this.issueButton = issueButton;
         this.textInput = textInput;
         this.icon = icon;
