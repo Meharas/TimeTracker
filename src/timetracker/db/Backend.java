@@ -1,6 +1,8 @@
 package timetracker.db;
 
 import timetracker.Constants;
+import timetracker.TimeTracker;
+import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.data.Type;
 import timetracker.icons.Icon;
@@ -32,20 +34,19 @@ public class Backend
     public static final String CN_TYPE = "TYPE";
 
     private static final String TN_ISSUES = "ISSUES";
-    private static final String TN_ISSUES_COLUMNS = String.format(" (%s INTEGER, %s VARCHAR(12), %s NVARCHAR(255), %s VARCHAR (12), %s VARCHAR(16), %s VARCHAR(16), " +
+    private static final String TN_ISSUES_COLUMNS = String.format(" (%s VARCHAR(12), %s VARCHAR(12), %s NVARCHAR(255), %s VARCHAR (12), %s VARCHAR(16), %s VARCHAR(16), " +
                                                                   "%s VARCHAR(255), %s BOOLEAN, %s BOOLEAN, PRIMARY KEY (%s))",
                                                                   CN_ID, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON, CN_DELETABLE, CN_MARKED, CN_ID);
 
-    private static final String QUERY_STMT = String.format("SELECT * FROM %s WHERE ID = ", TN_ISSUES) + "%s";
+    private static final String QUERY_STMT = String.format("SELECT * FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s'";
     private static final String QUERY_ALL_STMT = String.format("SELECT * FROM %s", TN_ISSUES);
     private static final String INSERT_STMT = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES ",
                                                             TN_ISSUES, CN_ID, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON, CN_DELETABLE, CN_MARKED) +
-                                                            "(%d, '%s', '%s', '%s', '%s', '%s', '%s', %s, %s)";
+                                                            "('%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s)";
     private static final String DELETE_STMT = String.format("DELETE FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s'";
-    private static final String MAX_ID_STMT = String.format("SELECT MAX(%s) FROM %s", CN_ID, TN_ISSUES);
     private static final String UPDATE_STMT = "UPDATE " + TN_ISSUES + " SET " + CN_ISSUE + UPDATE_VALUE + CN_LABEL + UPDATE_VALUE + CN_TYPE + UPDATE_VALUE +
                                               CN_DURATION + UPDATE_VALUE + CN_DURATION_SAVED + UPDATE_VALUE + CN_ICON + UPDATE_VALUE +
-                                              CN_DELETABLE + UPDATE_VALUE + CN_MARKED + "=%s WHERE " + CN_ID + "=%d";
+                                              CN_DELETABLE + UPDATE_VALUE + CN_MARKED + "=%s WHERE " + CN_ID + "='%s'";
 
     
     // Innere private Klasse, die erst beim Zugriff durch die umgebende Klasse initialisiert wird
@@ -81,7 +82,9 @@ public class Backend
         try
         {
             Log.info("Connect to DB...");
-            this.conn = DriverManager.getConnection("jdbc:hsqldb:db/timetrackerDB;hsqldb.default_table_type=CACHED;hsqldb.cache_size=60000;hsqldb.log_size=5",
+            final String file = TimeTracker.home + "db/timetrackerDB";
+            Log.info("Database file: " + file);
+            this.conn = DriverManager.getConnection("jdbc:hsqldb:" + file + ";hsqldb.default_table_type=CACHED;hsqldb.cache_size=60000;hsqldb.log_size=5",
                                                     "sa", null);
             Log.info("Connected successfully to DB");
 
@@ -175,10 +178,10 @@ public class Backend
         stmt.executeUpdate(sqlTable.toString());
         Log.info("Table created: " + TN_ISSUES);
 
-        insertIssue(new Issue(Constants.STRING_EMPTY, "Support", Type.SUPPORT, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false));
-        insertIssue(new Issue(Constants.STRING_EMPTY, "Telefonat", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon(), false, false));
-        insertIssue(new Issue(Constants.STRING_EMPTY, "Meeting", Type.MEETING, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
-        insertIssue(new Issue(Constants.STRING_EMPTY, "Pause", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon(), false, false));
+        insertIssue(new Issue("1", Constants.STRING_EMPTY, "Support", Type.SUPPORT, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false));
+        insertIssue(new Issue("2", Constants.STRING_EMPTY, "Telefonat", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon(), false, false));
+        insertIssue(new Issue("3", Constants.STRING_EMPTY, "Meeting", Type.MEETING, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
+        insertIssue(new Issue("4", Constants.STRING_EMPTY, "Pause", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon(), false, false));
 
         return false;
     }
@@ -191,44 +194,17 @@ public class Backend
     public void insertIssue(final Issue issue) throws Throwable
     {
         initTable();
-        final int id = getId();
-        executeUpdate(String.format(INSERT_STMT, id, issue.getTicket(), issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(null),
+
+        final String ticket = issue.getTicket();
+        String id = issue.getId();
+        if(ticket != null && !ticket.isEmpty())
+        {
+            id = Client.getIssueID(ticket);
+        }
+
+        executeUpdate(String.format(INSERT_STMT, id, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(null),
                                     issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked()));
         issue.setId(id);
-    }
-
-    private int getId() throws Throwable
-    {
-        final int max = getMaxId();
-        return max + 1;
-    }
-
-    /**
-     * Liefert das Maximum über die Id
-     * @return Maximum über die Id
-     * @throws Throwable database access error or other errors
-     */
-    private int getMaxId() throws Throwable
-    {
-        ResultSet rs = null;
-        try
-        {
-            rs = this.statement.executeQuery(MAX_ID_STMT);
-            if (rs.next())
-            {
-                return rs.getInt(1);
-            }
-        }
-        catch (final Throwable t)
-        {
-            Log.warning("Could not execute query: " + MAX_ID_STMT, t);
-            throw t;
-        }
-        finally
-        {
-            close(rs);
-        }
-        return 0;
     }
 
     /**

@@ -207,7 +207,7 @@ public class TimeTracker extends Frame
 
         final JButton button = new JButton(label);
         BaseAction.setButtonIcon(button, issue.getIcon());
-        button.setName(Integer.toString(issue.getId()));
+        button.setName(issue.getId());
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.addMouseListener(new MouseAdapter()
         {
@@ -239,7 +239,7 @@ public class TimeTracker extends Frame
         labelPanel.add(button, BorderLayout.CENTER);
 
         final JLabel timeLabel = new JLabel();
-        timeLabel.setName(Integer.toString(issue.getId()));
+        timeLabel.setName(issue.getId());
         timeLabel.setPreferredSize(new Dimension(100, 20));
         timeLabel.setBorder(new EmptyBorder(0, 8, 0, 0));
 
@@ -268,7 +268,7 @@ public class TimeTracker extends Frame
 
         final JButton action = addAction(actionsPanel, Resource.getString(PropertyConstants.LABEL_FINISH), Icon.FINISH);
         action.addActionListener(new FinishDialogAction(button));
-        action.setEnabled(issue.getId() > 4);
+        action.setEnabled(issue.isDeletable());
 
         buttonPanel.add(actionsPanel, BorderLayout.EAST);
         addToPanel(buttonPanel);
@@ -291,7 +291,7 @@ public class TimeTracker extends Frame
     {
         try
         {
-            final String issueState = issue.getId() > 4 ? Client.getIssueState(button.getText()) : null;
+            final String issueState = issue.isDeletable() ? Client.getIssueState(button.getText()) : null;
             final JMenuItem inProgressItem = new JMenuItem(Resource.getString(PropertyConstants.LABEL_IN_PROGRESS));
             inProgressItem.setBorder(BORDER);
             inProgressItem.setEnabled(issueState != null && !Constants.ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));
@@ -361,7 +361,7 @@ public class TimeTracker extends Frame
             }
         });
         BaseAction.setButtonIcon(starItem, Icon.STAR);
-        starItem.setEnabled(issue.getId() > 4);
+        starItem.setEnabled(issue.isDeletable());
         menu.add(starItem);
     }
 

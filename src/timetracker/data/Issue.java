@@ -11,7 +11,7 @@ import java.util.Optional;
  */
 public class Issue
 {
-    private int id = -1;
+    private String id;
     private String ticket;
     private String label;
     private Type type;
@@ -24,10 +24,10 @@ public class Issue
     public Issue(final String ticket, final String label, final Type type, final String duration, final String durationSaved, final String icon,
                  final boolean deletable, final boolean marked)
     {
-        this(-1, ticket, label, type, duration, durationSaved, icon, deletable, marked);
+        this(Constants.STRING_EMPTY, ticket, label, type, duration, durationSaved, icon, deletable, marked);
     }
 
-    public Issue(final int id, final String ticket, final String label, final Type type, final String duration, final String durationSaved, final String icon,
+    public Issue(final String id, final String ticket, final String label, final Type type, final String duration, final String durationSaved, final String icon,
                  final boolean deletable, final boolean marked)
     {
         this.id = id;
@@ -43,7 +43,7 @@ public class Issue
 
     public Issue(final Map<String, String> data)
     {
-        this.id = Optional.ofNullable(data.get(Backend.CN_ID)).map(Integer::parseInt).orElse(-1);
+        this.id = getString(data.get(Backend.CN_ID));
         this.ticket = getString(data.get(Backend.CN_ISSUE));
         this.label = getString(data.get(Backend.CN_LABEL));
         this.type = Type.getType(data.get(Backend.CN_TYPE));
@@ -59,14 +59,14 @@ public class Issue
         return Optional.ofNullable(string).orElse(Constants.STRING_EMPTY);
     }
 
-    public int getId()
+    public String getId()
     {
         return this.id;
     }
 
-    public void setId(final int id)
+    public void setId(final String id)
     {
-        if(this.id == -1)
+        if(this.id == null || this.id.isEmpty())
         {
             this.id = id;
         }

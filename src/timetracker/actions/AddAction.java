@@ -20,8 +20,8 @@ import java.util.Optional;
 public class AddAction extends BaseAction
 {
     private static final long serialVersionUID = 2109270279366930967L;
-    private JTextField textInput;
-    private JFileChooser icon;
+    private final JTextField textInput;
+    private final JFileChooser icon;
 
     public AddAction(final JButton button)
     {
