@@ -150,7 +150,7 @@ public class Issue
     @Override
     public String toString()
     {
-        return String.format("Issue{Id=%d, Ticket=%s, Label=%s, Type=%s, Duration=%s, Saved duration=%s, Icon=%s, Deletable=%s, Marked=%s}",
+        return String.format("Issue{Id=%s, Ticket=%s, Label=%s, Type=%s, Duration=%s, Saved duration=%s, Icon=%s, Deletable=%s, Marked=%s}",
                              getId(), getTicket(), getLabel(), getType(), getDuration(), getDurationSaved(), getIcon(), isDeletable(), isMarked());
     }
 }

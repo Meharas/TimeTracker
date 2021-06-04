@@ -4,6 +4,7 @@ import timetracker.actions.*;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
+import timetracker.error.BackendException;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.ContextMenu;
@@ -161,9 +162,12 @@ public class TimeTracker extends Frame
 
     public static void handleException(final Throwable t)
     {
-        t.printStackTrace();
         final String msg = getMessage(t);
-        Log.severe(msg, t);
+        if (!(t instanceof BackendException))
+        {
+            t.printStackTrace();
+            Log.severe(msg, t);
+        }
         JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
     }
 

@@ -5,6 +5,8 @@ import timetracker.TimeTracker;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.data.Type;
+import timetracker.error.BackendException;
+import timetracker.error.ErrorCodes;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 
@@ -197,14 +199,22 @@ public class Backend
 
         final String ticket = issue.getTicket();
         String id = issue.getId();
-        if(ticket != null && !ticket.isEmpty())
+        if(id == null || id.isEmpty())
         {
             id = Client.getIssueID(ticket);
         }
 
-        executeUpdate(String.format(INSERT_STMT, id, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(null),
+        final String issueId = id;
+        final List<Issue> issues = getIssues();
+        final boolean issueExists = issues.stream().anyMatch(iss -> iss.getId().equalsIgnoreCase(issueId));
+        if(issueExists)
+        {
+            throw new BackendException(ErrorCodes.getString(ErrorCodes.ERROR_ISSUE_EXISTS));
+        }
+
+        executeUpdate(String.format(INSERT_STMT, issueId, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(null),
                                     issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked()));
-        issue.setId(id);
+        issue.setId(issueId);
     }
 
     /**
