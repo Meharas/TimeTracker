@@ -484,6 +484,7 @@ public class TimeTracker extends Frame
      */
     private void saveWindowPositionAndSize()
     {
+        Log.info("Timetracker closing...");
         final Properties properties = new Properties();
         try (final InputStream inputStream = loadProperties(properties, Constants.PROPERTIES))
         {

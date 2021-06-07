@@ -298,7 +298,8 @@ public class Backend
         {
             return null;
         }
-        return executeSelect(String.format(QUERY_STMT, id)).iterator().next();
+        final List<Issue> issues = executeSelect(String.format(QUERY_STMT, id));
+        return !issues.isEmpty() ? issues.iterator().next() : null;
     }
 
     /**
