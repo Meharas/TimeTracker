@@ -59,7 +59,7 @@ public class TimeTracker extends Frame
             @Override
             public void windowClosing(final WindowEvent windowEvent)
             {
-                saveWindowPositionAndSize();
+                shutdown();
             }
         });
     }
@@ -169,12 +169,6 @@ public class TimeTracker extends Frame
             Log.severe(msg, t);
         }
         JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
-    }
-
-    @Override
-    public final synchronized void addWindowListener(final WindowListener l)
-    {
-        super.addWindowListener(l);
     }
 
     @Override
@@ -482,9 +476,17 @@ public class TimeTracker extends Frame
     /**
      * Speichert die Fenstergröße und -position
      */
-    private void saveWindowPositionAndSize()
+    private void shutdown()
     {
         Log.info("Timetracker closing...");
+
+        saveDurations();
+
+        if(!isVisible())
+        {
+            System.exit(0);
+        }
+
         final Properties properties = new Properties();
         try (final InputStream inputStream = loadProperties(properties, Constants.PROPERTIES))
         {
@@ -500,7 +502,6 @@ public class TimeTracker extends Frame
                 Log.fine("Saving window dimension {0}", value);
                 properties.setProperty(PropertyConstants.WINDOW_DIMENSION, value);
 
-                saveDurations();
                 storeProperties(properties);
             }
         }
