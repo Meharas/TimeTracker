@@ -120,6 +120,7 @@ public class Issue
     public void setDurationSaved(final String duration)
     {
         this.durationSaved = getString(duration);
+        this.duration = Constants.STRING_EMPTY;
     }
 
     public String getIcon()

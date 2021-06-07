@@ -176,15 +176,16 @@ public class Backend
         sqlTable.append(TN_ISSUES);
         sqlTable.append(TN_ISSUES_COLUMNS);
 
-        final Statement stmt = this.conn.createStatement();
-        stmt.executeUpdate(sqlTable.toString());
-        Log.info("Table created: " + TN_ISSUES);
+        try (final Statement stmt = this.conn.createStatement())
+        {
+            stmt.executeUpdate(sqlTable.toString());
+            Log.info("Table created: " + TN_ISSUES);
 
-        insertIssue(new Issue("1", Constants.STRING_EMPTY, "Support", Type.SUPPORT, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false));
-        insertIssue(new Issue("2", Constants.STRING_EMPTY, "Telefonat", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon(), false, false));
-        insertIssue(new Issue("3", Constants.STRING_EMPTY, "Meeting", Type.MEETING, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
-        insertIssue(new Issue("4", Constants.STRING_EMPTY, "Pause", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon(), false, false));
-
+            insertIssue(new Issue("1", Constants.STRING_EMPTY, "Support", Type.SUPPORT, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false));
+            insertIssue(new Issue("2", Constants.STRING_EMPTY, "Telefonat", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon(), false, false));
+            insertIssue(new Issue("3", Constants.STRING_EMPTY, "Meeting", Type.MEETING, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
+            insertIssue(new Issue("4", Constants.STRING_EMPTY, "Pause", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon(), false, false));
+        }
         return false;
     }
 
@@ -204,31 +205,29 @@ public class Backend
             id = Client.getIssueID(ticket);
         }
 
-        final String issueId = id;
-        final List<Issue> issues = getIssues();
-        final boolean issueExists = issues.stream().anyMatch(iss -> iss.getId().equalsIgnoreCase(issueId));
-        if(issueExists)
+        final Issue result = getIssue(id);
+        if(result != null)
         {
             throw new BackendException(ErrorCodes.getString(ErrorCodes.ERROR_ISSUE_EXISTS));
         }
 
-        executeUpdate(String.format(INSERT_STMT, issueId, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(null),
+        executeUpdate(String.format(INSERT_STMT, id, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(null),
                                     issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked()));
-        issue.setId(issueId);
+        issue.setId(id);
+        Log.info("Issue inserted: " +  issue);
     }
 
     /**
      * Löscht die Issues zu einem Benutzer
      * @param issue Ticket
-     * @return Anzahl gelöschter Datensätze
      * @throws Throwable database access error or other errors
      */
-    public int deleteIssue(final Issue issue) throws Throwable
+    public void deleteIssue(final Issue issue) throws Throwable
     {
         if(issue == null)
         {
             Log.severe("Issue is null or empty");
-            return -1;
+            return;
         }
         try
         {
@@ -238,7 +237,8 @@ public class Backend
         {
             Log.severe("Could not create table", e);
         }
-        return executeUpdate(String.format(DELETE_STMT, issue.getId()));
+        executeUpdate(String.format(DELETE_STMT, issue.getId()));
+        Log.info("Issue updated: " +  issue);
     }
 
     /**
@@ -287,6 +287,21 @@ public class Backend
     }
 
     /**
+     * Liefert das Issue zur übergebenen Id
+     * @param id Id des Issues
+     * @return Issue oder {@code null}
+     * @throws Throwable database access error or other errors
+     */
+    public Issue getIssue(final String id) throws Throwable
+    {
+        if(!initTable())
+        {
+            return null;
+        }
+        return executeSelect(String.format(QUERY_STMT, id)).iterator().next();
+    }
+
+    /**
      * Setzt die Zeitdauer zurück
      * @param issue Issue
      * @throws Throwable database access error or other errors
@@ -305,8 +320,7 @@ public class Backend
      */
     public void saveCurrentDuration(final String issueId, final String duration) throws Throwable
     {
-        final List<Issue> issues = executeSelect(String.format(QUERY_STMT, issueId));
-        final Issue issue = issues.iterator().next();
+        final Issue issue = getIssue(issueId);
         issue.setDuration(duration);
         updateIssue(issue);
     }
@@ -319,8 +333,7 @@ public class Backend
      */
     public void saveDuration(final String issueId, final String duration) throws Throwable
     {
-        final List<Issue> issues = executeSelect(String.format(QUERY_STMT, issueId));
-        final Issue issue = issues.iterator().next();
+        final Issue issue = getIssue(issueId);
         issue.setDurationSaved(duration);
         issue.setDuration(Constants.STRING_EMPTY);
         updateIssue(issue);
@@ -335,6 +348,7 @@ public class Backend
     {
         executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(Constants.STRING_EMPTY),
                                     issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked(), issue.getId()));
+        Log.info("Issue updated: " +  issue);
     }
 
     /**
