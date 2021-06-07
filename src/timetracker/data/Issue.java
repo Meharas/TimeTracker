@@ -94,7 +94,7 @@ public class Issue
 
     public Type getType()
     {
-        return this.type;
+        return Optional.ofNullable(this.type).orElse(Type.EMPTY);
     }
 
     public void setType(final Type type)
