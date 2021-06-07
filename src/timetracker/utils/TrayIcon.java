@@ -3,7 +3,10 @@ package timetracker.utils;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
+import timetracker.actions.AddClipboardAction;
+import timetracker.actions.OpenLogAction;
 import timetracker.actions.ShowAddButtonAction;
+import timetracker.actions.ShowDatabaseContent;
 import timetracker.icons.Icon;
 
 import javax.swing.*;
@@ -30,7 +33,7 @@ public class TrayIcon
             final TimeTracker timeTracker = TimeTracker.getTimeTracker();
             final MenuItem aboutItem = new MenuItem("About");
             final int year = LocalDateTime.now().getYear();
-            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(timeTracker, "Version 0.5 Leipzig\n\nby Andreas Beyer\n©" + year));
+            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(timeTracker, "Version 0.6 Leipzig\n\nby Andreas Beyer\n©" + year));
 
             final MenuItem openItem = new MenuItem(Resource.getString(PropertyConstants.LABEL_OPEN));
             openItem.setEnabled(false);
@@ -85,10 +88,24 @@ public class TrayIcon
             final MenuItem add = new MenuItem(Resource.getString(PropertyConstants.LABEL_ADD));
             add.addActionListener(new ShowAddButtonAction());
 
+            final MenuItem addCb = new MenuItem(Resource.getString(PropertyConstants.LABEL_ADD_FROM_CLIPBOARD));
+            addCb.addActionListener(new AddClipboardAction());
+
+            final MenuItem openLog = new MenuItem(Resource.getString(PropertyConstants.LABEL_SHOW_LOG));
+            openLog.addActionListener(new OpenLogAction());
+
+            final MenuItem showDb = new MenuItem(Resource.getString(PropertyConstants.LABEL_SHOW_DB));
+            showDb.addActionListener(new ShowDatabaseContent());
+
             final PopupMenu popup = new PopupMenu();
-            popup.add(aboutItem);
             popup.add(openItem);
+            popup.addSeparator();
             popup.add(add);
+            popup.add(addCb);
+            popup.addSeparator();
+            popup.add(showDb);
+            popup.add(openLog);
+            popup.add(aboutItem);
             icon.setPopupMenu(popup);
             SystemTray.getSystemTray().add(icon);
 

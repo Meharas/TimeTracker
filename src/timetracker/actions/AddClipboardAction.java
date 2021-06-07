@@ -11,6 +11,11 @@ import java.awt.event.ActionEvent;
  */
 public class AddClipboardAction extends BaseAction
 {
+    public AddClipboardAction()
+    {
+        super();
+    }
+
     public AddClipboardAction(final JButton button)
     {
         super(button);

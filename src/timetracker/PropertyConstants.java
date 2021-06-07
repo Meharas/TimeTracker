@@ -37,6 +37,8 @@ public final class PropertyConstants
     public static final String LABEL_TICKET = "button.label.ticket";
     public static final String LABEL_TIME = "button.label.time";
     public static final String LABEL_OPEN = "button.label.open";
+    public static final String LABEL_SHOW_LOG = "button.label.showlog";
+    public static final String LABEL_SHOW_DB = "button.label.showdb";
 
     public static final String TICKET_IN_PROGRESS = "ticket.inprogress";
     public static final String TIME_SAVED = "time.saved";
