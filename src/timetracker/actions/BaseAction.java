@@ -6,6 +6,7 @@ import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import java.awt.*;
@@ -131,7 +132,7 @@ public class BaseAction extends AbstractAction
         }
         catch (final Throwable t)
         {
-            TimeTracker.handleException(t);
+            Util.handleException(t);
         }
     }
 
@@ -227,7 +228,7 @@ public class BaseAction extends AbstractAction
         }
         catch (final Throwable t)
         {
-            TimeTracker.handleException(t);
+            Util.handleException(t);
         }
     }
 
@@ -245,7 +246,7 @@ public class BaseAction extends AbstractAction
         }
         catch (final Throwable t)
         {
-            TimeTracker.handleException(t);
+            Util.handleException(t);
         }
     }
 

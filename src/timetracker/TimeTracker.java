@@ -4,12 +4,12 @@ import timetracker.actions.*;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
-import timetracker.error.BackendException;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.ContextMenu;
 import timetracker.menu.MiscMenuBar;
 import timetracker.utils.TrayIcon;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,7 +17,6 @@ import javax.swing.text.TextAction;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,9 +79,6 @@ public class TimeTracker extends Frame
         {
             Client.setUserID(properties);
 
-            final Backend db = Backend.getInstance();
-            db.initTable();
-
             final JButton add = new JButton(Resource.getString(PropertyConstants.LABEL_ADD));
             BaseAction.setButtonIcon(add, Icon.ADD);
             add.setAction(new ShowAddButtonAction(add));
@@ -104,7 +100,7 @@ public class TimeTracker extends Frame
             addToPanel(new JPanel()); //Spacer
             increaseLine();
 
-            final List<Issue> issues = db.getIssues();
+            final List<Issue> issues = Backend.getInstance().getIssues();
             for(final Issue issue : issues)
             {
                 addButton(issue);
@@ -117,7 +113,7 @@ public class TimeTracker extends Frame
         }
         catch (final Throwable e)
         {
-            handleException(e);
+            Util.handleException(e);
             throw e;
         }
     }
@@ -140,35 +136,6 @@ public class TimeTracker extends Frame
     public void decreaseLine()
     {
         this.line--;
-    }
-
-    public static String getMessage(final Throwable e)
-    {
-        if(e == null)
-        {
-            return "";
-        }
-        String msg = e.getMessage();
-        if(msg == null || msg.isEmpty())
-        {
-            msg = getMessage(e.getCause());
-        }
-        if(msg.isEmpty())
-        {
-            msg = e.getClass().getSimpleName();
-        }
-        return msg;
-    }
-
-    public static void handleException(final Throwable t)
-    {
-        final String msg = getMessage(t);
-        if (!(t instanceof BackendException))
-        {
-            t.printStackTrace();
-            Log.severe(msg, t);
-        }
-        JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
     }
 
     @Override
@@ -225,7 +192,7 @@ public class TimeTracker extends Frame
             {
                 if(e.isPopupTrigger())
                 {
-                    final JPopupMenu menu = ContextMenu.create(TimeTracker.this, button, issue);
+                    final JPopupMenu menu = ContextMenu.create(button, issue);
                     menu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
@@ -276,91 +243,6 @@ public class TimeTracker extends Frame
     private void setButtonMarked(final JButton button, final Issue issue)
     {
         button.setBackground(issue.isMarked() ? Color.YELLOW : null);
-    }
-
-    /**
-     * Fügt den Menüeintrag "In Bearbeitung nehmen" hinzu. Dabei wird geprüft, ob das Ticket nicht schon in Bearbeitung ist. Ausserdem ist diese Aktion
-     * für die Standardaktionen nicht vorgesehen
-     * @param menu Menü
-     * @param button Issue-Button
-     * @param issue Issue
-     */
-    public void addInProgressItem(final JPopupMenu menu, final JButton button, final Issue issue)
-    {
-        try
-        {
-            final String issueState = issue.isDeletable() ? Client.getIssueState(button.getText()) : null;
-            final JMenuItem inProgressItem = new JMenuItem(Resource.getString(PropertyConstants.LABEL_IN_PROGRESS));
-            inProgressItem.setBorder(BORDER);
-            inProgressItem.setEnabled(issueState != null && !Constants.ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));
-            BaseAction.setButtonIcon(inProgressItem, Icon.PROGRESS);
-            inProgressItem.addActionListener(new AddAction(button)
-            {
-                private static final long serialVersionUID = 922056815591098770L;
-
-                @Override
-                protected String createButtonText()
-                {
-                    return button.getText();
-                }
-
-                @Override
-                protected JButton createButton(final String text)
-                {
-                    return button;
-                }
-            });
-            menu.add(inProgressItem);
-        }
-        catch (final URISyntaxException | IOException ex)
-        {
-            Log.severe(ex.getMessage(), ex);
-        }
-    }
-
-    /**
-     * Fügt den Menüeintrag "Zurücksetzen" hinzu
-     * @param menu Menü
-     * @param button Issue-Button
-     */
-    public void addRedoItem(final JPopupMenu menu, final JButton button)
-    {
-        final JMenuItem redoItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_REDO));
-        redoItem.setBorder(BORDER);
-        BaseAction.setButtonIcon(redoItem, Icon.STOP);
-        redoItem.addActionListener((final ActionEvent event) -> {
-            final Action a = button.getAction();
-            ((BaseAction) a).reset();
-        });
-        menu.add(redoItem);
-    }
-
-    public void addStarItem(final JPopupMenu menu, final JButton button, final Issue issue)
-    {
-        final JMenuItem starItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_STAR));
-        starItem.setBorder(BORDER);
-        starItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
-        {
-            private static final long serialVersionUID = -101044272648382148L;
-
-            @Override
-            public void actionPerformed(final ActionEvent e)
-            {
-                try
-                {
-                    issue.setMarked(true);
-                    Backend.getInstance().updateIssue(issue);
-                    button.setBackground(Color.YELLOW);
-                }
-                catch (final Throwable t)
-                {
-                    TimeTracker.handleException(t);
-                }
-            }
-        });
-        BaseAction.setButtonIcon(starItem, Icon.STAR);
-        starItem.setEnabled(issue.isDeletable());
-        menu.add(starItem);
     }
 
     private JButton addAction(final JPanel parent, final String tooltip, final Icon icon)
@@ -537,7 +419,7 @@ public class TimeTracker extends Frame
                     }
                     catch (final Throwable t)
                     {
-                        final String msg = getMessage(t);
+                        final String msg = Util.getMessage(t);
                         Log.severe(msg, t);
                         JOptionPane.showMessageDialog(this, String.format("Error while saving spent time for %s:%n%s", ((JLabel)component).getText(), msg));
                     }
@@ -931,7 +813,7 @@ public class TimeTracker extends Frame
                 }
                 catch (final Throwable e)
                 {
-                    final String msg = getMessage(e);
+                    final String msg = Util.getMessage(e);
                     Log.severe(msg);
                     if(timeTracker != null)
                     {

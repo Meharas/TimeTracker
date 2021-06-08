@@ -31,7 +31,7 @@ public class ShowDatabaseContent extends AbstractAction
         }
         catch (Throwable throwable)
         {
-            TimeTracker.handleException(throwable);
+            Util.handleException(throwable);
             return;
         }
 

@@ -1,6 +1,7 @@
 package timetracker.utils;
 
 import timetracker.TimeTracker;
+import timetracker.error.BackendException;
 import timetracker.log.Log;
 
 import javax.swing.*;
@@ -10,6 +11,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  * Utility-Klasse
@@ -58,5 +60,39 @@ public class Util
             }
         }
         return null;
+    }
+
+    public static Locale getLocale()
+    {
+        return new Locale((String) System.getProperties().get("user.language"));
+    }
+
+    public static void handleException(final Throwable t)
+    {
+        final String msg = getMessage(t);
+        if (!(t instanceof BackendException))
+        {
+            t.printStackTrace();
+            Log.severe(msg, t);
+        }
+        JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
+    }
+
+    public static String getMessage(final Throwable e)
+    {
+        if(e == null)
+        {
+            return "";
+        }
+        String msg = e.getMessage();
+        if(msg == null || msg.isEmpty())
+        {
+            msg = getMessage(e.getCause());
+        }
+        if(msg.isEmpty())
+        {
+            msg = e.getClass().getSimpleName();
+        }
+        return msg;
     }
 }

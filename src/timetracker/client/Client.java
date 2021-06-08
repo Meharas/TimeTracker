@@ -23,10 +23,11 @@ import org.apache.http.impl.conn.DefaultSchemePortResolver;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
+import timetracker.Constants;
 import timetracker.ServicePath;
 import timetracker.TimeTracker;
-import timetracker.Constants;
 import timetracker.log.Log;
+import timetracker.utils.Util;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -422,8 +423,8 @@ public class Client
         }
         catch (final Exception e)
         {
-            TimeTracker.handleException(e);
-            throw new IOException(TimeTracker.getMessage(e), e.getCause());
+            Util.handleException(e);
+            throw new IOException(Util.getMessage(e), e.getCause());
         }
         return sslContext;
     }

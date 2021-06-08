@@ -1,7 +1,8 @@
 package timetracker;
 
+import timetracker.utils.Util;
+
 import java.text.MessageFormat;
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -9,7 +10,7 @@ import java.util.ResourceBundle;
  */
 public final class Resource
 {
-    private static final ResourceBundle bundle = ResourceBundle.getBundle("timetracker.TimeTracker", new Locale((String) System.getProperties().get("user.language")));
+    private static final ResourceBundle bundle = ResourceBundle.getBundle("timetracker.TimeTracker", Util.getLocale());
 
     private Resource()
     {

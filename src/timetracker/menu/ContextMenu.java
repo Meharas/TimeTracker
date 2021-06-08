@@ -1,15 +1,17 @@
 package timetracker.menu;
 
-import timetracker.*;
-import timetracker.actions.DeleteButtonAction;
-import timetracker.actions.ShowAddButtonAction;
+import timetracker.Constants;
+import timetracker.PropertyConstants;
+import timetracker.Resource;
+import timetracker.TimeTracker;
+import timetracker.actions.*;
 import timetracker.client.Client;
 import timetracker.data.Issue;
+import timetracker.db.Backend;
 import timetracker.icons.Icon;
-import timetracker.actions.BaseAction;
 import timetracker.log.Log;
 import timetracker.utils.ClipboardMonitor;
-import org.apache.http.client.utils.URIBuilder;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,7 +20,7 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.net.URI;
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 /**
@@ -33,13 +35,15 @@ public class ContextMenu
     {
     }
 
-    public static JPopupMenu create(final TimeTracker timeTracker, final JButton parent, final Issue issue)
+    public static JPopupMenu create(final JButton parent, final Issue issue)
     {
         final JPopupMenu menu = new JPopupMenu();
         menu.setBorder(MENU_BORDER);
 
+        final boolean matches = TimeTracker.matches(issue.getTicket());
         final JMenuItem copyItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_COPY));
         copyItem.setBorder(BORDER);
+        copyItem.setEnabled(matches);
         BaseAction.setButtonIcon(copyItem, Icon.COPY);
 
         copyItem.addActionListener((final ActionEvent e) -> {
@@ -56,52 +60,48 @@ public class ContextMenu
 
         final JMenuItem openItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_OPEN));
         openItem.setBorder(BORDER);
-        openItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
+        openItem.setEnabled(matches);
+        openItem.addActionListener(new OpenUrlAction(issue));
+        BaseAction.setButtonIcon(openItem, Icon.OPEN);
+
+        final JMenuItem starItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_STAR));
+        starItem.setBorder(BORDER);
+        starItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
         {
-            private static final long serialVersionUID = -8597151290962363254L;
+            private static final long serialVersionUID = -101044272648382148L;
 
             @Override
             public void actionPerformed(final ActionEvent e)
             {
-                final String ticket = issue.getTicket();
-                if (ticket != null && !ticket.isEmpty())
+                try
                 {
-                    try
-                    {
-                        final URIBuilder builder = Client.getURIBuilder(ServicePath.URL, ticket);
-                        openWebpage(builder.build());
-                    }
-                    catch (final URISyntaxException ex)
-                    {
-                        Log.severe(ex.getMessage(), ex);
-                    }
+                    issue.setMarked(true);
+                    Backend.getInstance().updateIssue(issue);
+                    parent.setBackground(Color.YELLOW);
                 }
-            }
-
-            private void openWebpage(final URI uri)
-            {
-                final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
-                if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE))
+                catch (final Throwable t)
                 {
-                    try
-                    {
-                        desktop.browse(uri);
-                    }
-                    catch (final Exception e)
-                    {
-                        Log.severe(e.getMessage(), e);
-                    }
+                    Util.handleException(t);
                 }
             }
         });
-        BaseAction.setButtonIcon(openItem, Icon.OPEN);
+        BaseAction.setButtonIcon(starItem, Icon.STAR);
+        starItem.setEnabled(issue.isDeletable());
+
+        final JMenuItem redoItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_REDO));
+        redoItem.setBorder(BORDER);
+        BaseAction.setButtonIcon(redoItem, Icon.STOP);
+        redoItem.addActionListener((final ActionEvent event) -> {
+            final Action a = parent.getAction();
+            ((BaseAction) a).reset();
+        });
 
         menu.add(openItem);
-        timeTracker.addStarItem(menu, parent, issue);
+        menu.add(starItem);
         menu.add(copyItem);
         menu.add(editItem);
-        timeTracker.addInProgressItem(menu, parent, issue);
-        timeTracker.addRedoItem(menu, parent);
+        addInProgressItem(menu, parent, issue);
+        menu.add(redoItem);
         menu.addSeparator();
 
         final JMenuItem deleteItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_DELETE));
@@ -111,5 +111,45 @@ public class ContextMenu
         deleteItem.addActionListener(new DeleteButtonAction(parent, issue));
         menu.add(deleteItem);
         return menu;
+    }
+
+    /**
+     * Fügt den Menüeintrag "In Bearbeitung nehmen" hinzu. Dabei wird geprüft, ob das Ticket nicht schon in Bearbeitung ist. Ausserdem ist diese Aktion
+     * für die Standardaktionen nicht vorgesehen
+     * @param menu Menü
+     * @param button Issue-Button
+     * @param issue Issue
+     */
+    private static void addInProgressItem(final JPopupMenu menu, final JButton button, final Issue issue)
+    {
+        try
+        {
+            final String issueState = issue.isDeletable() ? Client.getIssueState(button.getText()) : null;
+            final JMenuItem inProgressItem = new JMenuItem(Resource.getString(PropertyConstants.LABEL_IN_PROGRESS));
+            inProgressItem.setBorder(BORDER);
+            inProgressItem.setEnabled(issueState != null && !Constants.ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));
+            BaseAction.setButtonIcon(inProgressItem, Icon.PROGRESS);
+            inProgressItem.addActionListener(new AddAction(button)
+            {
+                private static final long serialVersionUID = 922056815591098770L;
+
+                @Override
+                protected String createButtonText()
+                {
+                    return button.getText();
+                }
+
+                @Override
+                protected JButton createButton(final String text)
+                {
+                    return button;
+                }
+            });
+            menu.add(inProgressItem);
+        }
+        catch (final URISyntaxException | IOException ex)
+        {
+            Log.severe(ex.getMessage(), ex);
+        }
     }
 }

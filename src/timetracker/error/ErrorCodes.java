@@ -1,7 +1,8 @@
 package timetracker.error;
 
+import timetracker.utils.Util;
+
 import java.text.MessageFormat;
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -9,7 +10,7 @@ import java.util.ResourceBundle;
  */
 public final class ErrorCodes
 {
-    private static final ResourceBundle bundle = ResourceBundle.getBundle("timetracker.error.ErrorCodes", new Locale((String) System.getProperties().get("user.language")));
+    private static final ResourceBundle bundle = ResourceBundle.getBundle("timetracker.error.ErrorCodes", Util.getLocale());
 
     public static final String ERROR_ISSUE_EXISTS = "1001";
 

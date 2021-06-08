@@ -1,8 +1,8 @@
 package timetracker.actions;
 
-import timetracker.TimeTracker;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +29,7 @@ public class DeleteButtonAction extends BaseAction
         }
         catch (final Throwable t)
         {
-            TimeTracker.handleException(t);
+            Util.handleException(t);
         }
 
         remove();

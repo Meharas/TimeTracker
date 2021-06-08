@@ -9,6 +9,7 @@ import timetracker.error.BackendException;
 import timetracker.error.ErrorCodes;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
+import timetracker.utils.Util;
 
 import java.sql.*;
 import java.util.*;
@@ -99,6 +100,8 @@ public class Backend
                 Log.severe("Could not create statement. Can not handle issues in DB!", e);
             }
 
+            initTable();
+
             Runtime.getRuntime().addShutdownHook(new DBShutDownThread());
         }
         catch (final SQLException e)
@@ -159,19 +162,17 @@ public class Backend
     }
 
     /**
-     * Generiert eine Tabelle mit dem NAmen
-     * @return {@code true}, wenn die Tabelle schon existierte, {@code false} sonst.
+     * Generiert eine Tabelle für die Issues
      * @throws SQLException Wenn Tabelle schon vorhanden ist
      */
-    public boolean initTable() throws Throwable
+    private void initTable() throws SQLException
     {
         final ResultSet rs = this.conn.getMetaData().getTables(null, null, TN_ISSUES, null);
         if (rs.next())
         {
-            return true;
+            return;
         }
 
-        //noinspection StringBufferReplaceableByString
         final StringBuilder sqlTable = new StringBuilder(STMT_CREATE_TABLE);
         sqlTable.append(TN_ISSUES);
         sqlTable.append(TN_ISSUES_COLUMNS);
@@ -186,7 +187,10 @@ public class Backend
             insertIssue(new Issue("3", Constants.STRING_EMPTY, "Meeting", Type.MEETING, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
             insertIssue(new Issue("4", Constants.STRING_EMPTY, "Pause", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon(), false, false));
         }
-        return false;
+        catch (final Throwable t)
+        {
+            Util.handleException(t);
+        }
     }
 
     /**
@@ -245,9 +249,9 @@ public class Backend
      * Führt ein Update oder Delete aus
      * @param query Statement
      * @return Anzahl der betroffenen Datensätze
-     * @throws Throwable database access error or other errors
+     * @throws SQLException database access error
      */
-    private int executeUpdate(final String query) throws Throwable
+    private int executeUpdate(final String query) throws SQLException
     {
         SQLException ex = null;
         int i = -1;
@@ -279,10 +283,6 @@ public class Backend
      */
     public List<Issue> getIssues() throws Throwable
     {
-        if(!initTable())
-        {
-            return Collections.emptyList();
-        }
         return executeSelect(QUERY_ALL_STMT);
     }
 
@@ -294,10 +294,6 @@ public class Backend
      */
     public Issue getIssue(final String id) throws Throwable
     {
-        if(!initTable())
-        {
-            return null;
-        }
         final List<Issue> issues = executeSelect(String.format(QUERY_STMT, id));
         return !issues.isEmpty() ? issues.iterator().next() : null;
     }
@@ -323,20 +319,6 @@ public class Backend
     {
         final Issue issue = getIssue(issueId);
         issue.setDuration(duration);
-        updateIssue(issue);
-    }
-
-    /**
-     * Speichert die Zeitdauer für ein bestimmtes Issue
-     * @param issueId Id des Issues
-     * @param duration Zeitdauer
-     * @throws Throwable database access error or other errors
-     */
-    public void saveDuration(final String issueId, final String duration) throws Throwable
-    {
-        final Issue issue = getIssue(issueId);
-        issue.setDurationSaved(duration);
-        issue.setDuration(Constants.STRING_EMPTY);
         updateIssue(issue);
     }
 

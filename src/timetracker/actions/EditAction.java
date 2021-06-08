@@ -4,6 +4,7 @@ import timetracker.TimeTracker;
 import timetracker.Constants;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +44,7 @@ public class EditAction extends BaseAction
         }
         catch (final Throwable t)
         {
-            TimeTracker.handleException(t);
+            Util.handleException(t);
         }
 
         this.issueButton.setText(text);

@@ -10,6 +10,7 @@ import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.menu.TypeRenderer;
 import timetracker.utils.EscapeEvent;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -260,7 +261,7 @@ public class BurnIssueDialog extends JFrame
         }
         catch (final Throwable t)
         {
-            TimeTracker.handleException(t);
+            Util.handleException(t);
         }
 
         if (!Client.hasToken())
@@ -282,7 +283,7 @@ public class BurnIssueDialog extends JFrame
         }
         catch (final URISyntaxException | IOException e)
         {
-            TimeTracker.handleException(e);
+            Util.handleException(e);
         }
         return false;
     }

@@ -5,6 +5,7 @@ import timetracker.TimeTracker;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +54,7 @@ public class AddAction extends BaseAction
         }
         catch (final IOException | URISyntaxException ex)
         {
-            TimeTracker.handleException(ex);
+            Util.handleException(ex);
         }
     }
 
@@ -92,7 +93,7 @@ public class AddAction extends BaseAction
         }
         catch (final Throwable t)
         {
-            TimeTracker.handleException(t);
+            Util.handleException(t);
         }
 
         final Frame frame = this.timeTracker.getParentFrame(this.button);
