@@ -13,6 +13,10 @@ public final class ErrorCodes
 
     public static final String ERROR_ISSUE_EXISTS = "1001";
 
+    private ErrorCodes()
+    {
+    }
+
     /**
      * Liefert einen String aus dem ResourceBundle
      * @param key Schlüssel
