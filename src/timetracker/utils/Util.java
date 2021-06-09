@@ -1,6 +1,7 @@
 package timetracker.utils;
 
 import timetracker.TimeTracker;
+import timetracker.data.Issue;
 import timetracker.error.BackendException;
 import timetracker.log.Log;
 
@@ -11,7 +12,11 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Utility-Klasse
@@ -94,5 +99,29 @@ public class Util
             msg = e.getClass().getSimpleName();
         }
         return msg;
+    }
+
+    /**
+     * Liefert alle Buttons, welche ein Issue darfstellen
+     * @return alle Buttons, welche ein Issue darfstellen
+     */
+    public static Collection<IssueButton> getButtons()
+    {
+        final Set<Component> components = new HashSet<>();
+        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
+        timeTracker.collectComponents(timeTracker, components);
+        return components.stream().filter(IssueButton.class::isInstance).map(IssueButton.class::cast).collect(Collectors.toList());
+    }
+
+    /**
+     * Liefert den Button zu einem bestimmten Issue
+     * @param issue Issue
+     * @return Button zu einem bestimmten Issue
+     */
+    public static IssueButton getButton(final Issue issue)
+    {
+        final Collection<IssueButton> buttons = getButtons();
+        return buttons.stream().filter(btn -> btn.getName() != null).filter(btn -> btn.getName().equalsIgnoreCase(issue.getId()))
+                               .findFirst().orElse(null);
     }
 }

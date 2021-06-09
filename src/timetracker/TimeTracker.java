@@ -8,6 +8,7 @@ import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.ContextMenu;
 import timetracker.menu.MiscMenuBar;
+import timetracker.utils.IssueButton;
 import timetracker.utils.TrayIcon;
 import timetracker.utils.Util;
 
@@ -170,7 +171,7 @@ public class TimeTracker extends Frame
             return null;
         }
 
-        final JButton button = new JButton(label);
+        final JButton button = new IssueButton(label);
         BaseAction.setButtonIcon(button, issue.getIcon());
         button.setName(issue.getId());
         button.setHorizontalAlignment(SwingConstants.LEFT);

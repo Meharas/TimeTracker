@@ -207,6 +207,7 @@ public class Backend
         if(id == null || id.isEmpty())
         {
             id = Client.getIssueID(ticket);
+            issue.setId(id);
         }
 
         final Issue result = getIssue(id);

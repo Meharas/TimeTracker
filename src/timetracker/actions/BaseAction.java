@@ -6,6 +6,7 @@ import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
+import timetracker.utils.IssueButton;
 import timetracker.utils.Util;
 
 import javax.swing.*;
@@ -16,8 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * Base Action
@@ -138,52 +138,26 @@ public class BaseAction extends AbstractAction
 
     void stopTimers()
     {
-        final Set<Component> components = new HashSet<>();
-        this.timeTracker.collectComponents(this.button.getParent().getParent(), components);
-
-        for (final Component c : components)
+        final Collection<IssueButton> buttons = Util.getButtons();
+        for (final IssueButton btn : buttons)
         {
-            if (c instanceof JButton)
+            final Action action = btn.getAction();
+            if (action instanceof BaseAction)
             {
-                final Action action = ((JButton) c).getAction();
-                if (action instanceof BaseAction)
-                {
-                    ((BaseAction) action).stop();
-                }
+                ((BaseAction) action).stop();
             }
         }
     }
 
-    public void resetTimers()
+    public static void resetTimers()
     {
-        resetTimers(this.button);
-    }
-
-    public static void resetTimers(final JButton button)
-    {
-        resetTimers(button.getParent().getParent().getComponents());
-    }
-
-    private static void resetTimers(final Component[] components)
-    {
-        if (components == null)
+        final Collection<IssueButton> buttons = Util.getButtons();
+        for (final IssueButton btn : buttons)
         {
-            return;
-        }
-        for (final Component c : components)
-        {
-            if (c instanceof JPanel)
+            final Action action = btn.getAction();
+            if (action instanceof BaseAction && ((BaseAction) action).issue != null)
             {
-                resetTimers(((JPanel) c).getComponents());
-                continue;
-            }
-            if (c instanceof JButton)
-            {
-                final Action action = ((JButton) c).getAction();
-                if (action instanceof BaseAction && ((BaseAction) action).issue != null)
-                {
-                    ((BaseAction) action).reset();
-                }
+                ((BaseAction) action).reset();
             }
         }
     }

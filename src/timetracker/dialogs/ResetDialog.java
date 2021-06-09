@@ -38,7 +38,7 @@ public class ResetDialog extends JFrame
 
         final JButton ok = new JButton(Resource.getString(PropertyConstants.TEXT_YES));
         ok.addActionListener(e1 -> {
-            BaseAction.resetTimers(button);
+            BaseAction.resetTimers();
             dispose();
         });
 

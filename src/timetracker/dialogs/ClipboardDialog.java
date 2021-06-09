@@ -1,11 +1,5 @@
 package timetracker.dialogs;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import timetracker.Constants;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
@@ -62,24 +56,7 @@ public class ClipboardDialog extends JFrame
         yesButton.addActionListener((final ActionEvent event) -> {
             try
             {
-                final String issueID = Client.getIssueID(ticket);
-                if (issueID == null)
-                {
-                    Log.severe("Issue id of " + ticket + " not found");
-                    return;
-                }
-
-                final URIBuilder builder = Client.getCommandURIBuilder();
-                final HttpPost request = new HttpPost(builder.build());
-                request.setEntity(new StringEntity(String.format(Constants.ISSUE_COMMAND, Constants.ISSUE_STATE,
-                                                                 Constants.ISSUE_VALUE_STATE_PROGRESS, issueID), ContentType.APPLICATION_JSON));
-
-                final HttpResponse response = Client.executeRequest(request);
-                if (response == null)
-                {
-                    return;
-                }
-                Client.logResponse(response);
+                Client.setInProgress(ticket);
                 dispose();
 
                 final JButton button = createButton(ticket, icon);
@@ -115,14 +92,13 @@ public class ClipboardDialog extends JFrame
     private JButton createButton(final String text, final String icon)
     {
         String ticket = null;
-        TimeTracker.MATCHER.reset(text);
-        if(TimeTracker.MATCHER.matches())
+        if(TimeTracker.matches(text))
         {
             ticket = TimeTracker.MATCHER.group(1);
         }
 
         final Issue issue = new Issue(ticket, text, null, null, null, icon, true, false);
-        JButton button = null;
+        JButton button;
         try
         {
             final String label = Client.getTicketSummary(text);
@@ -138,6 +114,7 @@ public class ClipboardDialog extends JFrame
         catch (final Throwable t)
         {
             Util.handleException(t);
+            button = Util.getButton(issue);
         }
         return button;
     }
