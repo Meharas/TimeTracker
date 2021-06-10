@@ -76,47 +76,39 @@ public class TimeTracker extends Frame
 
         setMenuBar(new MiscMenuBar());
 
-        try
+        Client.setUserID(properties);
+
+        final JButton add = new JButton(Resource.getString(PropertyConstants.LABEL_ADD));
+        BaseAction.setButtonIcon(add, Icon.ADD);
+        add.setAction(new ShowAddButtonAction(add));
+
+        final JButton addClipboard = new JButton(Resource.getString(PropertyConstants.LABEL_ADD_FROM_CLIPBOARD));
+        BaseAction.setButtonIcon(addClipboard, Icon.ADD);
+        addClipboard.setAction(new AddClipboardAction(addClipboard));
+
+        final JButton reset = new JButton(Resource.getString(PropertyConstants.LABEL_STOP));
+        BaseAction.setButtonIcon(reset, Icon.STOP);
+        reset.setAction(new ResetAction(reset));
+
+        final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 3));
+        globalActionsPanel.add(add);
+        globalActionsPanel.add(addClipboard);
+        globalActionsPanel.add(reset);
+        addToPanel(globalActionsPanel);
+        increaseLine();
+        addToPanel(new JPanel()); //Spacer
+        increaseLine();
+
+        final List<Issue> issues = Backend.getInstance().getIssues();
+        for(final Issue issue : issues)
         {
-            Client.setUserID(properties);
-
-            final JButton add = new JButton(Resource.getString(PropertyConstants.LABEL_ADD));
-            BaseAction.setButtonIcon(add, Icon.ADD);
-            add.setAction(new ShowAddButtonAction(add));
-
-            final JButton addClipboard = new JButton(Resource.getString(PropertyConstants.LABEL_ADD_FROM_CLIPBOARD));
-            BaseAction.setButtonIcon(addClipboard, Icon.ADD);
-            addClipboard.setAction(new AddClipboardAction(addClipboard));
-
-            final JButton reset = new JButton(Resource.getString(PropertyConstants.LABEL_STOP));
-            BaseAction.setButtonIcon(reset, Icon.STOP);
-            reset.setAction(new ResetAction(reset));
-
-            final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 3));
-            globalActionsPanel.add(add);
-            globalActionsPanel.add(addClipboard);
-            globalActionsPanel.add(reset);
-            addToPanel(globalActionsPanel);
+            addButton(issue);
             increaseLine();
-            addToPanel(new JPanel()); //Spacer
-            increaseLine();
-
-            final List<Issue> issues = Backend.getInstance().getIssues();
-            for(final Issue issue : issues)
-            {
-                addButton(issue);
-                increaseLine();
-            }
-
-            add(this.panel);
-            pack();
-            restoreWindowPositionAndSize();
         }
-        catch (final Throwable e)
-        {
-            Util.handleException(e);
-            throw e;
-        }
+
+        add(this.panel);
+        pack();
+        restoreWindowPositionAndSize();
     }
 
     public JPanel getPanel()
