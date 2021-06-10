@@ -7,6 +7,7 @@ public enum ServicePath
 {
     ISSUE("api/issues/%s"),
     COMMENT(ISSUE.restEndPoint + "/comments"),
+    WORKITEMTYPES("api/admin/timeTrackingSettings/workItemTypes"),
     WORKITEM(ISSUE.restEndPoint + "/timeTracking/workItems"),
     COMMAND("api/commands"),
     URL("issue/%s"),

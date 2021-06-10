@@ -14,20 +14,20 @@ public class Issue
     private String id;
     private String ticket;
     private String label;
-    private Type type;
+    private WorkItemType type;
     private String duration;
     private String durationSaved;
     private String icon;
     private final boolean deletable;
     private boolean marked;
 
-    public Issue(final String ticket, final String label, final Type type, final String duration, final String durationSaved, final String icon,
+    public Issue(final String ticket, final String label, final WorkItemType type, final String duration, final String durationSaved, final String icon,
                  final boolean deletable, final boolean marked)
     {
         this(Constants.STRING_EMPTY, ticket, label, type, duration, durationSaved, icon, deletable, marked);
     }
 
-    public Issue(final String id, final String ticket, final String label, final Type type, final String duration, final String durationSaved, final String icon,
+    public Issue(final String id, final String ticket, final String label, final WorkItemType type, final String duration, final String durationSaved, final String icon,
                  final boolean deletable, final boolean marked)
     {
         this.id = id;
@@ -46,7 +46,7 @@ public class Issue
         this.id = getString(data.get(Backend.CN_ID));
         this.ticket = getString(data.get(Backend.CN_ISSUE));
         this.label = getString(data.get(Backend.CN_LABEL));
-        this.type = Type.getType(data.get(Backend.CN_TYPE));
+        this.type = WorkItemType.getType(data.get(Backend.CN_TYPE));
         this.duration = getString(data.get(Backend.CN_DURATION));
         this.durationSaved = getString(data.get(Backend.CN_DURATION_SAVED));
         this.icon = getString(data.get(Backend.CN_ICON));
@@ -92,14 +92,14 @@ public class Issue
         this.label = getString(label);
     }
 
-    public Type getType()
+    public WorkItemType getType()
     {
-        return Optional.ofNullable(this.type).orElse(Type.EMPTY);
+        return Optional.ofNullable(this.type).orElse(WorkItemType.EMPTY);
     }
 
-    public void setType(final Type type)
+    public void setType(final WorkItemType type)
     {
-        this.type = Optional.ofNullable(type).orElse(Type.EMPTY);
+        this.type = Optional.ofNullable(type).orElse(WorkItemType.EMPTY);
     }
 
     public String getDuration()

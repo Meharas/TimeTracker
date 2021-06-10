@@ -42,9 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Matcher;
 
 /**
@@ -119,6 +117,78 @@ public class Client
             return null;
         }
         return Client.getID(response, null);
+    }
+
+    /**
+     * Liefert die WorkItems zur Zeiterfassung
+     * @return Map mit der Id als Key und dem Namen als Value
+     * @throws URISyntaxException Url falsch
+     * @throws IOException Fehler beim Request
+     */
+    public static Map<String, String> getWorkItems() throws URISyntaxException, IOException
+    {
+        final URIBuilder builder = Client.getURIBuilder(ServicePath.WORKITEMTYPES, null, new BasicNameValuePair("fields", "id,name"));
+        final HttpGet request = new HttpGet(builder.build());
+        final HttpResponse response = Client.executeRequest(request);
+        if (response == null)
+        {
+            return null;
+        }
+
+        JsonParser parser = null;
+        try (final ByteArrayOutputStream outputStream = new ByteArrayOutputStream())
+        {
+            response.getEntity().writeTo(outputStream);
+            outputStream.flush();
+
+            final String msg = new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
+            final JsonFactory jsonFactory = new JsonFactory();
+            parser = jsonFactory.createParser(msg);
+            return getWorkItems(parser);
+        }
+        finally
+        {
+            if(parser != null)
+            {
+                parser.close();
+            }
+        }
+    }
+
+    /**
+     * Liefert die WorkItems
+     * @param parser JsonParser
+     * @return WorkItems
+     * @throws IOException I/O Error
+     */
+    private static Map<String, String> getWorkItems(final JsonParser parser) throws IOException
+    {
+        final Map<String, String> workItems = new HashMap<>(20);
+
+        String id = null;
+        String workItemName = null;
+        while ((parser.nextToken()) != null)
+        {
+            final String currentName = parser.getCurrentName();
+            if("name".equalsIgnoreCase(currentName))
+            {
+                parser.nextToken();
+                workItemName = parser.getValueAsString();
+            }
+            else if("id".equalsIgnoreCase(currentName))
+            {
+                parser.nextToken();
+                id = parser.getValueAsString();
+            }
+
+            if(id != null && workItemName != null)
+            {
+                workItems.put(id, workItemName);
+                id = null;
+                workItemName = null;
+            }
+        }
+        return workItems;
     }
 
     public static String getValueFromJson(final String ticket, final String fields, final String attribute) throws IOException, URISyntaxException

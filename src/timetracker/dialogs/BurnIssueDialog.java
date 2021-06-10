@@ -7,6 +7,8 @@ import timetracker.TimeTracker;
 import timetracker.actions.BaseAction;
 import timetracker.client.Client;
 import timetracker.data.Issue;
+import timetracker.data.WorkItemType;
+import timetracker.data.WorkItemTypes;
 import timetracker.db.Backend;
 import timetracker.menu.TypeRenderer;
 import timetracker.utils.EscapeEvent;
@@ -18,9 +20,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * Dialog zum Burnen der Zeit eines Issues
@@ -67,21 +67,20 @@ public class BurnIssueDialog extends JFrame
         timeField.setBackground(TimeTracker.MANDATORY);
         timeField.setText(getParsedTime(label.getText()));
 
-        final JComboBox<String[]> typeField = new JComboBox<>();
+        final JComboBox<WorkItemType> typeField = new JComboBox<>();
         typeField.setMaximumSize(new Dimension(350, 100));
         typeField.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
         typeField.setRenderer(new TypeRenderer());
 
         final String type = issue.getType().getId();
-        final LinkedList<String[]> items = Arrays.stream(timetracker.data.Type.values()).map(t -> new String[]{t.getId(), t.getLabel()})
-                                                 .collect(Collectors.toCollection(LinkedList::new));
+        final List<WorkItemType> workItemTypes = WorkItemTypes.get();
 
-        for (final String[] item : items)
+        for (final WorkItemType t : workItemTypes)
         {
-            typeField.addItem(item);
-            if (item[0].equalsIgnoreCase(type))
+            typeField.addItem(t);
+            if (t.getId().equalsIgnoreCase(type))
             {
-                typeField.setSelectedItem(item);
+                typeField.setSelectedItem(t);
             }
         }
 
@@ -219,7 +218,7 @@ public class BurnIssueDialog extends JFrame
      * @param textArea Feld mit dem Kommentar
      * @return <code>true</code>, wenn erfolgreich, sonst <code>false</code>
      */
-    private boolean burnTime(final JTextField ticketField, final JTextField timeField, final JComboBox<String[]> typeField, final JTextArea textArea)
+    private boolean burnTime(final JTextField ticketField, final JTextField timeField, final JComboBox<WorkItemType> typeField, final JTextArea textArea)
     {
         final String ticket = ticketField.getText();
         final String spentTime = timeField.getText();
@@ -230,9 +229,8 @@ public class BurnIssueDialog extends JFrame
             return false;
         }
 
-        final String type = ((String[]) selectedItem)[0];
         this.issue.setTicket(ticket);
-        this.issue.setType(timetracker.data.Type.getType(type));
+        this.issue.setType((WorkItemType) selectedItem);
 
         final int[] spentTimeUnits = getTimeUnits(spentTime);
         int spentHours = spentTimeUnits[0];
@@ -279,7 +277,7 @@ public class BurnIssueDialog extends JFrame
 
         try
         {
-            return Client.setSpentTime(ticket, spentTime, type, text);
+            return Client.setSpentTime(ticket, spentTime, this.issue.getType().getId(), text);
         }
         catch (final URISyntaxException | IOException e)
         {

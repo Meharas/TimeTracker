@@ -640,6 +640,9 @@ public class TimeTracker extends Frame
         dialog.add(button);
         dialog.pack();
         dialog.setVisible(true);
+
+        SwingUtilities.getRootPane(button).setDefaultButton(button);
+
         return false;
     }
 

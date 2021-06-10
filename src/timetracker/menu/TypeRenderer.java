@@ -1,5 +1,7 @@
 package timetracker.menu;
 
+import timetracker.data.WorkItemType;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -16,7 +18,7 @@ public class TypeRenderer extends DefaultListCellRenderer
         final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value != null)
         {
-            setText(((String[]) value)[1]);
+            setText(((WorkItemType) value).getLabel());
         }
         return component;
     }

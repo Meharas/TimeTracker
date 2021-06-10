@@ -79,7 +79,7 @@ public class ShowDatabaseContent extends AbstractAction
             result[counter][0] = issue.getId();
             result[counter][1] = issue.getTicket();
             result[counter][2] = issue.getLabel();
-            result[counter][3] = issue.getType().getLabel();
+            result[counter][3] = issue.getType().getLabel() + " (" + issue.getType().getId() + ")";
             result[counter][4] = issue.getIcon();
             result[counter][5] = issue.getDuration();
             result[counter][6] = issue.getDurationSaved();

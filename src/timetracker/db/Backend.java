@@ -4,7 +4,7 @@ import timetracker.Constants;
 import timetracker.TimeTracker;
 import timetracker.client.Client;
 import timetracker.data.Issue;
-import timetracker.data.Type;
+import timetracker.data.WorkItemType;
 import timetracker.error.BackendException;
 import timetracker.error.ErrorCodes;
 import timetracker.icons.Icon;
@@ -182,10 +182,10 @@ public class Backend
             stmt.executeUpdate(sqlTable.toString());
             Log.info("Table created: " + TN_ISSUES);
 
-            insertIssue(new Issue("1", Constants.STRING_EMPTY, "Support", Type.SUPPORT, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false));
-            insertIssue(new Issue("2", Constants.STRING_EMPTY, "Telefonat", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon(), false, false));
-            insertIssue(new Issue("3", Constants.STRING_EMPTY, "Meeting", Type.MEETING, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
-            insertIssue(new Issue("4", Constants.STRING_EMPTY, "Pause", Type.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon(), false, false));
+            insertIssue(new Issue("1", Constants.STRING_EMPTY, "Support", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false));
+            insertIssue(new Issue("2", Constants.STRING_EMPTY, "Telefonat", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon(), false, false));
+            insertIssue(new Issue("3", Constants.STRING_EMPTY, "Meeting", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
+            insertIssue(new Issue("4", Constants.STRING_EMPTY, "Pause", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon(), false, false));
         }
         catch (final Throwable t)
         {
@@ -216,7 +216,7 @@ public class Backend
             throw new BackendException(ErrorCodes.getString(ErrorCodes.ERROR_ISSUE_EXISTS));
         }
 
-        executeUpdate(String.format(INSERT_STMT, id, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(null),
+        executeUpdate(String.format(INSERT_STMT, id, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(WorkItemType::getId).orElse(null),
                                     issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked()));
         issue.setId(id);
         Log.info("Issue inserted: " +  issue);
@@ -330,7 +330,7 @@ public class Backend
      */
     public void updateIssue(final Issue issue) throws Throwable
     {
-        executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getLabel(), Optional.ofNullable(issue.getType()).map(Type::getId).orElse(Constants.STRING_EMPTY),
+        executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getLabel(), issue.getType().getId(),
                                     issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked(), issue.getId()));
         Log.info("Issue updated: " +  issue);
     }
