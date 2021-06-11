@@ -597,6 +597,15 @@ public class TimeTracker extends Frame
         dialog.setResizable(false);
         dialog.setLayout(new GridLayout(2, 1));
 
+        dialog.addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosing(final WindowEvent windowEvent)
+            {
+                System.exit(0);
+            }
+        });
+
         final JTextField tokenField = new JTextField(Constants.YOUTRACK_TOKEN_PREFIX);
         tokenField.setCaretPosition(Constants.YOUTRACK_TOKEN_PREFIX.length());
         tokenField.setBackground(MANDATORY);
