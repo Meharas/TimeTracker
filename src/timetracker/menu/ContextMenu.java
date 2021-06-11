@@ -86,7 +86,32 @@ public class ContextMenu
             }
         });
         BaseAction.setButtonIcon(starItem, Icon.STAR);
-        starItem.setEnabled(issue.isDeletable());
+        starItem.setVisible(issue.isDeletable() && !issue.isMarked());
+
+        final JMenuItem unStarItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_UNSTAR));
+        unStarItem.setBorder(BORDER);
+        unStarItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
+        {
+            private static final long serialVersionUID = -101044272648382148L;
+
+            @Override
+            public void actionPerformed(final ActionEvent e)
+            {
+                try
+                {
+                    issue.setMarked(false);
+                    Backend.getInstance().updateIssue(issue);
+                    parent.setBackground(null);
+                    parent.setOpaque(false);
+                }
+                catch (final Throwable t)
+                {
+                    Util.handleException(t);
+                }
+            }
+        });
+        BaseAction.setButtonIcon(unStarItem, Icon.UNSTAR);
+        unStarItem.setVisible(issue.isDeletable() && issue.isMarked());
 
         final JMenuItem redoItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_REDO));
         redoItem.setBorder(BORDER);
@@ -98,6 +123,7 @@ public class ContextMenu
 
         menu.add(openItem);
         menu.add(starItem);
+        menu.add(unStarItem);
         menu.add(copyItem);
         menu.add(editItem);
         addInProgressItem(menu, parent, issue);

@@ -28,6 +28,8 @@ public class FinishIssueDialog extends JFrame
 {
     public FinishIssueDialog(final JButton button) throws HeadlessException
     {
+        super("Finish issue");
+
         final Point location = TimeTracker.getTimeTracker().getWindowLocation();
         setBounds(location.x, location.y, 400, 300);
         setResizable(false);

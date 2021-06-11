@@ -20,6 +20,7 @@ public final class PropertyConstants
     public static final String MENU_ITEM_EDIT = "menu.item.edit";
     public static final String MENU_ITEM_OPEN = "menu.item.open";
     public static final String MENU_ITEM_STAR = "menu.item.star";
+    public static final String MENU_ITEM_UNSTAR = "menu.item.unstar";
 
     public static final String TOOLTIP_DELETE = "button.tooltip.delete";
     public static final String TOOLTIP_BURN = "button.tooltip.burn";

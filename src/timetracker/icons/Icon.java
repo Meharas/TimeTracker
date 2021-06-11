@@ -19,6 +19,7 @@ public enum Icon
     PROGRESS("progress.png"),
     REMOVE("delete_grey.png"),
     STAR("star.png"),
+    UNSTAR("unstar.png"),
     STOP("stop.png"),
     SUPPORT("support.png"),
     TIMETRACKER("timetracker.png");
