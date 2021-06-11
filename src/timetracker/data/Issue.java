@@ -20,6 +20,7 @@ public class Issue
     private String icon;
     private final boolean deletable;
     private boolean marked;
+    private boolean inProgress;
 
     public Issue(final String ticket, final String label, final WorkItemType type, final String duration, final String durationSaved, final String icon,
                  final boolean deletable, final boolean marked)
@@ -146,6 +147,16 @@ public class Issue
     public void setMarked(final boolean marked)
     {
         this.marked = marked;
+    }
+
+    public boolean isInProgress()
+    {
+        return this.inProgress;
+    }
+
+    public void setInProgress(final boolean inProgress)
+    {
+        this.inProgress = inProgress;
     }
 
     @Override

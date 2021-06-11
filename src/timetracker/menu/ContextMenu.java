@@ -86,7 +86,7 @@ public class ContextMenu
             }
         });
         BaseAction.setButtonIcon(starItem, Icon.STAR);
-        starItem.setVisible(issue.isDeletable() && !issue.isMarked());
+        starItem.setVisible(issue.isDeletable() && !issue.isMarked() && !issue.isInProgress());
 
         final JMenuItem unStarItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_UNSTAR));
         unStarItem.setBorder(BORDER);
@@ -111,7 +111,7 @@ public class ContextMenu
             }
         });
         BaseAction.setButtonIcon(unStarItem, Icon.UNSTAR);
-        unStarItem.setVisible(issue.isDeletable() && issue.isMarked());
+        unStarItem.setVisible(issue.isDeletable() && issue.isMarked() && !issue.isInProgress());
 
         final JMenuItem redoItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_REDO));
         redoItem.setBorder(BORDER);

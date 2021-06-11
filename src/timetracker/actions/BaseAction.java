@@ -129,6 +129,7 @@ public class BaseAction extends AbstractAction
             this.timer.start();
             this.button.setBackground(Color.GREEN);
             this.button.setOpaque(true);
+            this.issue.setInProgress(true);
         }
         catch (final Throwable t)
         {
@@ -181,6 +182,7 @@ public class BaseAction extends AbstractAction
             {
                 saveDuration(reset);
             }
+            this.issue.setInProgress(false);
         }
 
         if(this.button.getBackground() == Color.YELLOW)
