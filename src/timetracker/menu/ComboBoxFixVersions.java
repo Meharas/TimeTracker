@@ -1,9 +1,9 @@
 package timetracker.menu;
 
-import timetracker.Versions;
+import timetracker.data.FixVersion;
 
 import javax.swing.*;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Combobox für die Fix Versions
@@ -14,16 +14,7 @@ public final class ComboBoxFixVersions extends JComboBox<String>
 
     public ComboBoxFixVersions()
     {
-        final Map<String, String> versions = Versions.get();
-        for(final Map.Entry<String, String> entry : versions.entrySet())
-        {
-            final String value = entry.getValue();
-            addItem(value);
-
-            if(entry.getKey().equalsIgnoreCase(Versions.getSelectedVersion()))
-            {
-                setSelectedItem(value);
-            }
-        }
+        final List<String> versions = FixVersion.getNames();
+        versions.forEach(this::addItem);
     }
 }

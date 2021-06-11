@@ -12,10 +12,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -123,5 +120,19 @@ public class Util
         final Collection<IssueButton> buttons = getButtons();
         return buttons.stream().filter(btn -> btn.getName() != null).filter(btn -> btn.getName().equalsIgnoreCase(issue.getId()))
                                .findFirst().orElse(null);
+    }
+
+    /**
+     * Sortiert eine Map nach dem Wert und gibt diese als neue Map zurück
+     * @param map Zu sortierende Map
+     * @return Sortierte neue Map
+     */
+    public static Map<String, String> sortByValue(final Map<String, String> map)
+    {
+        return map.entrySet().stream().sorted(Map.Entry.comparingByValue())
+                             .collect(Collectors.toMap(Map.Entry::getKey,
+                                                       Map.Entry::getValue,
+                                                       (e1, e2) -> e1,
+                                                       LinkedHashMap::new));
     }
 }

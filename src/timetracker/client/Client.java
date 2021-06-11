@@ -127,12 +127,39 @@ public class Client
      */
     public static Map<String, String> getWorkItems() throws URISyntaxException, IOException
     {
-        final URIBuilder builder = Client.getURIBuilder(ServicePath.WORKITEMTYPES, null, new BasicNameValuePair("fields", "id,name"));
+        return getResponseAsMap(ServicePath.WORKITEMTYPES);
+    }
+
+    /**
+     * Liefert die möglichen States eines Issues
+     * @return States mit Id und Name
+     * @throws URISyntaxException Url falsch
+     * @throws IOException Fehler beim Request
+     */
+    public static Map<String, String> getStates() throws URISyntaxException, IOException
+    {
+        return getResponseAsMap(ServicePath.STATES);
+    }
+
+    /**
+     * Liefert die FixVersions eines Issues
+     * @return FixVersions mit Id und Name
+     * @throws URISyntaxException Url falsch
+     * @throws IOException Fehler beim Request
+     */
+    public static Map<String, String> getFixVersions() throws URISyntaxException, IOException
+    {
+        return getResponseAsMap(ServicePath.FIX_VERSIONS);
+    }
+
+    private static Map<String, String> getResponseAsMap(final ServicePath path) throws IOException, URISyntaxException
+    {
+        final URIBuilder builder = Client.getURIBuilder(path, null, new BasicNameValuePair("fields", "id,name"));
         final HttpGet request = new HttpGet(builder.build());
         final HttpResponse response = Client.executeRequest(request);
         if (response == null)
         {
-            return null;
+            return Collections.emptyMap();
         }
 
         JsonParser parser = null;
@@ -144,7 +171,7 @@ public class Client
             final String msg = new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
             final JsonFactory jsonFactory = new JsonFactory();
             parser = jsonFactory.createParser(msg);
-            return getWorkItems(parser);
+            return getIdNameMap(parser);
         }
         finally
         {
@@ -161,7 +188,7 @@ public class Client
      * @return WorkItems
      * @throws IOException I/O Error
      */
-    private static Map<String, String> getWorkItems(final JsonParser parser) throws IOException
+    private static Map<String, String> getIdNameMap(final JsonParser parser) throws IOException
     {
         final Map<String, String> workItems = new HashMap<>(20);
 

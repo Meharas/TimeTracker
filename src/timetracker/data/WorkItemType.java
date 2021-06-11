@@ -1,14 +1,35 @@
 package timetracker.data;
 
 import timetracker.Constants;
+import timetracker.client.Client;
+import timetracker.utils.Util;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Enum für den Typ eines Tickets, Development oder Meeting
  */
 public class WorkItemType
 {
+    private static final List<WorkItemType> WORKITEM_TYPES = new LinkedList<>();
+    static
+    {
+        try
+        {
+            final Map<String, String> result = Util.sortByValue(Client.getWorkItems());
+            for(final Map.Entry<String, String> entry : result.entrySet())
+            {
+                WORKITEM_TYPES.add(new WorkItemType(entry.getKey(), entry.getValue()));
+            }
+        }
+        catch (final Exception e)
+        {
+            Util.handleException(e);
+        }
+    }
+
     public static final WorkItemType EMPTY = new WorkItemType();
     private final String id;
     private final String label;
@@ -37,8 +58,12 @@ public class WorkItemType
 
     public static WorkItemType getType(final String id)
     {
-        final List<WorkItemType> workItemTypes = WorkItemTypes.get();
-        return workItemTypes.stream().filter(item -> item.getId().equalsIgnoreCase(id)).findFirst().orElse(WorkItemType.EMPTY);
+        return WORKITEM_TYPES.stream().filter(item -> item.getId().equalsIgnoreCase(id)).findFirst().orElse(WorkItemType.EMPTY);
+    }
+
+    public static List<WorkItemType> getTypes()
+    {
+        return WORKITEM_TYPES;
     }
 
     @Override

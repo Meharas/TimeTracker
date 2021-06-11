@@ -11,6 +11,8 @@ public enum ServicePath
     WORKITEM(ISSUE.restEndPoint + "/timeTracking/workItems"),
     COMMAND("api/commands"),
     URL("issue/%s"),
+    STATES("api/admin/customFieldSettings/bundles/state/34-0/values"),
+    FIX_VERSIONS("api/admin/customFieldSettings/bundles/version/40-7/values"),
     USER("api/admin/users/me");
 
     public final String restEndPoint;

@@ -8,7 +8,6 @@ import timetracker.actions.BaseAction;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.data.WorkItemType;
-import timetracker.data.WorkItemTypes;
 import timetracker.db.Backend;
 import timetracker.menu.TypeRenderer;
 import timetracker.utils.EscapeEvent;
@@ -73,7 +72,7 @@ public class BurnIssueDialog extends JFrame
         typeField.setRenderer(new TypeRenderer());
 
         final String type = issue.getType().getId();
-        final List<WorkItemType> workItemTypes = WorkItemTypes.get();
+        final List<WorkItemType> workItemTypes = WorkItemType.getTypes();
 
         for (final WorkItemType t : workItemTypes)
         {

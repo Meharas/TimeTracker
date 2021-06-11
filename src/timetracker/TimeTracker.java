@@ -109,6 +109,8 @@ public class TimeTracker extends Frame
         add(this.panel);
         pack();
         restoreWindowPositionAndSize();
+
+        Client.getStates();
     }
 
     public JPanel getPanel()

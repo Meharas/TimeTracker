@@ -1,17 +1,33 @@
 package timetracker.data;
 
-import java.util.HashSet;
-import java.util.Set;
+import timetracker.client.Client;
+import timetracker.utils.Util;
+
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Abbildung der Zustände
  */
-public enum State
+public class State
 {
-    VERIFIED ("Verified"),
-    VERIFIED_OBSOLETE ("Verified obsolete"),
-    DUBLICATE ("Duplicate"),
-    TO_VERIFY ("To verify");
+    private static final Map<String, String> STATES = new LinkedHashMap<>();
+    static
+    {
+        try
+        {
+            final Map<String, String> states = Util.sortByValue(Client.getStates());
+            for(final Map.Entry<String, String> entry : states.entrySet())
+            {
+                STATES.put(entry.getKey(), entry.getValue());
+            }
+        }
+        catch (final Exception e)
+        {
+            Util.handleException(e);
+        }
+    }
 
     private final String name;
     State(final String name)
@@ -24,14 +40,8 @@ public enum State
         return this.name;
     }
 
-    public static Set<String> getNames()
+    public static Collection<String> getNames()
     {
-        final State[] values = values();
-        final Set<String> names = new HashSet<>(values.length);
-        for(final State state : values)
-        {
-            names.add(state.getName());
-        }
-        return names;
+        return STATES.values();
     }
 }
