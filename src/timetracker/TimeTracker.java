@@ -7,8 +7,9 @@ import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.ContextMenu;
-import timetracker.menu.MiscMenuBar;
+import timetracker.menu.TimeTrackerMenuBar;
 import timetracker.utils.IssueButton;
+import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.TrayIcon;
 import timetracker.utils.Util;
 
@@ -29,7 +30,7 @@ import java.util.regex.Matcher;
 /**
  * TimeTracking-Tool
  */
-public class TimeTracker extends Frame
+public class TimeTracker extends JFrame
 {
     private static final long serialVersionUID = 7225687129886672540L;
 
@@ -74,8 +75,6 @@ public class TimeTracker extends Frame
         Client.setPort(p == null || p.isEmpty() ? -1 : Integer.parseInt(p));
         Client.setToken(properties.getProperty(Constants.YOUTRACK_TOKEN));
 
-        setMenuBar(new MiscMenuBar());
-
         Client.setUserID(properties);
 
         final JButton add = new JButton(Resource.getString(PropertyConstants.LABEL_ADD));
@@ -110,7 +109,10 @@ public class TimeTracker extends Frame
         pack();
         restoreWindowPositionAndSize();
 
-        Client.getStates();
+        final String classname = properties.getProperty(PropertyConstants.LOOK_AND_FEEL, "javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        LookAndFeelManager.setLookAndFeel(classname);
+
+        setJMenuBar(new TimeTrackerMenuBar(classname));
     }
 
     public JPanel getPanel()
@@ -774,16 +776,6 @@ public class TimeTracker extends Frame
         {
             Log.severe("Empty properties!");
             return;
-        }
-
-        try
-        {
-            final String lookAndFeel = properties.getProperty(PropertyConstants.LOOK_AND_FEEL, "javax.swing.plaf.nimbus.NimbusLookAndFeel");
-            UIManager.setLookAndFeel(lookAndFeel);
-        }
-        catch (final ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e)
-        {
-            Log.severe(e.getMessage(), e);
         }
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> Log.severe(e.getMessage(), e));

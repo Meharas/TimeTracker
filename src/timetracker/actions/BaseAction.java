@@ -7,6 +7,7 @@ import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.utils.IssueButton;
+import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
 
 import javax.swing.*;
@@ -127,7 +128,8 @@ public class BaseAction extends AbstractAction
             stopTimers();
             formatTime(0);
             this.timer.start();
-            this.button.setBackground(Color.GREEN);
+            this.button.setBackground(LookAndFeelManager.getColorInProgress());
+            this.button.setForeground(LookAndFeelManager.getFontColor());
             this.button.setOpaque(true);
             this.issue.setInProgress(true);
         }
@@ -185,12 +187,13 @@ public class BaseAction extends AbstractAction
             this.issue.setInProgress(false);
         }
 
-        if(this.button.getBackground() == Color.YELLOW)
+        if(this.issue.isMarked())
         {
             //Der Button wurde markiert
             return;
         }
         this.button.setBackground(null);
+        this.button.setForeground(null);
         this.button.setOpaque(false);
     }
 

@@ -11,6 +11,7 @@ import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.utils.ClipboardMonitor;
+import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
 
 import javax.swing.*;
@@ -77,7 +78,8 @@ public class ContextMenu
                 {
                     issue.setMarked(true);
                     Backend.getInstance().updateIssue(issue);
-                    parent.setBackground(Color.YELLOW);
+                    parent.setBackground(LookAndFeelManager.getColorMarked());
+                    parent.setForeground(LookAndFeelManager.getFontColor());
                 }
                 catch (final Throwable t)
                 {
@@ -102,6 +104,7 @@ public class ContextMenu
                     issue.setMarked(false);
                     Backend.getInstance().updateIssue(issue);
                     parent.setBackground(null);
+                    parent.setForeground(null);
                     parent.setOpaque(false);
                 }
                 catch (final Throwable t)

@@ -82,10 +82,10 @@ public class Backend
             System.exit(1);
         }
 
+        final String file = TimeTracker.home + "db/timetrackerDB";
         try
         {
             Log.info("Connect to DB...");
-            final String file = TimeTracker.home + "db/timetrackerDB";
             Log.info("Database file: " + file);
             this.conn = DriverManager.getConnection("jdbc:hsqldb:" + file + ";hsqldb.default_table_type=CACHED;hsqldb.cache_size=60000;hsqldb.log_size=5",
                                                     "sa", null);
@@ -106,7 +106,7 @@ public class Backend
         }
         catch (final SQLException e)
         {
-            Log.severe("Can't connect to TaskPrinter DB", e);
+            Log.severe("Can't connect to " + file, e);
             System.exit(1);
         }
     }
