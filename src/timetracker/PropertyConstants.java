@@ -21,6 +21,7 @@ public final class PropertyConstants
     public static final String MENU_ITEM_OPEN = "menu.item.open";
     public static final String MENU_ITEM_STAR = "menu.item.star";
     public static final String MENU_ITEM_UNSTAR = "menu.item.unstar";
+    public static final String MENU_ITEM_REMOVE_ICON = "menu.item.removeicon";
 
     public static final String TOOLTIP_DELETE = "button.tooltip.delete";
     public static final String TOOLTIP_BURN = "button.tooltip.burn";
@@ -44,6 +45,7 @@ public final class PropertyConstants
     public static final String LABEL_ABOUT = "button.label.about";
 
     public static final String TICKET_IN_PROGRESS = "ticket.inprogress";
+    public static final String TICKET_DELETE = "text.delete";
     public static final String TIME_SAVED = "time.saved";
 
     public static final String WINDOW_LOCATION = "window.location";

@@ -8,6 +8,7 @@ import timetracker.actions.EditAction;
 import timetracker.data.Issue;
 import timetracker.icons.IconFileFilter;
 import timetracker.utils.EscapeEvent;
+import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
 
 import javax.swing.*;
@@ -21,7 +22,7 @@ public class AddIssueDialog extends JFrame
 {
     public AddIssueDialog(final JButton button, final Issue issue) throws HeadlessException
     {
-        super(Resource.getString(PropertyConstants.LABEL_ADD));
+        super(issue == null ? Resource.getString(PropertyConstants.LABEL_ADD) : Resource.getString(PropertyConstants.MENU_ITEM_EDIT));
 
         setAlwaysOnTop(true);
         setResizable(false);
@@ -34,6 +35,7 @@ public class AddIssueDialog extends JFrame
         chooser.setFileFilter(new IconFileFilter());
 
         final JTextField labelField = new JTextField();
+        labelField.setForeground(LookAndFeelManager.getFontColor());
         labelField.setPreferredSize(new Dimension(200, 30));
         labelField.setBackground(TimeTracker.MANDATORY);
 

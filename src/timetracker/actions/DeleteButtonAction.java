@@ -1,5 +1,8 @@
 package timetracker.actions;
 
+import timetracker.PropertyConstants;
+import timetracker.Resource;
+import timetracker.TimeTracker;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.utils.Util;
@@ -23,6 +26,12 @@ public class DeleteButtonAction extends BaseAction
     @Override
     public void actionPerformed(final ActionEvent e)
     {
+        final String message = Resource.getString(PropertyConstants.TICKET_DELETE, this.issue.getTicket());
+        final int result = JOptionPane.showConfirmDialog(TimeTracker.getTimeTracker(), message, Resource.getString(PropertyConstants.TEXT_CONFIRMATION), JOptionPane.YES_NO_OPTION);
+        if(result != JOptionPane.YES_OPTION)
+        {
+            return;
+        }
         try
         {
             Backend.getInstance().deleteIssue(this.issue);
@@ -52,7 +61,7 @@ public class DeleteButtonAction extends BaseAction
         {
             remove(parent, child);
         }
-        this.timeTracker.getPanel().remove(parent);
+        this.timeTracker.getContentPane().remove(parent);
     }
 
     /**

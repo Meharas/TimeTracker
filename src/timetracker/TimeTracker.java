@@ -1,14 +1,15 @@
 package timetracker;
 
 import timetracker.actions.*;
+import timetracker.buttons.GlobalButton;
+import timetracker.buttons.IssueActionButton;
+import timetracker.buttons.IssueButton;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
-import timetracker.menu.ContextMenu;
 import timetracker.menu.TimeTrackerMenuBar;
-import timetracker.utils.IssueButton;
 import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.TrayIcon;
 import timetracker.utils.Util;
@@ -17,7 +18,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.TextAction;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,21 +43,18 @@ public class TimeTracker extends JFrame
     public static final Matcher DURATION_MATCHER = Constants.DURATION_PATTERN.matcher(Constants.STRING_EMPTY);
 
     public static final Color MANDATORY = new Color(200, 221, 242);
-    public static final EmptyBorder BORDER = new EmptyBorder(5, 5, 5, 5);
 
-    public static String home = Constants.STRING_EMPTY;
+    public static String HOME = Constants.STRING_EMPTY;
     private static TimeTracker timeTracker;
     private static final Object syncObject = new Object();
 
     private int line;
-    private JPanel panel;
 
     private TimeTracker()
     {
         super("Time Tracker");
         setMinimumSize(new Dimension(575, 0));
         setAlwaysOnTop(true);
-
         addWindowListener(new WindowAdapter()
         {
             @Override
@@ -67,7 +67,12 @@ public class TimeTracker extends JFrame
 
     private void init(final Properties properties) throws Throwable
     {
-        this.panel = new JPanel(new GridLayout(0, 1));
+        //noinspection ResultOfMethodCallIgnored
+        LookAndFeelManager.getInstance(); //Initialisierung
+
+        final JPanel panel = (JPanel) getContentPane();
+        panel.setLayout(new GridLayout(0, 1));
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         Client.setScheme(properties.getProperty(Constants.YOUTRACK_SCHEME, Constants.DEFAULT_SCHEME));
         Client.setHost(properties.getProperty(Constants.YOUTRACK_HOST, Constants.DEFAULT_HOST));
 
@@ -77,22 +82,20 @@ public class TimeTracker extends JFrame
 
         Client.setUserID(properties);
 
-        final JButton add = new JButton(Resource.getString(PropertyConstants.LABEL_ADD));
-        BaseAction.setButtonIcon(add, Icon.ADD);
+        final JButton add = new GlobalButton(Resource.getString(PropertyConstants.LABEL_ADD), Icon.ADD);
         add.setAction(new ShowAddButtonAction(add));
 
-        final JButton addClipboard = new JButton(Resource.getString(PropertyConstants.LABEL_ADD_FROM_CLIPBOARD));
-        BaseAction.setButtonIcon(addClipboard, Icon.ADD);
+        final JButton addClipboard = new GlobalButton(Resource.getString(PropertyConstants.LABEL_ADD_FROM_CLIPBOARD), Icon.ADD);
         addClipboard.setAction(new AddClipboardAction(addClipboard));
 
-        final JButton reset = new JButton(Resource.getString(PropertyConstants.LABEL_STOP));
-        BaseAction.setButtonIcon(reset, Icon.STOP);
+        final JButton reset = new GlobalButton(Resource.getString(PropertyConstants.LABEL_STOP), Icon.STOP);
         reset.setAction(new ResetAction(reset));
 
-        final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 3));
+        final JPanel globalActionsPanel = new JPanel(new GridLayout(1, 2));
         globalActionsPanel.add(add);
         globalActionsPanel.add(addClipboard);
         globalActionsPanel.add(reset);
+        globalActionsPanel.setBorder(new EmptyBorder(0,0,0,0));
         addToPanel(globalActionsPanel);
         increaseLine();
         addToPanel(new JPanel()); //Spacer
@@ -105,7 +108,6 @@ public class TimeTracker extends JFrame
             increaseLine();
         }
 
-        add(this.panel);
         pack();
         restoreWindowPositionAndSize();
 
@@ -115,14 +117,9 @@ public class TimeTracker extends JFrame
         setJMenuBar(new TimeTrackerMenuBar(classname));
     }
 
-    public JPanel getPanel()
-    {
-        return this.panel;
-    }
-
     public static String getHome()
     {
-        return home;
+        return HOME;
     }
 
     public void increaseLine()
@@ -133,24 +130,6 @@ public class TimeTracker extends JFrame
     public void decreaseLine()
     {
         this.line--;
-    }
-
-    @Override
-    public final void setMinimumSize(final Dimension minimumSize)
-    {
-        super.setMinimumSize(minimumSize);
-    }
-
-    @Override
-    public final Component add(final Component comp)
-    {
-        return super.add(comp);
-    }
-
-    @Override
-    public final void pack()
-    {
-        super.pack();
     }
 
     public void showFrame(final MenuItem openItem, final boolean show)
@@ -167,34 +146,13 @@ public class TimeTracker extends JFrame
             return null;
         }
 
-        final JButton button = new IssueButton(label);
-        BaseAction.setButtonIcon(button, issue.getIcon());
-        button.setName(issue.getId());
-        button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.addMouseListener(new MouseAdapter()
+        final JButton button = new IssueButton(issue);
+        final Collection<IssueButton> buttons = Util.getButtons();
+        if (!buttons.isEmpty())
         {
-            @Override
-            public void mousePressed(final MouseEvent e)
-            {
-                showPopUp(e);
-            }
-
-            @Override
-            public void mouseReleased(final MouseEvent e)
-            {
-                showPopUp(e);
-            }
-
-            private void showPopUp(final MouseEvent e)
-            {
-                if(e.isPopupTrigger())
-                {
-                    final JPopupMenu menu = ContextMenu.create(button, issue);
-                    menu.show(e.getComponent(), e.getX(), e.getY());
-                }
-            }
-        });
-        setButtonMarked(button, issue);
+            final IssueButton firstButton = buttons.iterator().next();
+            button.setPreferredSize(firstButton.getPreferredSize());
+        }
 
         final JPanel labelPanel = new JPanel();
         labelPanel.setLayout(new BorderLayout(0, 0));
@@ -222,33 +180,28 @@ public class TimeTracker extends JFrame
         buttonPanel.setLayout(new BorderLayout(0, 0));
         buttonPanel.add(labelPanel, BorderLayout.CENTER);
 
-        final JPanel actionsPanel = new JPanel();
-        actionsPanel.setLayout(new BoxLayout(actionsPanel, BoxLayout.X_AXIS));
-
-        final JButton burnAction = addAction(actionsPanel, Resource.getString(PropertyConstants.TOOLTIP_BURN), Icon.BURN);
+        final JButton burnAction = new IssueActionButton(Icon.BURN);
+        burnAction.setToolTipText(Resource.getString(PropertyConstants.TOOLTIP_BURN));
         burnAction.addActionListener(new BurnButtonAction(button, timeLabel, issue));
 
-        final JButton action = addAction(actionsPanel, Resource.getString(PropertyConstants.LABEL_FINISH), Icon.FINISH);
+        final JButton action = new IssueActionButton(Icon.FINISH);
+        action.setToolTipText(Resource.getString(PropertyConstants.LABEL_FINISH));
         action.addActionListener(new FinishDialogAction(button));
         action.setEnabled(issue.isDeletable());
 
+        final JButton deleteItem = new IssueActionButton(Icon.REMOVE);
+        deleteItem.setToolTipText(Resource.getString(PropertyConstants.TOOLTIP_DELETE));
+        deleteItem.setEnabled(issue.isDeletable());
+        deleteItem.addActionListener(new DeleteButtonAction(button, issue));
+
+        final JPanel actionsPanel = new JPanel();
+        actionsPanel.setLayout(new BoxLayout(actionsPanel, BoxLayout.X_AXIS));
+        actionsPanel.add(burnAction);
+        actionsPanel.add(action);
+        actionsPanel.add(deleteItem);
+
         buttonPanel.add(actionsPanel, BorderLayout.EAST);
         addToPanel(buttonPanel);
-        return button;
-    }
-
-    private void setButtonMarked(final JButton button, final Issue issue)
-    {
-        button.setBackground(issue.isMarked() ? Color.YELLOW : null);
-    }
-
-    private JButton addAction(final JPanel parent, final String tooltip, final Icon icon)
-    {
-        final JButton button = new JButton();
-        button.setBorder(new EmptyBorder(8, 8, 8, 8));
-        button.setToolTipText(tooltip);
-        BaseAction.setButtonIcon(button, icon);
-        parent.add(button);
         return button;
     }
 
@@ -277,12 +230,12 @@ public class TimeTracker extends JFrame
     private void addToPanel(final JComponent button)
     {
         updateRows(true);
-        this.panel.add(button, this.line);
+        getContentPane().add(button, this.line);
     }
 
     private void updateRows(final boolean addRow)
     {
-        final GridLayout layout = (GridLayout) this.panel.getLayout();
+        final GridLayout layout = (GridLayout) getContentPane().getLayout();
         final int op = addRow ? 1 : -1;
         layout.setRows(layout.getRows() + op);
     }
@@ -544,7 +497,7 @@ public class TimeTracker extends JFrame
 
     private static File getPropertyFile(final String propertyFileName)
     {
-        File propertyFile = new File(TimeTracker.home + propertyFileName);
+        File propertyFile = new File(TimeTracker.HOME + propertyFileName);
         if(!propertyFile.exists())
         {
             Log.warning("Property file not found: {0}", propertyFile.getAbsolutePath());
@@ -702,7 +655,7 @@ public class TimeTracker extends JFrame
             Log.info("property key={0}, value={1}", new Object[]{entry.getKey(), entry.getValue()});
         }
 
-        final File propertyFile = new File(TimeTracker.home + Constants.PROPERTIES);
+        final File propertyFile = new File(TimeTracker.HOME + Constants.PROPERTIES);
 
         //noinspection unchecked
         final Map<String, String> map = new TreeMap<>((Map) properties);
@@ -760,12 +713,12 @@ public class TimeTracker extends JFrame
                 if(arg.startsWith("-h"))
                 {
                     final StringBuilder sb = new StringBuilder(arg.substring(2));
-                    if(!TimeTracker.home.endsWith("\\"))
+                    if(!TimeTracker.HOME.endsWith("\\"))
                     {
                         sb.append("\\");
                     }
-                    TimeTracker.home = sb.toString();
-                    Log.info("Home = {0}", TimeTracker.home);
+                    TimeTracker.HOME = sb.toString();
+                    Log.info("Home = {0}", TimeTracker.HOME);
                 }
             }
         }

@@ -2,21 +2,14 @@ package timetracker.actions;
 
 import timetracker.Constants;
 import timetracker.TimeTracker;
+import timetracker.buttons.IssueButton;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
-import timetracker.icons.Icon;
-import timetracker.log.Log;
-import timetracker.utils.IssueButton;
 import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.Collection;
 
@@ -232,57 +225,5 @@ public class BaseAction extends AbstractAction
     private void removeDuration() throws Throwable
     {
         Backend.getInstance().removeDuration(this.issue);
-    }
-
-    public static void setButtonIcon(final AbstractButton button, final Icon icon)
-    {
-        if (icon == null)
-        {
-            return;
-        }
-        setButtonIcon(button, icon.getIcon());
-    }
-
-    public static void setButtonIcon(final AbstractButton button, final String icon)
-    {
-        if (icon == null || icon.isEmpty())
-        {
-            button.setIcon(null);
-            return;
-        }
-        try
-        {
-            try (final InputStream iconStream = TimeTracker.class.getResourceAsStream(icon))
-            {
-                if (iconStream != null)
-                {
-                    button.setIcon(new ImageIcon(getBytes(iconStream)));
-                    return;
-                }
-                final File file = new File(icon);
-                if (file.exists())
-                {
-                    button.setIcon(new ImageIcon(icon));
-                }
-            }
-        }
-        catch (final IOException e)
-        {
-            Log.severe(e.getMessage(), e);
-        }
-    }
-
-    private static byte[] getBytes(final InputStream in) throws IOException
-    {
-        try (final ByteArrayOutputStream bos = new ByteArrayOutputStream())
-        {
-            int next;
-            while ((next = in.read()) > -1)
-            {
-                bos.write(next);
-            }
-            bos.flush();
-            return bos.toByteArray();
-        }
     }
 }

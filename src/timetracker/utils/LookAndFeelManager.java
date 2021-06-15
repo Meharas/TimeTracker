@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Manager für Look&Feels
@@ -31,15 +32,18 @@ public final class LookAndFeelManager
     }
 
     private static final ToggleUiListener LISTENER = new ToggleUiListener();
+    private static final Color IN_PROGRESS = new Color(163, 255, 145);
+    private static final Color MARKED = new Color(255, 205, 28);
+    private static final Color BLACK = new Color(34, 34, 34);
 
     private LookAndFeelManager()
     {
         installLookAndFeel(new LafInfo("Metal", "javax.swing.plaf.metal.MetalLookAndFeel"));
         installLookAndFeel(new LafInfo("Nimbus", "javax.swing.plaf.nimbus.NimbusLookAndFeel"));
         installLookAndFeel(new LafInfo("FlatLaf Light", "com.formdev.flatlaf.FlatLightLaf"));
-        installLookAndFeel(new LafInfo("FlatLaf IntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf"));
-        installLookAndFeel(new LafInfo("FlatLaf Dark", "com.formdev.flatlaf.FlatDarkLaf", true));
-        installLookAndFeel(new LafInfo("FlatLaf Darcula", "com.formdev.flatlaf.FlatDarculaLaf", true));
+        //installLookAndFeel(new LafInfo("FlatLaf IntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf"));
+        //installLookAndFeel(new LafInfo("FlatLaf Dark", "com.formdev.flatlaf.FlatDarkLaf", true));
+        //installLookAndFeel(new LafInfo("FlatLaf Darcula", "com.formdev.flatlaf.FlatDarculaLaf", true));
     }
 
     /**
@@ -99,10 +103,10 @@ public final class LookAndFeelManager
     {
         try
         {
+            LookAndFeelManager.selectedLafClassName = classname;
             UIManager.setLookAndFeel(classname);
             SwingUtilities.updateComponentTreeUI(TimeTracker.getTimeTracker());
             TimeTracker.saveSetting(classname, PropertyConstants.LOOK_AND_FEEL);
-            LookAndFeelManager.selectedLafClassName = classname;
         }
         catch (final Exception ex)
         {
@@ -110,13 +114,22 @@ public final class LookAndFeelManager
         }
     }
 
-    public static boolean isDarkMode()
+    public static boolean isDark()
+    {
+        return getSelectedLafInfoStream().anyMatch(LafInfo::isDark);
+    }
+
+    public static boolean isFlat()
+    {
+        return getSelectedLafInfoStream().anyMatch(LafInfo::isFlat);
+    }
+
+    private static Stream<LafInfo> getSelectedLafInfoStream()
     {
         final UIManager.LookAndFeelInfo[] lookAndFeels = UIManager.getInstalledLookAndFeels();
         return Arrays.stream(lookAndFeels).filter(LafInfo.class::isInstance)
                                           .filter(laf -> laf.getClassName().equalsIgnoreCase(LookAndFeelManager.selectedLafClassName))
-                                          .map(LafInfo.class::cast)
-                                          .anyMatch(LafInfo::isDarkMode);
+                                          .map(LafInfo.class::cast);
     }
 
     /**
@@ -131,7 +144,7 @@ public final class LookAndFeelManager
             return new Color(163, 255, 145);
         }
         return Color.GREEN;*/
-        return new Color(163, 255, 145);
+        return IN_PROGRESS;
     }
 
     /**
@@ -146,7 +159,7 @@ public final class LookAndFeelManager
             return new Color(244, 151, 148);
         }
         return Color.YELLOW;*/
-        return new Color(244, 151, 148);
+        return MARKED;
     }
 
     /**
@@ -161,12 +174,13 @@ public final class LookAndFeelManager
             return new Color(34, 34, 34);
         }
         return Color.BLACK;*/
-        return new Color(34, 34, 34);
+        return BLACK;
     }
 
     private static class LafInfo extends UIManager.LookAndFeelInfo
     {
-        private final boolean isDarkMode;
+        private final boolean isDark;
+        private final boolean isFlat;
 
         /**
          * Constructs a <code>UIManager</code>s
@@ -178,8 +192,7 @@ public final class LookAndFeelManager
          */
         public LafInfo(final String name, final String className)
         {
-            super(name, className);
-            this.isDarkMode = false;
+            this(name, className, false);
         }
         /**
          * Constructs a <code>UIManager</code>s
@@ -192,12 +205,18 @@ public final class LookAndFeelManager
         public LafInfo(final String name, final String className, final boolean isDarkMode)
         {
             super(name, className);
-            this.isDarkMode = isDarkMode;
+            this.isDark = isDarkMode;
+            this.isFlat = name.startsWith("Flat");
         }
 
-        public boolean isDarkMode()
+        public boolean isDark()
         {
-            return this.isDarkMode;
+            return this.isDark;
+        }
+
+        public boolean isFlat()
+        {
+            return this.isFlat;
         }
     }
 }

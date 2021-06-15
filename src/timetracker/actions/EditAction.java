@@ -1,7 +1,8 @@
 package timetracker.actions;
 
-import timetracker.TimeTracker;
 import timetracker.Constants;
+import timetracker.TimeTracker;
+import timetracker.buttons.BaseButton;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.utils.Util;
@@ -37,7 +38,10 @@ public class EditAction extends BaseAction
         final String text = TimeTracker.getTicketSummary(this.textInput);
 
         this.issue.setLabel(text);
-        this.issue.setIcon(filePath);
+        if(file != null)
+        {
+            this.issue.setIcon(filePath);
+        }
         try
         {
             Backend.getInstance().updateIssue(this.issue);
@@ -48,7 +52,10 @@ public class EditAction extends BaseAction
         }
 
         this.issueButton.setText(text);
-        setButtonIcon(this.issueButton, filePath);
+        if (file != null)
+        {
+            ((BaseButton) this.issueButton).setIcon(filePath);
+        }
 
         final Frame frame = this.timeTracker.getParentFrame(this.button);
         if(frame != null)

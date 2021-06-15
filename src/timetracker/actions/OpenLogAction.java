@@ -26,7 +26,7 @@ public class OpenLogAction extends TextAction
     @Override
     public void actionPerformed(final ActionEvent e)
     {
-        final File log = new File(TimeTracker.home + "\\log\\" + Constants.LOGFILE_NAME);
+        final File log = new File(TimeTracker.HOME + "\\log\\" + Constants.LOGFILE_NAME);
         if (log.exists())
         {
             final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;

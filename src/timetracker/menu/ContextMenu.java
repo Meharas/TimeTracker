@@ -4,14 +4,17 @@ import timetracker.Constants;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
-import timetracker.actions.*;
+import timetracker.actions.AddAction;
+import timetracker.actions.BaseAction;
+import timetracker.actions.OpenUrlAction;
+import timetracker.actions.ShowAddButtonAction;
+import timetracker.buttons.IssueButton;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.utils.ClipboardMonitor;
-import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
 
 import javax.swing.*;
@@ -36,36 +39,49 @@ public class ContextMenu
     {
     }
 
-    public static JPopupMenu create(final JButton parent, final Issue issue)
+    public static JPopupMenu create(final IssueButton button, final Issue issue)
     {
         final JPopupMenu menu = new JPopupMenu();
         menu.setBorder(MENU_BORDER);
 
         final boolean matches = TimeTracker.matches(issue.getTicket());
-        final JMenuItem copyItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_COPY));
+        final JMenuItem copyItem = new ContextMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_COPY), Icon.COPY);
         copyItem.setBorder(BORDER);
         copyItem.setEnabled(matches);
-        BaseAction.setButtonIcon(copyItem, Icon.COPY);
 
         copyItem.addActionListener((final ActionEvent e) -> {
-            final StringSelection stringSelection = new StringSelection(parent.getText());
+            final StringSelection stringSelection = new StringSelection(button.getText());
             final Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
             ClipboardMonitor.disabled = true;
             cb.setContents(stringSelection, stringSelection);
         });
 
-        final JMenuItem editItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_EDIT));
+        final JMenuItem editItem = new ContextMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_EDIT), Icon.EDIT);
         editItem.setBorder(BORDER);
-        editItem.addActionListener(new ShowAddButtonAction(parent, issue));
-        BaseAction.setButtonIcon(editItem, Icon.EDIT);
+        editItem.addActionListener(new ShowAddButtonAction(button, issue));
 
-        final JMenuItem openItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_OPEN));
+        final JMenuItem removeIcon = new ContextMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_REMOVE_ICON), Icon.REMOVE_ICON);
+        removeIcon.setEnabled(issue.getIcon() != null && !issue.getIcon().isEmpty());
+        removeIcon.setBorder(BORDER);
+        removeIcon.addActionListener(e -> {
+            try
+            {
+                issue.setIcon(null);
+                Backend.getInstance().updateIssue(issue);
+            }
+            catch (final Throwable t)
+            {
+                Util.handleException(t);
+            }
+        });
+
+        final JMenuItem openItem = new ContextMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_OPEN), Icon.OPEN);
         openItem.setBorder(BORDER);
         openItem.setEnabled(matches);
         openItem.addActionListener(new OpenUrlAction(issue));
-        BaseAction.setButtonIcon(openItem, Icon.OPEN);
 
-        final JMenuItem starItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_STAR));
+        final JMenuItem starItem = new ContextMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_STAR), Icon.STAR);
+        starItem.setVisible(issue.isDeletable() && !issue.isMarked() && !issue.isInProgress());
         starItem.setBorder(BORDER);
         starItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
         {
@@ -78,8 +94,6 @@ public class ContextMenu
                 {
                     issue.setMarked(true);
                     Backend.getInstance().updateIssue(issue);
-                    parent.setBackground(LookAndFeelManager.getColorMarked());
-                    parent.setForeground(LookAndFeelManager.getFontColor());
                 }
                 catch (final Throwable t)
                 {
@@ -87,10 +101,9 @@ public class ContextMenu
                 }
             }
         });
-        BaseAction.setButtonIcon(starItem, Icon.STAR);
-        starItem.setVisible(issue.isDeletable() && !issue.isMarked() && !issue.isInProgress());
 
-        final JMenuItem unStarItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_UNSTAR));
+        final JMenuItem unStarItem = new ContextMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_UNSTAR), Icon.UNSTAR);
+        unStarItem.setVisible(issue.isDeletable() && issue.isMarked() && !issue.isInProgress());
         unStarItem.setBorder(BORDER);
         unStarItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
         {
@@ -103,9 +116,6 @@ public class ContextMenu
                 {
                     issue.setMarked(false);
                     Backend.getInstance().updateIssue(issue);
-                    parent.setBackground(null);
-                    parent.setForeground(null);
-                    parent.setOpaque(false);
                 }
                 catch (final Throwable t)
                 {
@@ -113,14 +123,11 @@ public class ContextMenu
                 }
             }
         });
-        BaseAction.setButtonIcon(unStarItem, Icon.UNSTAR);
-        unStarItem.setVisible(issue.isDeletable() && issue.isMarked() && !issue.isInProgress());
 
-        final JMenuItem redoItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_REDO));
+        final JMenuItem redoItem = new ContextMenuItem(Resource.getString(PropertyConstants.TOOLTIP_REDO), Icon.STOP);
         redoItem.setBorder(BORDER);
-        BaseAction.setButtonIcon(redoItem, Icon.STOP);
         redoItem.addActionListener((final ActionEvent event) -> {
-            final Action a = parent.getAction();
+            final Action a = button.getAction();
             ((BaseAction) a).reset();
         });
 
@@ -129,16 +136,9 @@ public class ContextMenu
         menu.add(unStarItem);
         menu.add(copyItem);
         menu.add(editItem);
-        addInProgressItem(menu, parent, issue);
+        menu.add(removeIcon);
+        addInProgressItem(menu, button, issue);
         menu.add(redoItem);
-        menu.addSeparator();
-
-        final JMenuItem deleteItem = new JMenuItem(Resource.getString(PropertyConstants.TOOLTIP_DELETE));
-        deleteItem.setBorder(BORDER);
-        deleteItem.setEnabled(issue.isDeletable());
-        BaseAction.setButtonIcon(deleteItem, Icon.REMOVE);
-        deleteItem.addActionListener(new DeleteButtonAction(parent, issue));
-        menu.add(deleteItem);
         return menu;
     }
 
@@ -154,10 +154,9 @@ public class ContextMenu
         try
         {
             final String issueState = issue.isDeletable() ? Client.getIssueState(button.getText()) : null;
-            final JMenuItem inProgressItem = new JMenuItem(Resource.getString(PropertyConstants.LABEL_IN_PROGRESS));
+            final JMenuItem inProgressItem = new ContextMenuItem(Resource.getString(PropertyConstants.LABEL_IN_PROGRESS), Icon.PROGRESS);
             inProgressItem.setBorder(BORDER);
             inProgressItem.setEnabled(issueState != null && !Constants.ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));
-            BaseAction.setButtonIcon(inProgressItem, Icon.PROGRESS);
             inProgressItem.addActionListener(new AddAction(button)
             {
                 private static final long serialVersionUID = 922056815591098770L;

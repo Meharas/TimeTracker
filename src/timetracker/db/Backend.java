@@ -2,6 +2,7 @@ package timetracker.db;
 
 import timetracker.Constants;
 import timetracker.TimeTracker;
+import timetracker.buttons.IssueButton;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.data.WorkItemType;
@@ -82,7 +83,7 @@ public class Backend
             System.exit(1);
         }
 
-        final String file = TimeTracker.home + "db/timetrackerDB";
+        final String file = TimeTracker.HOME + "db/timetrackerDB";
         try
         {
             Log.info("Connect to DB...");
@@ -333,6 +334,9 @@ public class Backend
         executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getLabel(), issue.getType().getId(),
                                     issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked(), issue.getId()));
         Log.info("Issue updated: " +  issue);
+
+        final IssueButton button = Util.getButton(issue);
+        button.refresh();
     }
 
     /**

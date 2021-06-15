@@ -1,6 +1,8 @@
 package timetracker.actions;
 
-import timetracker.dialogs.ResetDialog;
+import timetracker.PropertyConstants;
+import timetracker.Resource;
+import timetracker.TimeTracker;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -20,7 +22,13 @@ public class ResetAction extends BaseAction
     @Override
     public void actionPerformed(final ActionEvent e)
     {
-        final ResetDialog dialog = new ResetDialog(this.button);
-        dialog.setVisible(true);
+        final int result = JOptionPane.showConfirmDialog(TimeTracker.getTimeTracker(), Resource.getString(PropertyConstants.TEXT_RESET),
+                                                         Resource.getString(PropertyConstants.TEXT_CONFIRMATION), JOptionPane.YES_NO_OPTION);
+        if(result != JOptionPane.YES_OPTION)
+        {
+            return;
+        }
+
+        BaseAction.resetTimers();
     }
 }

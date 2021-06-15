@@ -1,6 +1,7 @@
 package timetracker.utils;
 
 import timetracker.TimeTracker;
+import timetracker.buttons.IssueButton;
 import timetracker.data.Issue;
 import timetracker.error.BackendException;
 import timetracker.log.Log;

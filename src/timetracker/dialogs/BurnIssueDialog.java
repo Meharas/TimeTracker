@@ -11,6 +11,7 @@ import timetracker.data.WorkItemType;
 import timetracker.db.Backend;
 import timetracker.menu.TypeRenderer;
 import timetracker.utils.EscapeEvent;
+import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
 
 import javax.swing.*;
@@ -46,6 +47,7 @@ public class BurnIssueDialog extends JFrame
         ticketField.setMaximumSize(new Dimension(350, 100));
         ticketField.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
         ticketField.setBackground(TimeTracker.MANDATORY);
+        ticketField.setForeground(LookAndFeelManager.getFontColor());
 
         final String buttonText = button.getText();
         TimeTracker.MATCHER.reset(buttonText);
@@ -64,6 +66,7 @@ public class BurnIssueDialog extends JFrame
         timeField.setMaximumSize(new Dimension(350, 100));
         timeField.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
         timeField.setBackground(TimeTracker.MANDATORY);
+        timeField.setForeground(LookAndFeelManager.getFontColor());
         timeField.setText(getParsedTime(label.getText()));
 
         final JComboBox<WorkItemType> typeField = new JComboBox<>();
