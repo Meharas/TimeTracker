@@ -10,6 +10,7 @@ import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.TimeTrackerMenuBar;
+import timetracker.updates.Updates;
 import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.TrayIcon;
 import timetracker.utils.Util;
@@ -706,6 +707,8 @@ public class TimeTracker extends JFrame
 
     public static void main(final String[] args)
     {
+        Log.disabled = true;
+
         if(args != null && args.length > 0)
         {
             for(final String arg : args)
@@ -722,6 +725,10 @@ public class TimeTracker extends JFrame
                 }
             }
         }
+
+        Updates.getInstance().executePreBackendUpdates();
+
+        Log.disabled = false;
         Log.info("Starting TimeTracker");
 
         final Properties properties = getProperties();

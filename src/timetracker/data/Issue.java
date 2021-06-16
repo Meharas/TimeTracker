@@ -159,6 +159,12 @@ public class Issue
         this.inProgress = inProgress;
     }
 
+    public void putAll(final Issue other)
+    {
+        setMarked(other.isMarked());
+        setInProgress(other.isInProgress());
+    }
+
     @Override
     public String toString()
     {

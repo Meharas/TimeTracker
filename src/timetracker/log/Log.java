@@ -1,7 +1,7 @@
 package timetracker.log;
 
-import timetracker.TimeTracker;
 import timetracker.Constants;
+import timetracker.TimeTracker;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.*;
 
 /**
@@ -16,7 +19,9 @@ import java.util.logging.*;
  */
 public class Log
 {
+    public static boolean disabled = true;
     private static final LocalLogger logger = new LocalLogger();
+    private static final Map<Level, String> QUEUE = new HashMap<>();
 
     private Log()
     {
@@ -24,6 +29,8 @@ public class Log
 
     private static class LocalLogger extends Logger
     {
+        private boolean initialized = false;
+
         private LocalLogger()
         {
             super(Logger.GLOBAL_LOGGER_NAME, null);
@@ -33,12 +40,39 @@ public class Log
         @Override
         public void log(final Level level, final String msg)
         {
+            if(Log.disabled)
+            {
+                QUEUE.put(level, msg);
+            }
+            else
+            {
+                if(!QUEUE.isEmpty())
+                {
+                    final Iterator<Map.Entry<Level, String>> iterator = QUEUE.entrySet().iterator();
+                    while (iterator.hasNext())
+                    {
+                        final Map.Entry<Level, String> entry = iterator.next();
+                        doLog(entry.getKey(), entry.getValue());
+                        iterator.remove();
+                    }
+                    init();
+                }
+                doLog(level, msg);
+            }
+        }
+
+        private void doLog(final Level level, final String msg)
+        {
             System.out.println(msg);
             super.log(level, msg);
         }
 
         private void init()
         {
+            if(Log.disabled || this.initialized)
+            {
+                return;
+            }
             // suppress the logging output to the console
             final Logger rootLogger = Logger.getLogger(Constants.STRING_EMPTY);
             final Handler[] handlers = rootLogger.getHandlers();
@@ -49,8 +83,7 @@ public class Log
 
             super.setLevel(Level.INFO);
 
-            final File logFile = new File(TimeTracker.getHome() + "log\\" + Constants.LOGFILE_NAME);
-            System.out.println("Log file: " + logFile.getAbsolutePath());
+            final File logFile = getLogFile();
             if (!logFile.exists())
             {
                 System.out.println("Log file does not exist: " + logFile.getAbsolutePath());
@@ -65,7 +98,7 @@ public class Log
                 }
             }
 
-            try (final InputStream inputStream = new FileInputStream(new File(TimeTracker.getHome() + Constants.DEFAULT_PROPERTIES)))
+            try (final InputStream inputStream = new FileInputStream(TimeTracker.getHome() + Constants.DEFAULT_PROPERTIES))
             {
                 final LogManager manager = LogManager.getLogManager();
                 manager.readConfiguration(inputStream);
@@ -73,12 +106,20 @@ public class Log
                 final FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), true);
                 fileHandler.setFormatter(new LogFormatter());
                 super.addHandler(fileHandler);
+                this.initialized = true;
             }
             catch (IOException e)
             {
                 super.log(Level.SEVERE, e.getMessage(), e);
             }
         }
+    }
+
+    public static File getLogFile()
+    {
+        final File file = new File(TimeTracker.getHome() + Constants.FOLDER_USERDATA + File.separator + Constants.LOGFILE_NAME);
+        System.out.println("Log file: " + file.getAbsolutePath());
+        return file;
     }
 
     public static void log(final Level level, final String msg)

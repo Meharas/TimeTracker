@@ -10,6 +10,8 @@ import timetracker.error.BackendException;
 import timetracker.error.ErrorCodes;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
+import timetracker.updates.IUpdateMethod;
+import timetracker.updates.Updates;
 import timetracker.utils.Util;
 
 import java.sql.*;
@@ -36,28 +38,41 @@ public class Backend
     public static final String CN_MARKED = "MARKED";
     public static final String CN_ICON = "ICON";
     public static final String CN_TYPE = "TYPE";
+    public static final String CN_UPDATE_ID = "UPDATE_ID";
 
     private static final String TN_ISSUES = "ISSUES";
+    private static final String TN_UPDATES = "UPDATES";
     private static final String TN_ISSUES_COLUMNS = String.format(" (%s VARCHAR(12), %s VARCHAR(12), %s NVARCHAR(255), %s VARCHAR (12), %s VARCHAR(16), %s VARCHAR(16), " +
-                                                                  "%s VARCHAR(255), %s BOOLEAN, %s BOOLEAN, PRIMARY KEY (%s))",
+                                                                  "%s VARCHAR(255), %s BOOLEAN, %s BOOLEAN, PRIMARY KEY (%s));",
                                                                   CN_ID, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON, CN_DELETABLE, CN_MARKED, CN_ID);
+    private static final String TN_UPDATES_COLUMNS = String.format(" (%s INTEGER PRIMARY KEY);", CN_UPDATE_ID);
 
-    private static final String QUERY_STMT = String.format("SELECT * FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s'";
-    private static final String QUERY_ALL_STMT = String.format("SELECT * FROM %s", TN_ISSUES);
+    private static final String QUERY_UPDATES = String.format("SELECT %s FROM %s;", CN_UPDATE_ID, TN_UPDATES);
+    private static final String INSERT_UPDATE = String.format("INSERT INTO %s (%s) VALUES (%s);", TN_UPDATES, CN_UPDATE_ID, "%d");
+
+    private static final String QUERY_STMT = String.format("SELECT * FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s';";
+    private static final String QUERY_ALL_STMT = String.format("SELECT * FROM %s;", TN_ISSUES);
     private static final String INSERT_STMT = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES ",
                                                             TN_ISSUES, CN_ID, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON, CN_DELETABLE, CN_MARKED) +
-                                                            "('%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s)";
-    private static final String DELETE_STMT = String.format("DELETE FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s'";
+                                                            "('%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s);";
+    private static final String DELETE_STMT = String.format("DELETE FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s';";
     private static final String UPDATE_STMT = "UPDATE " + TN_ISSUES + " SET " + CN_ISSUE + UPDATE_VALUE + CN_LABEL + UPDATE_VALUE + CN_TYPE + UPDATE_VALUE +
                                               CN_DURATION + UPDATE_VALUE + CN_DURATION_SAVED + UPDATE_VALUE + CN_ICON + UPDATE_VALUE +
-                                              CN_DELETABLE + UPDATE_VALUE + CN_MARKED + "=%s WHERE " + CN_ID + "='%s'";
+                                              CN_DELETABLE + UPDATE_VALUE + CN_MARKED + "=%s WHERE " + CN_ID + "='%s';";
+
+    private static final String COMMIT_STMT = "COMMIT;";
+    private static final String ROLLBACK_STMT = "ROLLBACK WORK;";
 
     
     // Innere private Klasse, die erst beim Zugriff durch die umgebende Klasse initialisiert wird
     private static final class InstanceHolder
     {
         // Die Initialisierung von Klassenvariablen geschieht nur einmal und wird vom ClassLoader implizit synchronisiert
-        static final Backend instance = new Backend();
+        private static final Backend instance = new Backend();
+        static
+        {
+            Updates.getInstance().executeUpdates();
+        }
     }
 
     public static Backend getInstance()
@@ -83,7 +98,7 @@ public class Backend
             System.exit(1);
         }
 
-        final String file = TimeTracker.HOME + "db/timetrackerDB";
+        final String file = TimeTracker.HOME + Constants.FOLDER_USERDATA + "/timetrackerDB";
         try
         {
             Log.info("Connect to DB...");
@@ -101,7 +116,10 @@ public class Backend
                 Log.severe("Could not create statement. Can not handle issues in DB!", e);
             }
 
-            initTable();
+            initTables();
+
+            //Verhindert das automatische Committen. Es können sonst keine Updates zurückgerollt werden.
+            executeUpdate("SET AUTOCOMMIT FALSE;", true);
 
             Runtime.getRuntime().addShutdownHook(new DBShutDownThread());
         }
@@ -166,14 +184,27 @@ public class Backend
      * Generiert eine Tabelle für die Issues
      * @throws SQLException Wenn Tabelle schon vorhanden ist
      */
-    private void initTable() throws SQLException
+    private void initTables() throws SQLException
     {
-        final ResultSet rs = this.conn.getMetaData().getTables(null, null, TN_ISSUES, null);
-        if (rs.next())
+        final DatabaseMetaData metaData = this.conn.getMetaData();
+        ResultSet rs = metaData.getTables(null, null, TN_ISSUES, null);
+        if (!rs.next())
         {
-            return;
+            initIssueTable();
         }
 
+        rs = metaData.getTables(null, null, TN_UPDATES, null);
+        if (!rs.next())
+        {
+            initUpdateTable();
+        }
+    }
+
+    /**
+     * Erzeugt die Tabelle für die Issues und fügt die Standard-Issues ein
+     */
+    private void initIssueTable()
+    {
         final StringBuilder sqlTable = new StringBuilder(STMT_CREATE_TABLE);
         sqlTable.append(TN_ISSUES);
         sqlTable.append(TN_ISSUES_COLUMNS);
@@ -195,13 +226,33 @@ public class Backend
     }
 
     /**
+     * Erzeugt die Tabelle für die UpdateIds
+     */
+    private void initUpdateTable()
+    {
+        final StringBuilder sqlTable = new StringBuilder(STMT_CREATE_TABLE);
+        sqlTable.append(TN_UPDATES);
+        sqlTable.append(TN_UPDATES_COLUMNS);
+
+        try (final Statement stmt = this.conn.createStatement())
+        {
+            stmt.executeUpdate(sqlTable.toString());
+            Log.info("Table created: " + TN_UPDATES);
+        }
+        catch (final Exception e)
+        {
+            Util.handleException(e);
+        }
+    }
+
+    /**
      * Fügt das übergebene Issue als Datensatz ein
      * @param issue Issue
      * @throws Throwable database access error or other errors
      */
     public void insertIssue(final Issue issue) throws Throwable
     {
-        initTable();
+        initTables();
 
         final String ticket = issue.getTicket();
         String id = issue.getId();
@@ -214,11 +265,13 @@ public class Backend
         final Issue result = getIssue(id);
         if(result != null)
         {
+            result.setMarked(true);
+            updateIssue(result);
             throw new BackendException(ErrorCodes.getString(ErrorCodes.ERROR_ISSUE_EXISTS));
         }
 
         executeUpdate(String.format(INSERT_STMT, id, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(WorkItemType::getId).orElse(null),
-                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked()));
+                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked()), true);
         issue.setId(id);
         Log.info("Issue inserted: " +  issue);
     }
@@ -237,29 +290,34 @@ public class Backend
         }
         try
         {
-            initTable();
+            initTables();
         }
         catch (final SQLException e)
         {
             Log.severe("Could not create table", e);
         }
-        executeUpdate(String.format(DELETE_STMT, issue.getId()));
+        executeUpdate(String.format(DELETE_STMT, issue.getId()), true);
         Log.info("Issue updated: " +  issue);
     }
 
     /**
      * Führt ein Update oder Delete aus
      * @param query Statement
+     * @param commit Apply changes
      * @return Anzahl der betroffenen Datensätze
      * @throws SQLException database access error
      */
-    private int executeUpdate(final String query) throws SQLException
+    private int executeUpdate(final String query, final boolean commit) throws SQLException
     {
         SQLException ex = null;
         int i = -1;
         try
         {
              i = this.statement.executeUpdate(query);
+             if(commit)
+             {
+                 commit();
+             }
         }
         catch (final SQLException e)
         {
@@ -332,11 +390,11 @@ public class Backend
     public void updateIssue(final Issue issue) throws Throwable
     {
         executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getLabel(), issue.getType().getId(),
-                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked(), issue.getId()));
+                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked(), issue.getId()), true);
         Log.info("Issue updated: " +  issue);
 
         final IssueButton button = Util.getButton(issue);
-        button.refresh();
+        button.refresh(issue);
     }
 
     /**
@@ -347,10 +405,8 @@ public class Backend
      */
     private List<Issue> executeSelect(final String query) throws Throwable
     {
-        ResultSet rs = null;
-        try
+        try (final ResultSet rs = this.statement.executeQuery(query))
         {
-            rs = this.statement.executeQuery(query);
             final ResultSetMetaData metaData = rs.getMetaData();
             final int columnCount = metaData.getColumnCount();
             final List<Issue> issues = new ArrayList<>();
@@ -365,30 +421,42 @@ public class Backend
             }
             return issues;
         }
-        finally
-        {
-            close(rs);
-        }
     }
 
-    /**
-     * Gibt die Ressource wieder frei
-     * @param rs ResultSet
-     */
-    private void close(final ResultSet rs)
+    public void insertUpdate(final IUpdateMethod update) throws SQLException
     {
-        if (rs == null)
-        {
-            return;
-        }
+        executeUpdate(String.format(INSERT_UPDATE, update.getUpdateId()), false);
+    }
+
+    public void commit() throws SQLException
+    {
+        this.statement.executeUpdate(COMMIT_STMT);
+    }
+
+    public void rollback() throws SQLException
+    {
+        this.statement.executeUpdate(ROLLBACK_STMT);
+    }
+
+    public Set<Integer> getUpdateIds()
+    {
         try
         {
-            rs.close();
+            try (final ResultSet rs = this.statement.executeQuery(QUERY_UPDATES))
+            {
+                final Set<Integer> updateIds = new HashSet<>();
+                while (rs.next())
+                {
+                    updateIds.add(rs.getInt(1));
+                }
+                return updateIds;
+            }
         }
-        catch (final SQLException e)
+        catch (final SQLException t)
         {
-            Log.log(Level.FINE, String.format("Could not close resultset: %s", rs.toString()), e);
+            Util.handleException(t);
         }
+        return Collections.emptySet();
     }
 
     /**

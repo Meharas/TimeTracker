@@ -54,8 +54,9 @@ public class IssueButton extends BaseButton
         });
     }
 
-    public void refresh()
+    public void refresh(final Issue issue)
     {
+        this.issue.putAll(issue);
         repaint();
     }
 

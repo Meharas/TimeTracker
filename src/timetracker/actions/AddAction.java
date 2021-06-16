@@ -13,7 +13,6 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 /**
  * Aktion zum Hinzufügen eines Tickets
@@ -46,10 +45,11 @@ public class AddAction extends BaseAction
         }
         try
         {
-            if (Client.setInProgress(text))
+            final JButton button = createButton(text);
+            if (button != null)
             {
-                final JButton button = createButton(text);
-                Optional.ofNullable(button).ifPresent(AbstractButton::doClick);
+                Client.setInProgress(text);
+                button.doClick();
             }
         }
         catch (final IOException | URISyntaxException ex)

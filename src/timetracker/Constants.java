@@ -1,5 +1,6 @@
 package timetracker;
 
+import java.io.File;
 import java.util.regex.Pattern;
 
 /**
@@ -17,7 +18,9 @@ public final class Constants
     public static final Pattern DURATION_PATTERN = Pattern.compile("(\\d{2})h (\\d{2})min (\\d{2})s");
     public static final Pattern USER_ID_PATTERN = Pattern.compile("(\\d+-\\d+)");
 
-    public static final String PROPERTIES = TimeTracker.class.getSimpleName() + ".properties";
+    public static final String FOLDER_USERDATA = "userdata";
+
+    public static final String PROPERTIES = File.separator + FOLDER_USERDATA + File.separator + TimeTracker.class.getSimpleName() + ".properties";
     public static final String DEFAULT_PROPERTIES = TimeTracker.class.getSimpleName() + ".default.properties";
     public static final String LOGFILE_NAME = "TimeTracker.log";
     public static final String PREFIX_BUTTON = "button.";

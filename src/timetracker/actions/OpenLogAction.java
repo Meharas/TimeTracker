@@ -1,7 +1,5 @@
 package timetracker.actions;
 
-import timetracker.Constants;
-import timetracker.TimeTracker;
 import timetracker.log.Log;
 
 import javax.swing.text.TextAction;
@@ -26,7 +24,7 @@ public class OpenLogAction extends TextAction
     @Override
     public void actionPerformed(final ActionEvent e)
     {
-        final File log = new File(TimeTracker.HOME + "\\log\\" + Constants.LOGFILE_NAME);
+        final File log = Log.getLogFile();
         if (log.exists())
         {
             final Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
