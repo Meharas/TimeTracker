@@ -11,8 +11,9 @@ import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.TimeTrackerMenuBar;
 import timetracker.updates.Updates;
+import timetracker.utils.ClipboardMonitor;
 import timetracker.utils.LookAndFeelManager;
-import timetracker.utils.TrayIcon;
+import timetracker.utils.SystemTrayIcon;
 import timetracker.utils.Util;
 
 import javax.swing.*;
@@ -208,11 +209,7 @@ public class TimeTracker extends JFrame
 
     private void setTime(final JLabel label, final Issue issue)
     {
-        String value = issue.getDuration();
-        if(value == null || value.isEmpty())
-        {
-            value = issue.getDurationSaved();
-        }
+        final String value = issue.getDuration();
         if (value != null && !value.isEmpty())
         {
             label.setText(value);
@@ -749,8 +746,8 @@ public class TimeTracker extends JFrame
 
     private static void initClipboardObserver()
     {
-        /*final ClipboardMonitor monitor = ClipboardMonitor.getMonitor();
-        monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));*/
+        final ClipboardMonitor monitor = ClipboardMonitor.getMonitor();
+        monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));
     }
 
     /**
@@ -767,7 +764,7 @@ public class TimeTracker extends JFrame
                     timeTracker = new TimeTracker();
                     timeTracker.init(properties);
                     timeTracker.setVisible(true);
-                    TrayIcon.addTrayIcon();
+                    SystemTrayIcon.addTrayIcon();
                     initClipboardObserver();
                 }
                 catch (final Throwable e)

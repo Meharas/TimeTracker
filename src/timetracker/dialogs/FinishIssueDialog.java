@@ -12,6 +12,7 @@ import timetracker.log.Log;
 import timetracker.menu.ComboBoxFixVersions;
 import timetracker.menu.ComboBoxStates;
 import timetracker.utils.EscapeEvent;
+import timetracker.utils.Util;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -30,8 +31,7 @@ public class FinishIssueDialog extends JFrame
     {
         super("Finish issue");
 
-        final Point location = TimeTracker.getTimeTracker().getWindowLocation();
-        setBounds(location.x, location.y, 400, 300);
+        setBounds(Util.getPopUpLocation(400, 300));
         setResizable(false);
         setAlwaysOnTop(true);
         EscapeEvent.add(this);

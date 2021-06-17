@@ -133,7 +133,7 @@ public class BaseButton extends JButton implements ITimeTrackerButton
      * @param icon Icon
      * @return Angepasster Name für das Icon
      */
-    protected static String getIconName(String icon)
+    public static String getIconName(String icon)
     {
         icon = icon.replace("_dark", Constants.STRING_EMPTY);
         if(LookAndFeelManager.isDark())
@@ -169,7 +169,7 @@ public class BaseButton extends JButton implements ITimeTrackerButton
      * @param icon Icon
      * @return ImageIcon
      */
-    protected static ImageIcon getImageIcon(final String icon)
+    public static ImageIcon getImageIcon(final String icon)
     {
         try (final InputStream iconStream = TimeTracker.class.getResourceAsStream(icon))
         {

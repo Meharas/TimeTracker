@@ -12,16 +12,15 @@ import timetracker.icons.Icon;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.time.LocalDateTime;
 
 /**
  * Erzeugt ein TrayIcon mit Menü
  */
-public class TrayIcon
+public class SystemTrayIcon
 {
-    private TrayIcon()
+    private SystemTrayIcon()
     {
 
     }
@@ -32,8 +31,7 @@ public class TrayIcon
         {
             final TimeTracker timeTracker = TimeTracker.getTimeTracker();
             final MenuItem aboutItem = new MenuItem(Resource.getString(PropertyConstants.LABEL_ABOUT));
-            final int year = LocalDateTime.now().getYear();
-            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(timeTracker, "Version 0.7 Leipzig\n\nby Andreas Beyer\n©" + year));
+            aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(timeTracker, "Version 0.8 Leipzig\n\nby Andreas Beyer\n©" + LocalDateTime.now().getYear()));
 
             final MenuItem openItem = new MenuItem(Resource.getString(PropertyConstants.LABEL_OPEN));
             openItem.setEnabled(false);
@@ -46,7 +44,7 @@ public class TrayIcon
             final ImageIcon imageIcon = new ImageIcon(TimeTracker.getHome() + Icon.TIMETRACKER.getIcon());
             final java.awt.TrayIcon icon = new java.awt.TrayIcon(imageIcon.getImage());
             icon.setToolTip(timeTracker.getTitle());
-            icon.addMouseListener(new MouseListener()
+            icon.addMouseListener(new MouseClickListener()
             {
                 @Override
                 public void mouseClicked(final MouseEvent e)
@@ -58,32 +56,7 @@ public class TrayIcon
                     timeTracker.showFrame(openItem, !timeTracker.isVisible());
                     timeTracker.setExtendedState(Frame.NORMAL);
                 }
-
-                @Override
-                public void mousePressed(final MouseEvent e)
-                {
-                    //doNothing
-                }
-
-                @Override
-                public void mouseReleased(final MouseEvent e)
-                {
-                    //doNothing
-                }
-
-                @Override
-                public void mouseEntered(final MouseEvent e)
-                {
-                    //doNothing
-                }
-
-                @Override
-                public void mouseExited(final MouseEvent e)
-                {
-                    //doNothing
-                }
             });
-
 
             final MenuItem add = new MenuItem(Resource.getString(PropertyConstants.LABEL_ADD));
             add.addActionListener(new ShowAddButtonAction());

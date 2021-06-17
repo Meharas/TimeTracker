@@ -25,6 +25,11 @@ public class Util
     {
     }
 
+    /**
+     * Liefert den Punkt für ein Fenster mittig auf dem Bildschirm
+     * @param dimension Abmessungen des anzuzeigenden Fensters
+     * @return Position des Fensters
+     */
     public static Point getWindowLocation(final Dimension dimension)
     {
         final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -50,8 +55,7 @@ public class Util
                 final Object transferData = contents.getTransferData(DataFlavor.stringFlavor);
                 if(transferData instanceof String)
                 {
-                    TimeTracker.MATCHER.reset((String) transferData);
-                    if(TimeTracker.MATCHER.matches())
+                    if(TimeTracker.matches((String) transferData))
                     {
                         return TimeTracker.MATCHER.group(1);
                     }
@@ -135,5 +139,21 @@ public class Util
                                                        Map.Entry::getValue,
                                                        (e1, e2) -> e1,
                                                        LinkedHashMap::new));
+    }
+
+    /**
+     * Liefert die Position eines PopUps in Relation zum TimeTracker unter Berücksichtigung der Bildschirmgröße
+     * @param width Breite des PopUps
+     * @param height Höhe des PopUps
+     * @return Position des PopUps
+     */
+    public static Rectangle getPopUpLocation(final int width, final int height)
+    {
+        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
+        final Point location = timeTracker.getWindowLocation();
+        final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        final int x =  (int) Math.max(Math.min(location.x, screenSize.getWidth() - width), 0);
+        final int y = (int) Math.max(Math.min(location.y, screenSize.getHeight() - height), 0);
+        return new Rectangle(x, y, width, height);
     }
 }

@@ -1,12 +1,17 @@
 package timetracker.utils;
 
+import timetracker.PropertyConstants;
+import timetracker.Resource;
 import timetracker.TimeTracker;
 import timetracker.dialogs.ClipboardDialog;
 import timetracker.log.Log;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
+import java.awt.event.MouseEvent;
 import java.util.Observable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Überwacht das Clipboard auf Youtrack-Issues
@@ -22,7 +27,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
     {
     }
 
-    private static void gainOwnership(final Transferable content)
+    private void gainOwnership(final Transferable content)
     {
         Log.info("gain ownership...");
         try
@@ -34,10 +39,39 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
                 {
                     Log.info("String content detected");
 
-                    if(TimeTracker.matches((String) transferData))
+                    final String ticket = (String) transferData;
+                    if(!TimeTracker.getTimeTracker().isVisible() && TimeTracker.matches(ticket))
                     {
-                        final ClipboardDialog dialog = new ClipboardDialog((String) transferData);
-                        dialog.setVisible(true);
+                        final JPopupMenu menu = new JPopupMenu();
+                        final JMenuItem add = new JMenuItem(Resource.getString(PropertyConstants.TEXT_ADD_CLIPBOARD, ticket));
+                        final Font current = add.getFont();
+                        final Font font = new Font(current.getName(), current.getStyle(), 16);
+                        add.setFont(font);
+                        add.setHorizontalTextPosition(SwingConstants.CENTER);
+                        add.invalidate();
+
+                        final Dimension dimension = new Dimension(350, 100);
+                        add.setPreferredSize(dimension);
+                        add.addMouseListener(new MouseClickListener()
+                        {
+                            @Override
+                            public void mouseClicked(final MouseEvent e)
+                            {
+                                final ClipboardDialog dialog = new ClipboardDialog(ticket);
+                                dialog.setVisible(true);
+                                menu.setVisible(false);
+                            }
+                        });
+
+                        final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                        menu.setLocation(screenSize.width - dimension.width, screenSize.height - dimension.height);
+                        menu.setPreferredSize(dimension);
+                        menu.add(add);
+                        menu.setVisible(true);
+
+                        final Timer timer = new Timer((int) TimeUnit.SECONDS.toMillis(5), e -> menu.setVisible(false));
+                        timer.setRepeats(false);
+                        timer.start();
                     }
                 }
             }
@@ -54,6 +88,17 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
     @Override
     public void lostOwnership(final Clipboard clipboard, final Transferable contents)
     {
+        Log.info("Ownership lost ...");
+
+        try
+        {
+            Thread.sleep(50);
+        }
+        catch (final InterruptedException e)
+        {
+            Util.handleException(e);
+        }
+        gainOwnership(clipboard.getContents(this));
     }
 
     @Override
@@ -62,7 +107,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
         throw new CloneNotSupportedException("There can be only one instance of this monitor!");
     }
 
-    public static void resetClipboard()
+    public void resetClipboard()
     {
         gainOwnership(new StringSelection(""));
     }
@@ -70,16 +115,6 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
     public static ClipboardMonitor getMonitor()
     {
         EventQueue.invokeLater(monitor);
-
-        /*final Scanner scanner = new Scanner(System.in);
-        while (scanner.hasNextLine())
-        {
-            final String buffer = scanner.nextLine();
-            if (!buffer.trim().isEmpty())
-            {
-                monitor.setBuffer(buffer);
-            }
-        }*/
         return monitor;
     }
 

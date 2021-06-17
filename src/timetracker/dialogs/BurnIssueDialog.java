@@ -5,11 +5,14 @@ import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
 import timetracker.actions.BaseAction;
+import timetracker.buttons.DatePickerButton;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.data.WorkItemType;
 import timetracker.db.Backend;
-import timetracker.menu.TypeRenderer;
+import timetracker.icons.Icon;
+import timetracker.menu.ComboBoxWorkItems;
+import timetracker.utils.DatePicker;
 import timetracker.utils.EscapeEvent;
 import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
@@ -20,7 +23,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.Date;
 
 /**
  * Dialog zum Burnen der Zeit eines Issues
@@ -34,20 +37,12 @@ public class BurnIssueDialog extends JFrame
         super("Burning time");
         this.issue = issue;
 
-        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
-        final Point location = timeTracker.getWindowLocation();
-
-        setBounds(location.x, location.y, 400, 350);
+        setBounds(Util.getPopUpLocation(400, 400));
         setResizable(false);
         setAlwaysOnTop(true);
         EscapeEvent.add(this);
 
-        final JTextField ticketField = new JTextField();
-        ticketField.setMargin(new Insets(0, 5, 0, 5));
-        ticketField.setMaximumSize(new Dimension(350, 100));
-        ticketField.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
-        ticketField.setBackground(TimeTracker.MANDATORY);
-        ticketField.setForeground(LookAndFeelManager.getFontColor());
+        final JTextField ticketField = createTextField(350, 100);
 
         final String buttonText = button.getText();
         TimeTracker.MATCHER.reset(buttonText);
@@ -61,42 +56,39 @@ public class BurnIssueDialog extends JFrame
             ticketField.setText(ticket);
         }
 
-        final JTextField timeField = new JTextField();
-        timeField.setMargin(new Insets(0, 5, 0, 5));
-        timeField.setMaximumSize(new Dimension(350, 100));
-        timeField.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
-        timeField.setBackground(TimeTracker.MANDATORY);
-        timeField.setForeground(LookAndFeelManager.getFontColor());
+        final JTextField timeField = createTextField(350, 100);
         timeField.setText(getParsedTime(label.getText()));
-
-        final JComboBox<WorkItemType> typeField = new JComboBox<>();
-        typeField.setMaximumSize(new Dimension(350, 100));
-        typeField.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
-        typeField.setRenderer(new TypeRenderer());
-
-        final String type = issue.getType().getId();
-        final List<WorkItemType> workItemTypes = WorkItemType.getTypes();
-
-        for (final WorkItemType t : workItemTypes)
-        {
-            typeField.addItem(t);
-            if (t.getId().equalsIgnoreCase(type))
-            {
-                typeField.setSelectedItem(t);
-            }
-        }
 
         final JPanel globalPanel = new JPanel();
         globalPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         globalPanel.setLayout(new BoxLayout(globalPanel, BoxLayout.Y_AXIS));
+
+        final ComboBoxWorkItems typeField = new ComboBoxWorkItems(issue);
 
         final JPanel panel = new JPanel();
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_TICKET)));
         panel.add(ticketField);
+        panel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_DATE)));
+
+        final JPanel datePanel = new JPanel();
+        datePanel.setLayout(new BoxLayout(datePanel, BoxLayout.X_AXIS));
+        datePanel.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
+        panel.add(datePanel);
+
+        final JTextField dateField = createTextField(315, 100);
+        dateField.setText(DatePicker.DATE_FORMAT.format(new Date()));
+        datePanel.add(dateField);
+
+        final JButton date = new DatePickerButton(Icon.CALENDAR);
+        date.setPreferredSize(new Dimension(20,20));
+        date.addActionListener(ae -> dateField.setText(new DatePicker(BurnIssueDialog.this).getSelectedDate()));
+        datePanel.add(date);
+
         panel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_TIME)));
         panel.add(timeField);
+
         panel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_TYPE)));
         panel.add(typeField);
         globalPanel.add(panel);
@@ -126,6 +118,7 @@ public class BurnIssueDialog extends JFrame
             timerAction.stopWithoutSave();
         }
 
+        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
         final JButton ok = new JButton(new AbstractAction(Resource.getString(PropertyConstants.TEXT_OK))
         {
             private static final long serialVersionUID = -2918616353182983419L;
@@ -133,7 +126,7 @@ public class BurnIssueDialog extends JFrame
             @Override
             public void actionPerformed(final ActionEvent e)
             {
-                if (burnTime(ticketField, timeField, typeField, textArea))
+                if (burnTime(ticketField, timeField, dateField, typeField, textArea))
                 {
                     if(timerAction != null)
                     {
@@ -154,6 +147,16 @@ public class BurnIssueDialog extends JFrame
         add(globalPanel);
     }
 
+    private JTextField createTextField(final int width, final int height)
+    {
+        final JTextField textField = new JTextField();
+        textField.setMargin(new Insets(0, 5, 0, 5));
+        textField.setMaximumSize(new Dimension(width, height));
+        textField.setAlignmentX(Component.LEFT_ALIGNMENT);//0.0
+        textField.setBackground(TimeTracker.MANDATORY);
+        textField.setForeground(LookAndFeelManager.getFontColor());
+        return textField;
+    }
 
     /**
      * Liefert einen Formatierten String zum Burnen
@@ -216,17 +219,19 @@ public class BurnIssueDialog extends JFrame
      * Burnt Zeit am Ticket
      * @param ticketField Feld mit dem Ticket
      * @param timeField Feld mit der Zeit
+     * @param dateField Feld mit dem Datum
      * @param typeField Feld mit dem Typ
      * @param textArea Feld mit dem Kommentar
      * @return <code>true</code>, wenn erfolgreich, sonst <code>false</code>
      */
-    private boolean burnTime(final JTextField ticketField, final JTextField timeField, final JComboBox<WorkItemType> typeField, final JTextArea textArea)
+    private boolean burnTime(final JTextField ticketField, final JTextField timeField, final JTextField dateField, final JComboBox<WorkItemType> typeField, final JTextArea textArea)
     {
         final String ticket = ticketField.getText();
         final String spentTime = timeField.getText();
+        final String date = dateField.getText();
         final Object selectedItem = typeField.getSelectedItem();
 
-        if (selectedItem == null || ticket.isEmpty() || spentTime.isEmpty())
+        if (selectedItem == null || ticket.isEmpty() || spentTime.isEmpty() || date.isEmpty())
         {
             return false;
         }
@@ -279,7 +284,7 @@ public class BurnIssueDialog extends JFrame
 
         try
         {
-            return Client.setSpentTime(ticket, spentTime, this.issue.getType().getId(), text);
+            return Client.setSpentTime(ticket, spentTime, date, this.issue.getType().getId(), text);
         }
         catch (final URISyntaxException | IOException e)
         {

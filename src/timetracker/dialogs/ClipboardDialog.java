@@ -75,14 +75,8 @@ public class ClipboardDialog extends JFrame
         buttonPanel.add(noButton);
         buttonPanel.add(cancelButton);
 
-        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
-
         final Dimension size = getPreferredSize();
-        final int width = size.width;
-        final int height = size.height;
-        final int x = timeTracker.getX() + ((timeTracker.getWidth() - width) / 2);
-        final int y = timeTracker.getY() + ((timeTracker.getHeight() - height) / 2);
-        setBounds(new Rectangle(x, y, width, height));
+        setBounds(Util.getPopUpLocation(size.width, size.height));
 
         SwingUtilities.getRootPane(yesButton).setDefaultButton(yesButton);
 

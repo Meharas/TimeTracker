@@ -27,6 +27,7 @@ import timetracker.Constants;
 import timetracker.ServicePath;
 import timetracker.TimeTracker;
 import timetracker.log.Log;
+import timetracker.utils.DatePicker;
 import timetracker.utils.Util;
 
 import javax.net.ssl.SSLContext;
@@ -42,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -530,17 +532,29 @@ public class Client
      * Überträgt die getrackte Zeit
      * @param ticket Ticket
      * @param spentTime Zeit
+     * @param date Datum
      * @param type Typ
      * @param text Kommentar
      * @return {@code true}, wenn das Übertragen erfolgreich war und ein Response erhalten wurde, sonst {@code false}
      * @throws URISyntaxException Fehler beim Erzeugen der URL
      * @throws IOException Fehler beim Absetzen des Requests
      */
-    public static boolean setSpentTime(final String ticket, final String spentTime, final String type, final String text) throws URISyntaxException, IOException
+    public static boolean setSpentTime(final String ticket, final String spentTime, final String date, final String type, final String text) throws URISyntaxException, IOException
     {
         final URIBuilder builder = Client.getURIBuilder(ServicePath.WORKITEM, ticket);
         final HttpPost request = new HttpPost(builder.build());
-        request.setEntity(new StringEntity(String.format(Constants.ENTITY, System.currentTimeMillis(), Client.getUserId(), spentTime, type, text), ContentType.APPLICATION_JSON));
+
+        final long time;
+        try
+        {
+            time = DatePicker.DATE_FORMAT.parse(date).getTime();
+        }
+        catch (final ParseException e)
+        {
+            Util.handleException(e);
+            return false;
+        }
+        request.setEntity(new StringEntity(String.format(Constants.ENTITY, time, Client.getUserId(), spentTime, type, text), ContentType.APPLICATION_JSON));
 
         final HttpResponse response = Client.executeRequest(request);
         if (response == null)

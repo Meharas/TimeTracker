@@ -7,6 +7,7 @@ public enum Icon
 {
     ADD("add.png"),
     BURN("burn.png"),
+    CALENDAR("calendar.png"),
     CLIPBOARD("clipboard.png"),
     CLOCK("clock.png"),
     COPY("copy.png"),
