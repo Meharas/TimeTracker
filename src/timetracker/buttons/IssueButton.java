@@ -1,6 +1,7 @@
 package timetracker.buttons;
 
 import timetracker.data.Issue;
+import timetracker.dnd.ButtonTransferHandler;
 import timetracker.icons.Icon;
 import timetracker.menu.ContextMenu;
 import timetracker.utils.LookAndFeelManager;
@@ -9,6 +10,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.dnd.DropTarget;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -52,6 +54,23 @@ public class IssueButton extends BaseButton
                 }
             }
         });
+
+        addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseDragged(final MouseEvent e)
+            {
+                final JButton button = (JButton) e.getSource();
+                final TransferHandler handle = button.getTransferHandler();
+                handle.exportAsDrag(button, e, TransferHandler.COPY);
+            }
+        });
+
+        setTransferHandler(new ButtonTransferHandler(issue));
+    }
+
+    public Issue getIssue()
+    {
+        return this.issue;
     }
 
     public void refresh(final Issue issue)

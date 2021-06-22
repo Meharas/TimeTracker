@@ -4,6 +4,7 @@ import timetracker.Constants;
 import timetracker.client.Client;
 import timetracker.utils.Util;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,7 @@ import java.util.Map;
 /**
  * Enum für den Typ eines Tickets, Development oder Meeting
  */
-public class WorkItemType
+public class WorkItemType implements Serializable
 {
     private static final List<WorkItemType> WORKITEM_TYPES = new LinkedList<>();
     static

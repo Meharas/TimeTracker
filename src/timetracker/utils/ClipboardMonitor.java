@@ -64,7 +64,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
                         });
 
                         final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                        menu.setLocation(screenSize.width - dimension.width, screenSize.height - dimension.height);
+                        menu.setLocation(screenSize.width - dimension.width, screenSize.height - dimension.height - 50);
                         menu.setPreferredSize(dimension);
                         menu.add(add);
                         menu.setVisible(true);

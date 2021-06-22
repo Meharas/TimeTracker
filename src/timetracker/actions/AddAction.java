@@ -81,7 +81,7 @@ public class AddAction extends BaseAction
             ticket = TimeTracker.MATCHER.group(1);
         }
 
-        final Issue issue = new Issue(ticket, text, null, null, null, filePath, true, false);
+        final Issue issue = new Issue(ticket, text, null, null, null, filePath);
         JButton button = null;
         try
         {

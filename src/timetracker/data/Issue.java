@@ -3,55 +3,49 @@ package timetracker.data;
 import timetracker.Constants;
 import timetracker.db.Backend;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * Repräsentiert ein Ticket
  */
-public class Issue
+public class Issue implements Serializable
 {
     private String id;
+    private int order = -1;
     private String ticket;
     private String label;
     private WorkItemType type;
     private String duration;
     private String durationSaved;
     private String icon;
-    private final boolean deletable;
+    private boolean canBeFinished;
     private boolean marked;
     private boolean inProgress;
+    private boolean preventTimer;
 
-    public Issue(final String ticket, final String label, final WorkItemType type, final String duration, final String durationSaved, final String icon,
-                 final boolean deletable, final boolean marked)
+    public Issue(final String ticket, final String label, final WorkItemType type, final String duration, final String durationSaved, final String icon)
     {
-        this(Constants.STRING_EMPTY, ticket, label, type, duration, durationSaved, icon, deletable, marked);
-    }
-
-    public Issue(final String id, final String ticket, final String label, final WorkItemType type, final String duration, final String durationSaved, final String icon,
-                 final boolean deletable, final boolean marked)
-    {
-        this.id = id;
         this.ticket = getString(ticket);
         this.label = getString(label);
         this.type = type;
         this.duration = getString(duration);
         this.durationSaved = getString(durationSaved);
         this.icon = getString(icon);
-        this.deletable = deletable;
-        this.marked = marked;
     }
 
     public Issue(final Map<String, String> data)
     {
         this.id = getString(data.get(Backend.CN_ID));
+        this.order = Optional.ofNullable(data.get(Backend.CN_ORDER)).map(Integer::parseInt).orElse(-1);
         this.ticket = getString(data.get(Backend.CN_ISSUE));
         this.label = getString(data.get(Backend.CN_LABEL));
         this.type = WorkItemType.getType(data.get(Backend.CN_TYPE));
         this.duration = getString(data.get(Backend.CN_DURATION));
         this.durationSaved = getString(data.get(Backend.CN_DURATION_SAVED));
         this.icon = getString(data.get(Backend.CN_ICON));
-        this.deletable = Boolean.parseBoolean(data.get(Backend.CN_DELETABLE));
+        this.canBeFinished = Boolean.parseBoolean(data.get(Backend.CN_CAN_BE_FINISHED));
         this.marked = Boolean.parseBoolean(data.get(Backend.CN_MARKED));
     }
 
@@ -71,6 +65,16 @@ public class Issue
         {
             this.id = id;
         }
+    }
+
+    public int getOrder()
+    {
+        return this.order;
+    }
+
+    public void setOrder(final int order)
+    {
+        this.order = order;
     }
 
     public String getTicket()
@@ -134,9 +138,14 @@ public class Issue
         this.icon = getString(icon);
     }
 
-    public boolean isDeletable()
+    public boolean canBeFinished()
     {
-        return this.deletable;
+        return this.canBeFinished;
+    }
+
+    public void setCanBeFinished(final boolean canBeFinished)
+    {
+        this.canBeFinished = canBeFinished;
     }
 
     public boolean isMarked()
@@ -159,6 +168,23 @@ public class Issue
         this.inProgress = inProgress;
     }
 
+    public boolean isPreventTimer()
+    {
+        try
+        {
+            return this.preventTimer;
+        }
+        finally
+        {
+            this.preventTimer = false;
+        }
+    }
+
+    public void setPreventTimer(final boolean preventTimer)
+    {
+        this.preventTimer = preventTimer;
+    }
+
     public void putAll(final Issue other)
     {
         setMarked(other.isMarked());
@@ -168,7 +194,7 @@ public class Issue
     @Override
     public String toString()
     {
-        return String.format("Issue{Id=%s, Ticket=%s, Label=%s, Type=%s, Duration=%s, Saved duration=%s, Icon=%s, Deletable=%s, Marked=%s}",
-                             getId(), getTicket(), getLabel(), getType(), getDuration(), getDurationSaved(), getIcon(), isDeletable(), isMarked());
+        return String.format("Issue{Id=%s, Ticket=%s, Order=%d, Label=%s, Type=%s, Duration=%s, Saved duration=%s, Icon=%s, Can be finished=%s, Marked=%s}",
+                             getId(), getTicket(), getOrder(), getLabel(), getType(), getDuration(), getDurationSaved(), getIcon(), canBeFinished(), isMarked());
     }
 }

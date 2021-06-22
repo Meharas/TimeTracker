@@ -91,7 +91,7 @@ public class ClipboardDialog extends JFrame
             ticket = TimeTracker.MATCHER.group(1);
         }
 
-        final Issue issue = new Issue(ticket, text, null, null, null, icon, true, false);
+        final Issue issue = new Issue(ticket, text, null, null, null, icon);
         JButton button;
         try
         {

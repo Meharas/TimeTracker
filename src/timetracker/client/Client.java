@@ -26,6 +26,7 @@ import org.apache.http.message.BasicNameValuePair;
 import timetracker.Constants;
 import timetracker.ServicePath;
 import timetracker.TimeTracker;
+import timetracker.data.Project;
 import timetracker.log.Log;
 import timetracker.utils.DatePicker;
 import timetracker.utils.Util;
@@ -122,6 +123,103 @@ public class Client
     }
 
     /**
+     * Liefert die im Youtrack zur Verfügung stehenden Projekte
+     * @return Projekte
+     * @throws URISyntaxException Wenn das Parsen als URI-Referenz schief ging
+     * @throws IOException Verbindungsproblem
+     */
+    public static List<Map<String, String>> getProjects() throws URISyntaxException, IOException
+    {
+        final URIBuilder builder = Client.getURIBuilder(ServicePath.PROJECTS, null, new BasicNameValuePair("$top", "-1"),
+                                                                                    new BasicNameValuePair("fields", "id,name,shortName,isDemo,ringId,archived,template,pinned"),
+                                                                                    new BasicNameValuePair("sorting", "natural"));
+        final HttpGet request = new HttpGet(builder.build());
+        final HttpResponse response = Client.executeRequest(request);
+        return getProjects(response);
+    }
+
+    private static List<Map<String, String>> getProjects(final HttpResponse response) throws IOException
+    {
+        List<Map<String, String>> projects = Collections.emptyList();
+        if (response == null)
+        {
+            return projects;
+        }
+
+        final StatusLine statusLine = response.getStatusLine();
+        final int status = statusLine.getStatusCode();
+        if (status == HttpStatus.SC_OK)
+        {
+            JsonParser parser = null;
+            try (final ByteArrayOutputStream outputStream = new ByteArrayOutputStream())
+            {
+                response.getEntity().writeTo(outputStream);
+                outputStream.flush();
+
+                final String msg = new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
+                Log.info(msg);
+
+                final JsonFactory jsonFactory = new JsonFactory();
+                parser = jsonFactory.createParser(msg);
+                projects = getProjectsFromParser(parser);
+            }
+            finally
+            {
+                if (parser != null)
+                {
+                    parser.close();
+                }
+            }
+        }
+        return projects;
+    }
+
+    /**
+     * Liefert die Projekte
+     * @param parser JsonParser
+     * @return Wert zum übergebenen Schlüssel
+     * @throws IOException I/O Error
+     */
+    private static List<Map<String, String>> getProjectsFromParser(final JsonParser parser) throws IOException
+    {
+        final List<Map<String, String>> projects = new LinkedList<>();
+        Map<String, String> currentProject = null;
+        final Set<String> attributes = new HashSet<>();
+
+        while ((parser.nextToken()) != null)
+        {
+            final String attribute = parser.getCurrentName();
+            if(attribute == null)
+            {
+                continue;
+            }
+
+            if(currentProject == null)
+            {
+                currentProject = new HashMap<>();
+            }
+            if(attributes.add(attribute))
+            {
+                parser.nextToken();
+                currentProject.put(attribute, parser.getValueAsString());
+            }
+            else
+            {
+                projects.add(currentProject);
+                currentProject = new HashMap<>();
+                attributes.clear();
+
+                if(attributes.add(attribute))
+                {
+                    parser.nextToken();
+                    currentProject.put(attribute, parser.getValueAsString());
+                }
+            }
+        }
+        return projects;
+    }
+
+    /**
      * Liefert die WorkItems zur Zeiterfassung
      * @return Map mit der Id als Key und dem Namen als Value
      * @throws URISyntaxException Url falsch
@@ -129,7 +227,9 @@ public class Client
      */
     public static Map<String, String> getWorkItems() throws URISyntaxException, IOException
     {
-        return getResponseAsMap(ServicePath.WORKITEMTYPES);
+        final String objectId = Project.getProjects().stream().filter(p -> "SEP".equalsIgnoreCase(p.getShortName())).findFirst().map(Project::getRingId).orElse(null);
+        return getResponseAsMap(ServicePath.WORKITEMTYPES, objectId, new BasicNameValuePair("$top","-1"),
+                                                                     new BasicNameValuePair("fields","enabled,workItemTypes(id,name,ordinal,url)"));
     }
 
     /**
@@ -156,7 +256,12 @@ public class Client
 
     private static Map<String, String> getResponseAsMap(final ServicePath path) throws IOException, URISyntaxException
     {
-        final URIBuilder builder = Client.getURIBuilder(path, null, new BasicNameValuePair("fields", "id,name"));
+        return getResponseAsMap(path, null, new BasicNameValuePair("fields", "id,name"));
+    }
+
+    private static Map<String, String> getResponseAsMap(final ServicePath path, final String objectId, final BasicNameValuePair...fields) throws IOException, URISyntaxException
+    {
+        final URIBuilder builder = Client.getURIBuilder(path, objectId, fields);
         final HttpGet request = new HttpGet(builder.build());
         final HttpResponse response = Client.executeRequest(request);
         if (response == null)

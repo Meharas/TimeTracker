@@ -18,6 +18,8 @@ public final class Updates
     static
     {
         UPDATE_METHODS.add(CopyUserFiles.class);
+        UPDATE_METHODS.add(RenameColumnDeletable.class);
+        UPDATE_METHODS.add(UpdateOrders.class);
     }
 
     // Innere private Klasse, die erst beim Zugriff durch die umgebende Klasse initialisiert wird

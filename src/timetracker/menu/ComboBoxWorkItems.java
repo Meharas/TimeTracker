@@ -18,18 +18,24 @@ public class ComboBoxWorkItems extends JComboBox<WorkItemType>
         setMaximumSize(new Dimension(350, 100));
         setAlignmentX(Component.LEFT_ALIGNMENT);
         setBackground(TimeTracker.MANDATORY);
-        setRenderer(new TypeRenderer());
+        setRenderer(TypeRenderer.getInstance());
 
         final String type = issue.getType().getId();
         final List<WorkItemType> workItemTypes = WorkItemType.getTypes();
 
+        boolean setNothingSelected = true;
         for (final WorkItemType t : workItemTypes)
         {
             addItem(t);
             if (t.getId().equalsIgnoreCase(type))
             {
                 setSelectedItem(t);
+                setNothingSelected = false;
             }
+        }
+        if(setNothingSelected)
+        {
+            setSelectedIndex(-1);
         }
     }
 }

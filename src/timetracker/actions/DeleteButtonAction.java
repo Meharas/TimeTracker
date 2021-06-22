@@ -10,6 +10,7 @@ import timetracker.utils.Util;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.sql.SQLException;
 
 /**
  * Löscht eine komplette Zeile.
@@ -32,18 +33,27 @@ public class DeleteButtonAction extends BaseAction
         {
             return;
         }
+        final Backend backend = Backend.getInstance();
         try
         {
-            Backend.getInstance().deleteIssue(this.issue);
+            backend.deleteIssue(this.issue);
+            this.timeTracker.removeRow(this.issue);
+            this.timeTracker.updateGui(true);
+            this.timeTracker.decreaseLine();
+            backend.commit();
         }
         catch (final Throwable t)
         {
-            Util.handleException(t);
+            try
+            {
+                backend.rollback();
+                Util.handleException(t);
+            }
+            catch (final SQLException ex)
+            {
+                Util.handleException(t);
+            }
         }
-
-        remove();
-        this.timeTracker.updateGui(true);
-        this.timeTracker.decreaseLine();
     }
 
     /**

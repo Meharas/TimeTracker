@@ -17,6 +17,7 @@ import timetracker.utils.Util;
 import java.sql.*;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * Dient dem Zugriff auf die Datenbank des TimeTrackers
@@ -34,36 +35,47 @@ public class Backend
     public static final String CN_LABEL = "LABEL";
     public static final String CN_DURATION = "DURATION";
     public static final String CN_DURATION_SAVED = "DURATION_SAVED";
+    @Deprecated
     public static final String CN_DELETABLE = "DELETABLE";
+    public static final String CN_CAN_BE_FINISHED = "CAN_BE_FINISHED";
     public static final String CN_MARKED = "MARKED";
     public static final String CN_ICON = "ICON";
     public static final String CN_TYPE = "TYPE";
+    public static final String CN_ORDER = "ORDER_ID";
+
     public static final String CN_UPDATE_ID = "UPDATE_ID";
 
-    private static final String TN_ISSUES = "ISSUES";
-    private static final String TN_UPDATES = "UPDATES";
-    private static final String TN_ISSUES_COLUMNS = String.format(" (%s VARCHAR(12), %s VARCHAR(12), %s NVARCHAR(255), %s VARCHAR (12), %s VARCHAR(16), %s VARCHAR(16), " +
+    public static final String TN_ISSUES = "ISSUES";
+    public static final String TN_UPDATES = "UPDATES";
+    private static final String TN_ISSUES_COLUMNS = String.format(" (%s VARCHAR(12), %s INTEGER, %s VARCHAR(12), %s NVARCHAR(255), %s VARCHAR (12), %s VARCHAR(16), %s VARCHAR(16), " +
                                                                   "%s VARCHAR(255), %s BOOLEAN, %s BOOLEAN, PRIMARY KEY (%s));",
-                                                                  CN_ID, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON, CN_DELETABLE, CN_MARKED, CN_ID);
+                                                                  CN_ID, CN_ORDER, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON,
+                                                                  CN_CAN_BE_FINISHED, CN_MARKED, CN_ID);
     private static final String TN_UPDATES_COLUMNS = String.format(" (%s INTEGER PRIMARY KEY);", CN_UPDATE_ID);
+
+    private static final String RENAME_TABLE = "ALTER TABLE %s ALTER COLUMN %s RENAME TO %s;";
+    private static final String ADD_COLUMN = "ALTER TABLE %s ADD %s %s;";
 
     private static final String QUERY_UPDATES = String.format("SELECT %s FROM %s;", CN_UPDATE_ID, TN_UPDATES);
     private static final String INSERT_UPDATE = String.format("INSERT INTO %s (%s) VALUES (%s);", TN_UPDATES, CN_UPDATE_ID, "%d");
 
     private static final String QUERY_STMT = String.format("SELECT * FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s';";
-    private static final String QUERY_ALL_STMT = String.format("SELECT * FROM %s;", TN_ISSUES);
-    private static final String INSERT_STMT = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES ",
-                                                            TN_ISSUES, CN_ID, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON, CN_DELETABLE, CN_MARKED) +
-                                                            "('%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s);";
+    private static final String QUERY_ALL_STMT = String.format("SELECT * FROM %s ORDER BY %s;", TN_ISSUES, CN_ORDER);
+    private static final String QUERY_FIRST_ISSUE = String.format("SELECT * FROM %s LIMIT 1;", TN_ISSUES);
+    private static final String INSERT_STMT = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES ",
+                                                            TN_ISSUES, CN_ID, CN_ORDER, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON,
+                                                            CN_CAN_BE_FINISHED, CN_MARKED) +
+                                              "('%s', %d, '%s', '%s', '%s', '%s', '%s', '%s', %s, %s);";
     private static final String DELETE_STMT = String.format("DELETE FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s';";
-    private static final String UPDATE_STMT = "UPDATE " + TN_ISSUES + " SET " + CN_ISSUE + UPDATE_VALUE + CN_LABEL + UPDATE_VALUE + CN_TYPE + UPDATE_VALUE +
+    private static final String UPDATE_STMT = "UPDATE " + TN_ISSUES + " SET " + CN_ISSUE + UPDATE_VALUE + CN_ORDER + "=%d," + CN_LABEL + UPDATE_VALUE + CN_TYPE + UPDATE_VALUE +
                                               CN_DURATION + UPDATE_VALUE + CN_DURATION_SAVED + UPDATE_VALUE + CN_ICON + UPDATE_VALUE +
-                                              CN_DELETABLE + UPDATE_VALUE + CN_MARKED + "=%s WHERE " + CN_ID + "='%s';";
+                                              CN_CAN_BE_FINISHED + UPDATE_VALUE + CN_MARKED + "=%s WHERE " + CN_ID + "='%s';";
+
+    private static final String QUERY_MAX_ORDER = String.format("SELECT MAX(%s) FROM %s;", CN_ORDER, TN_ISSUES);
 
     private static final String COMMIT_STMT = "COMMIT;";
     private static final String ROLLBACK_STMT = "ROLLBACK WORK;";
 
-    
     // Innere private Klasse, die erst beim Zugriff durch die umgebende Klasse initialisiert wird
     private static final class InstanceHolder
     {
@@ -192,6 +204,34 @@ public class Backend
         {
             initIssueTable();
         }
+        else
+        {
+            boolean columnFound = false;
+            try (final ResultSet resultSet = this.statement.executeQuery(QUERY_FIRST_ISSUE))
+            {
+                final ResultSetMetaData rsMetaData = resultSet.getMetaData();
+                final int columnCount = rsMetaData.getColumnCount();
+                while (resultSet.next())
+                {
+                    for(int i = 1; i <= columnCount; i++)
+                    {
+                        columnFound = CN_ORDER.equalsIgnoreCase(rsMetaData.getColumnName(i));
+                        if(columnFound)
+                        {
+                            break;
+                        }
+                    }
+                    if(columnFound)
+                    {
+                        break;
+                    }
+                }
+            }
+            if(!columnFound)
+            {
+                addColum(TN_ISSUES, CN_ORDER, "INTEGER");
+            }
+        }
 
         rs = metaData.getTables(null, null, TN_UPDATES, null);
         if (!rs.next())
@@ -214,10 +254,10 @@ public class Backend
             stmt.executeUpdate(sqlTable.toString());
             Log.info("Table created: " + TN_ISSUES);
 
-            insertIssue(new Issue("1", Constants.STRING_EMPTY, "Support", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon(), false, false));
-            insertIssue(new Issue("2", Constants.STRING_EMPTY, "Telefonat", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon(), false, false));
-            insertIssue(new Issue("3", Constants.STRING_EMPTY, "Meeting", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon(), false, false));
-            insertIssue(new Issue("4", Constants.STRING_EMPTY, "Pause", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon(), false, false));
+            insertIssue(new Issue(Constants.STRING_EMPTY, "Support", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon()));
+            insertIssue(new Issue(Constants.STRING_EMPTY, "Telefonat", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon()));
+            insertIssue(new Issue(Constants.STRING_EMPTY, "Meeting", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon()));
+            insertIssue(new Issue(Constants.STRING_EMPTY, "Pause", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon()));
         }
         catch (final Throwable t)
         {
@@ -252,15 +292,16 @@ public class Backend
      */
     public void insertIssue(final Issue issue) throws Throwable
     {
-        initTables();
-
         final String ticket = issue.getTicket();
-        String id = issue.getId();
-        if(id == null || id.isEmpty())
+        String id = Client.getIssueID(ticket);
+        //Wenn eine Id ermittelt werden konnte, dann kann das Ticket auch abgeschlossen werden. Ansonsten ist es was eigenes ohne Entsprechung im Youtrack
+        issue.setCanBeFinished(id != null);
+
+        if(id == null)
         {
-            id = Client.getIssueID(ticket);
-            issue.setId(id);
+            id = UUID.randomUUID().toString();
         }
+        issue.setId(id);
 
         final Issue result = getIssue(id);
         if(result != null)
@@ -270,10 +311,34 @@ public class Backend
             throw new BackendException(ErrorCodes.getString(ErrorCodes.ERROR_ISSUE_EXISTS));
         }
 
-        executeUpdate(String.format(INSERT_STMT, id, ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(WorkItemType::getId).orElse(null),
-                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked()), true);
+        setOrder(issue);
+
+        executeUpdate(String.format(INSERT_STMT, id, issue.getOrder(), ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(WorkItemType::getId).orElse(null),
+                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.canBeFinished(), issue.isMarked()), true);
         issue.setId(id);
         Log.info("Issue inserted: " +  issue);
+    }
+
+    private void setOrder(final Issue issue) throws SQLException
+    {
+        int order = issue.getOrder();
+        if(order == -1)
+        {
+            getNewOrder(issue);
+        }
+    }
+
+    private void getNewOrder(final Issue issue) throws SQLException
+    {
+        try (final ResultSet rs = this.statement.executeQuery(QUERY_MAX_ORDER))
+        {
+            int order = 0;
+            if(rs.next())
+            {
+                order = rs.getInt(1) + 1;
+            }
+            issue.setOrder(order);
+        }
     }
 
     /**
@@ -288,16 +353,16 @@ public class Backend
             Log.severe("Issue is null or empty");
             return;
         }
-        try
-        {
-            initTables();
-        }
-        catch (final SQLException e)
-        {
-            Log.severe("Could not create table", e);
-        }
-        executeUpdate(String.format(DELETE_STMT, issue.getId()), true);
+        executeUpdate(String.format(DELETE_STMT, issue.getId()), false);
         Log.info("Issue updated: " +  issue);
+
+        final int currentOrder = issue.getOrder();
+        final List<Issue> issues = getIssues().stream().filter(iss -> iss.getOrder() > currentOrder).collect(Collectors.toList());
+        for(final Issue iss : issues)
+        {
+            iss.setOrder(iss.getOrder() - 1);
+            updateIssue(iss, false);
+        }
     }
 
     /**
@@ -389,12 +454,23 @@ public class Backend
      */
     public void updateIssue(final Issue issue) throws Throwable
     {
-        executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getLabel(), issue.getType().getId(),
-                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.isDeletable(), issue.isMarked(), issue.getId()), true);
+        updateIssue(issue, true);
+    }
+
+    /**
+     * Aktualisiert das übergebene Issue in der Datenbank
+     * @param issue Issue
+     * @throws Throwable database access error or other errors
+     */
+    public void updateIssue(final Issue issue, final boolean commit) throws Throwable
+    {
+        setOrder(issue);
+        executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getOrder(), issue.getLabel(), issue.getType().getId(), issue.getDuration(), issue.getDurationSaved(),
+                                    issue.getIcon(), issue.canBeFinished(), issue.isMarked(), issue.getId()), commit);
         Log.info("Issue updated: " +  issue);
 
         final IssueButton button = Util.getButton(issue);
-        button.refresh(issue);
+        Optional.ofNullable(button).ifPresent(btn -> btn.refresh(issue));
     }
 
     /**
@@ -457,6 +533,16 @@ public class Backend
             Util.handleException(t);
         }
         return Collections.emptySet();
+    }
+
+    public void renameColumn(final String tableName, final String oldColumnName, final String newColumnName) throws SQLException
+    {
+        this.statement.executeUpdate(String.format(RENAME_TABLE, tableName, oldColumnName, newColumnName));
+    }
+
+    public void addColum(final String tableName, final String columnName, final String columnType) throws SQLException
+    {
+        this.statement.executeUpdate(String.format(ADD_COLUMN, tableName, columnName, columnType));
     }
 
     /**

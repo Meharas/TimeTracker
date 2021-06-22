@@ -1,15 +1,16 @@
 package timetracker;
 
-import timetracker.actions.*;
+import timetracker.actions.AddClipboardAction;
+import timetracker.actions.ResetAction;
+import timetracker.actions.ShowAddButtonAction;
 import timetracker.buttons.GlobalButton;
-import timetracker.buttons.IssueActionButton;
-import timetracker.buttons.IssueButton;
 import timetracker.client.Client;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.log.Log;
 import timetracker.menu.TimeTrackerMenuBar;
+import timetracker.misc.Row;
 import timetracker.updates.Updates;
 import timetracker.utils.ClipboardMonitor;
 import timetracker.utils.LookAndFeelManager;
@@ -148,72 +149,131 @@ public class TimeTracker extends JFrame
             return null;
         }
 
-        final JButton button = new IssueButton(issue);
-        final Collection<IssueButton> buttons = Util.getButtons();
-        if (!buttons.isEmpty())
-        {
-            final IssueButton firstButton = buttons.iterator().next();
-            button.setPreferredSize(firstButton.getPreferredSize());
-        }
-
-        final JPanel labelPanel = new JPanel();
-        labelPanel.setLayout(new BorderLayout(0, 0));
-        labelPanel.add(button, BorderLayout.CENTER);
-
-        final JLabel timeLabel = new JLabel();
-        timeLabel.setName(issue.getId());
-        timeLabel.setPreferredSize(new Dimension(100, 20));
-        timeLabel.setBorder(new EmptyBorder(0, 8, 0, 0));
-
-        final String savedDuration = issue.getDurationSaved();
-        if(savedDuration != null && !savedDuration.isEmpty())
-        {
-            setLabelTooltip(savedDuration, timeLabel);
-        }
-        labelPanel.add(timeLabel, BorderLayout.EAST);
-
-        setTime(timeLabel, issue);
-
-        final BaseAction timerAction = new BaseAction(button, issue, timeLabel);
-        button.setAction(timerAction);
-
-        final JPanel buttonPanel = new JPanel();
-        buttonPanel.setMaximumSize(new Dimension(0, 30));
-        buttonPanel.setLayout(new BorderLayout(0, 0));
-        buttonPanel.add(labelPanel, BorderLayout.CENTER);
-
-        final JButton burnAction = new IssueActionButton(Icon.BURN);
-        burnAction.setToolTipText(Resource.getString(PropertyConstants.TOOLTIP_BURN));
-        burnAction.addActionListener(new BurnButtonAction(button, timeLabel, issue));
-
-        final JButton action = new IssueActionButton(Icon.FINISH);
-        action.setToolTipText(Resource.getString(PropertyConstants.LABEL_FINISH));
-        action.addActionListener(new FinishDialogAction(button));
-        action.setEnabled(issue.isDeletable());
-
-        final JButton deleteItem = new IssueActionButton(Icon.REMOVE);
-        deleteItem.setToolTipText(Resource.getString(PropertyConstants.TOOLTIP_DELETE));
-        deleteItem.setEnabled(issue.isDeletable());
-        deleteItem.addActionListener(new DeleteButtonAction(button, issue));
-
-        final JPanel actionsPanel = new JPanel();
-        actionsPanel.setLayout(new BoxLayout(actionsPanel, BoxLayout.X_AXIS));
-        actionsPanel.add(burnAction);
-        actionsPanel.add(action);
-        actionsPanel.add(deleteItem);
-
-        buttonPanel.add(actionsPanel, BorderLayout.EAST);
-        addToPanel(buttonPanel);
-        return button;
+        final Row row = new Row(issue);
+        addToPanel(row);
+        return row.getButton();
     }
 
-    private void setTime(final JLabel label, final Issue issue)
+    /**
+     * Ermittelt die Row zum übergebenen Ticket
+     * @return Map mit der IssueId als Key und der zugehörigen Row als Value
+     */
+    public Collection<Row> getRows()
     {
-        final String value = issue.getDuration();
-        if (value != null && !value.isEmpty())
+        final Container contentPane = TimeTracker.getTimeTracker().getContentPane();
+        final Component[] components = contentPane.getComponents();
+        final Collection<Row> rows = new ArrayList<>(components.length);
+        for(final Component component : components)
         {
-            label.setText(value);
+            if(component instanceof Row)
+            {
+                rows.add((Row) component);
+            }
         }
+        return rows;
+    }
+
+    /**
+     * Verschiebt die Zeile mit dem SourceIssue an die Stelle des TargetIssues
+     * @param sourceIssue Source
+     * @param targetIssue Target
+     */
+    public void move(final Issue sourceIssue, final Issue targetIssue)
+    {
+        final Collection<Row> rows = getRows();
+        final Row source = getByIssue(rows, sourceIssue);
+        final Row target = getByIssue(rows, targetIssue);
+
+        final int sourceIndex = source.getIndex();
+        final int targetIndex = target.getIndex();
+
+        if(sourceIndex < targetIndex)
+        {
+            moveDown(sourceIndex, targetIndex);
+        }
+        else
+        {
+            moveUp(sourceIndex, targetIndex);
+        }
+        //sorgt dafür, dass nicht gleich der Timer los läuft
+        source.getButton().getIssue().setPreventTimer(true);
+        updateGui(false);
+
+        //ToDo update issue order
+    }
+
+    /**
+     * Vollzieht ein DnD von oben nach unten
+     * @param sourceIndex Index des getraggten Elements
+     * @param targetIndex Index des Elements, an dessen Stelle gedroppt wurde
+     */
+    private void moveDown(final int sourceIndex, final int targetIndex)
+    {
+        final Container contentPane = TimeTracker.getTimeTracker().getContentPane();
+        final List<Row> newRows = new LinkedList<>();
+        for(int i = sourceIndex + 1, counter = 0; sourceIndex + counter < targetIndex; counter++)
+        {
+            final Row row = (Row) contentPane.getComponent(i);
+            newRows.add(row);
+            contentPane.remove(i); //Es wird immer die Komponent an der Stelle entfernt. Der Index aktualisiert sich
+        }
+
+        final Row row = (Row) contentPane.getComponent(sourceIndex);
+        contentPane.remove(row);
+        row.setIndex(row.getIndex() + (targetIndex - sourceIndex));
+        contentPane.add(row, sourceIndex);
+
+        Collections.reverse(newRows);
+        for (final Row newRow : newRows)
+        {
+            newRow.setIndex(newRow.getIndex() - 1);
+            contentPane.add(newRow, sourceIndex);
+        }
+    }
+
+    /**
+     * Vollzieht ein DnD von unten nach oben
+     * @param sourceIndex Index des getraggten Elements
+     * @param targetIndex Index des Elements, an dessen Stelle gedroppt wurde
+     */
+    private void moveUp(final int sourceIndex, final int targetIndex)
+    {
+        final Container contentPane = TimeTracker.getTimeTracker().getContentPane();
+        final Row row = (Row) contentPane.getComponent(sourceIndex);
+        contentPane.remove(row);
+        contentPane.add(row, targetIndex);
+
+        for(int counter = 0; targetIndex + counter <= sourceIndex; counter++)
+        {
+            final Row r = (Row) contentPane.getComponent(targetIndex + counter);
+            r.setIndex(targetIndex + counter);
+        }
+    }
+
+    /**
+     * Entfernt die Zeile für ein Issue. Der Index aller nachfolgenden Zeilen wird um 1 reduziert.
+     * @param issue zu entfernendes Issue
+     */
+    public void removeRow(final Issue issue)
+    {
+        final Collection<Row> rows = getRows();
+        final Row row = getByIssue(rows, issue);
+        final Container contentPane = getContentPane();
+        contentPane.remove(row);
+
+        for(final Row r : rows)
+        {
+            final int index = r.getIndex();
+            if(index > row.getIndex())
+            {
+                r.setIndex(index - 1);
+            }
+        }
+    }
+
+    private Row getByIssue(final Collection<Row> rows, final Issue issue)
+    {
+        return rows.stream().filter(r -> r.getButton().getIssue().getId().equalsIgnoreCase(issue.getId())).findFirst().get();
     }
 
     public void updateGui(final boolean removeLine)
@@ -225,10 +285,10 @@ public class TimeTracker extends JFrame
         pack();
     }
 
-    private void addToPanel(final JComponent button)
+    private void addToPanel(final JPanel panel)
     {
         updateRows(true);
-        getContentPane().add(button, this.line);
+        getContentPane().add(panel, this.line);
     }
 
     private void updateRows(final boolean addRow)

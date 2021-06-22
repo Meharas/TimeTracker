@@ -81,7 +81,7 @@ public class ContextMenu
         openItem.addActionListener(new OpenUrlAction(issue));
 
         final JMenuItem starItem = new ContextMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_STAR), Icon.STAR);
-        starItem.setVisible(issue.isDeletable() && !issue.isMarked() && !issue.isInProgress());
+        starItem.setVisible(!issue.isMarked() && !issue.isInProgress());
         starItem.setBorder(BORDER);
         starItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
         {
@@ -103,7 +103,7 @@ public class ContextMenu
         });
 
         final JMenuItem unStarItem = new ContextMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_UNSTAR), Icon.UNSTAR);
-        unStarItem.setVisible(issue.isDeletable() && issue.isMarked() && !issue.isInProgress());
+        unStarItem.setVisible(issue.isMarked() && !issue.isInProgress());
         unStarItem.setBorder(BORDER);
         unStarItem.addActionListener(new TextAction(Constants.STRING_EMPTY)
         {
@@ -153,7 +153,7 @@ public class ContextMenu
     {
         try
         {
-            final String issueState = issue.isDeletable() ? Client.getIssueState(button.getText()) : null;
+            final String issueState = issue.canBeFinished() ? Client.getIssueState(button.getText()) : null;
             final JMenuItem inProgressItem = new ContextMenuItem(Resource.getString(PropertyConstants.LABEL_IN_PROGRESS), Icon.PROGRESS);
             inProgressItem.setBorder(BORDER);
             inProgressItem.setEnabled(issueState != null && !Constants.ISSUE_VALUE_STATE_PROGRESS.equalsIgnoreCase(issueState));

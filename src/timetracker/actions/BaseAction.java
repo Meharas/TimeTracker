@@ -113,6 +113,11 @@ public class BaseAction extends AbstractAction
             return;
         }
 
+        if(this.issue.isPreventTimer())
+        {
+            return;
+        }
+
         try
         {
             this.issue.setMarked(false);
