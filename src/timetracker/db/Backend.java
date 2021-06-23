@@ -198,11 +198,12 @@ public class Backend
      */
     private void initTables() throws SQLException
     {
+        boolean insertInitialUpdates = false;
         final DatabaseMetaData metaData = this.conn.getMetaData();
         ResultSet rs = metaData.getTables(null, null, TN_ISSUES, null);
         if (!rs.next())
         {
-            initIssueTable();
+            insertInitialUpdates = initIssueTable();
         }
         else
         {
@@ -236,14 +237,18 @@ public class Backend
         rs = metaData.getTables(null, null, TN_UPDATES, null);
         if (!rs.next())
         {
-            initUpdateTable();
+            insertInitialUpdates = initUpdateTable();
+        }
+        if(insertInitialUpdates)
+        {
+            Updates.insertInitialUpdates();
         }
     }
 
     /**
      * Erzeugt die Tabelle für die Issues und fügt die Standard-Issues ein
      */
-    private void initIssueTable()
+    private boolean initIssueTable()
     {
         final StringBuilder sqlTable = new StringBuilder(STMT_CREATE_TABLE);
         sqlTable.append(TN_ISSUES);
@@ -258,17 +263,19 @@ public class Backend
             insertIssue(new Issue(Constants.STRING_EMPTY, "Telefonat", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon()));
             insertIssue(new Issue(Constants.STRING_EMPTY, "Meeting", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.MEETING.getIcon()));
             insertIssue(new Issue(Constants.STRING_EMPTY, "Pause", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PAUSE.getIcon()));
+            return true;
         }
         catch (final Throwable t)
         {
             Util.handleException(t);
         }
+        return false;
     }
 
     /**
      * Erzeugt die Tabelle für die UpdateIds
      */
-    private void initUpdateTable()
+    private boolean initUpdateTable()
     {
         final StringBuilder sqlTable = new StringBuilder(STMT_CREATE_TABLE);
         sqlTable.append(TN_UPDATES);
@@ -278,11 +285,13 @@ public class Backend
         {
             stmt.executeUpdate(sqlTable.toString());
             Log.info("Table created: " + TN_UPDATES);
+            return true;
         }
         catch (final Exception e)
         {
             Util.handleException(e);
         }
+        return false;
     }
 
     /**

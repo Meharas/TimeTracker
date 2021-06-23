@@ -72,6 +72,38 @@ public final class Updates
     }
 
     /**
+     * Fügt die Updates beim Anlegen der Datenbank initial ein.
+     */
+    public static void insertInitialUpdates()
+    {
+        final Backend backend = Backend.getInstance();
+        final Set<Integer> updateIds = backend.getUpdateIds();
+        for(final Class<? extends IUpdateMethod> updateMethod : UPDATE_METHODS)
+        {
+            try
+            {
+                final Constructor<? extends IUpdateMethod> constructor = updateMethod.getConstructor();
+                final IUpdateMethod update = constructor.newInstance();
+                if(update.isPreBackendUpdate())
+                {
+                    continue;
+                }
+                final int updateId = update.getUpdateId();
+                if(updateIds.add(updateId))
+                {
+                    backend.insertUpdate(update);
+                    Log.info(String.format("Update #%d inserted initially.", updateId));
+                    backend.commit();
+                }
+            }
+            catch (final Exception e)
+            {
+                Util.handleException(e);
+            }
+        }
+    }
+
+    /**
      * Führt alle registrierten Updates aus, insofern diese nicht schon ausgeführt wurden.
      */
     public void executeUpdates()

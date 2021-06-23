@@ -36,10 +36,14 @@ public class RenameColumnDeletable implements IUpdateMethod
         catch (final SQLException e)
         {
             final Throwable cause = e.getCause();
-            if((cause instanceof HsqlException) && (ErrorCode.X_42504 == Math.abs(((HsqlException) cause).getErrorCode())))
+            if(cause instanceof HsqlException)
             {
-                //Spalte existiert schon
-                success = true;
+                final int errorCode = Math.abs(((HsqlException) cause).getErrorCode());
+                if(ErrorCode.X_42504 == errorCode || ErrorCode.X_42501 == errorCode)
+                {
+                    //Neue Spalte existiert schon bzw. alte Spalte existiert nicht mehr.
+                    success = true;
+                }
             }
             else
             {
