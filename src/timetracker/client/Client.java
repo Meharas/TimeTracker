@@ -354,7 +354,7 @@ public class Client
         final String value = getValueFromJson(response, "id", false);
         if(value != null && saveWithKey != null)
         {
-            TimeTracker.saveSetting(value, saveWithKey);
+            TimeTracker.saveSetting(saveWithKey, value);
         }
         return value;
     }

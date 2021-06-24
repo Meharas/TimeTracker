@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 
 /**
@@ -183,23 +184,23 @@ public class TimeTracker extends JFrame
         final Collection<Row> rows = getRows();
         final Row source = getByIssue(rows, sourceIssue);
         final Row target = getByIssue(rows, targetIssue);
-
-        final int sourceIndex = source.getIndex();
-        final int targetIndex = target.getIndex();
-
-        if(sourceIndex < targetIndex)
+        if(source != null && target != null)
         {
-            moveDown(sourceIndex, targetIndex);
-        }
-        else
-        {
-            moveUp(sourceIndex, targetIndex);
-        }
-        //sorgt dafür, dass nicht gleich der Timer los läuft
-        source.getButton().getIssue().setPreventTimer(true);
-        updateGui(false);
+            final int sourceIndex = source.getIndex();
+            final int targetIndex = target.getIndex();
 
-        //ToDo update issue order
+            if(sourceIndex < targetIndex)
+            {
+                moveDown(sourceIndex, targetIndex);
+            }
+            else
+            {
+                moveUp(sourceIndex, targetIndex);
+            }
+            //sorgt dafür, dass nicht gleich der Timer los läuft
+            source.getButton().getIssue().setPreventTimer(true);
+            updateGui(false);
+        }
     }
 
     /**
@@ -258,22 +259,25 @@ public class TimeTracker extends JFrame
     {
         final Collection<Row> rows = getRows();
         final Row row = getByIssue(rows, issue);
-        final Container contentPane = getContentPane();
-        contentPane.remove(row);
-
-        for(final Row r : rows)
+        if(row != null)
         {
-            final int index = r.getIndex();
-            if(index > row.getIndex())
+            final Container contentPane = getContentPane();
+            contentPane.remove(row);
+
+            for(final Row r : rows)
             {
-                r.setIndex(index - 1);
+                final int index = r.getIndex();
+                if(index > row.getIndex())
+                {
+                    r.setIndex(index - 1);
+                }
             }
         }
     }
 
     private Row getByIssue(final Collection<Row> rows, final Issue issue)
     {
-        return rows.stream().filter(r -> r.getButton().getIssue().getId().equalsIgnoreCase(issue.getId())).findFirst().get();
+        return rows.stream().filter(r -> r.getButton().getIssue().getId().equalsIgnoreCase(issue.getId())).findFirst().orElse(null);
     }
 
     public void updateGui(final boolean removeLine)
@@ -676,7 +680,7 @@ public class TimeTracker extends JFrame
      */
     private static void saveToken(final String token)
     {
-        saveSetting(token, Constants.YOUTRACK_TOKEN);
+        saveSetting(Constants.YOUTRACK_TOKEN, token);
     }
 
     /**
@@ -684,7 +688,7 @@ public class TimeTracker extends JFrame
      * @param value Wert
      * @param key Schlüssel
      */
-    public static void saveSetting(final String value, final String key)
+    public static void saveSetting(final String key, final String value)
     {
         Log.info("Saving key = {0} with value =  {1}", new String[]{key, value});
         try (final InputStream inputStream = TimeTracker.class.getResourceAsStream(Constants.PROPERTIES))
@@ -697,7 +701,7 @@ public class TimeTracker extends JFrame
         }
         catch (final IOException e)
         {
-            Log.severe(e.getMessage(), e);
+            Util.handleException(e);
         }
     }
 
@@ -706,17 +710,15 @@ public class TimeTracker extends JFrame
      * @param properties Properties
      * @throws IOException I/O Error
      */
-    public static void storeProperties(final Properties properties) throws IOException
+    public static void storeProperties(final Map<Object, Object> properties) throws IOException
     {
         for(final Map.Entry<Object, Object> entry : properties.entrySet())
         {
-            Log.info("property key={0}, value={1}", new Object[]{entry.getKey(), entry.getValue()});
+            Log.log(Level.FINER, "property key={0}, value={1}", new Object[]{entry.getKey(), entry.getValue()});
         }
 
         final File propertyFile = new File(TimeTracker.HOME + Constants.PROPERTIES);
-
-        //noinspection unchecked
-        final Map<String, String> map = new TreeMap<>((Map) properties);
+        final Map<Object, Object> map = new TreeMap<>(properties);
         OutputStream outputStream = null;
         try
         {
@@ -740,12 +742,12 @@ public class TimeTracker extends JFrame
         }
     }
 
-    private static void store(final OutputStream out, final Map<String, String> map) throws IOException
+    private static void store(final OutputStream out, final Map<Object, Object> map) throws IOException
     {
         store(new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.ISO_8859_1)), map);
     }
 
-    private static void store(final BufferedWriter bw, final Map<String, String> map) throws IOException
+    private static void store(final BufferedWriter bw, final Map<Object, Object> map) throws IOException
     {
         if(map.isEmpty())
         {
@@ -754,7 +756,7 @@ public class TimeTracker extends JFrame
 
         bw.write("#" + new Date().toString());
 
-        for(final Map.Entry<String, String> entry : map.entrySet())
+        for(final Map.Entry<Object, Object> entry : map.entrySet())
         {
             bw.newLine();
             bw.write(entry.getKey() + "=" + entry.getValue());

@@ -106,7 +106,7 @@ public final class LookAndFeelManager
             LookAndFeelManager.selectedLafClassName = classname;
             UIManager.setLookAndFeel(classname);
             SwingUtilities.updateComponentTreeUI(TimeTracker.getTimeTracker());
-            TimeTracker.saveSetting(classname, PropertyConstants.LOOK_AND_FEEL);
+            TimeTracker.saveSetting(PropertyConstants.LOOK_AND_FEEL, classname);
         }
         catch (final Exception ex)
         {

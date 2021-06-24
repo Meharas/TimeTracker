@@ -24,6 +24,9 @@ import java.util.stream.Collectors;
  */
 public class Backend
 {
+    private static final String FILE = TimeTracker.HOME + Constants.FOLDER_USERDATA + "/timetrackerDB";
+    private static final String CONNECT_URL = "jdbc:hsqldb:" + FILE + ";hsqldb.default_table_type=CACHED;hsqldb.cache_size=60000;hsqldb.log_size=5";
+
     private static final String DB_DRIVER = "org.hsqldb.jdbcDriver";
     private static final String DB_SHUTDOWN = "SHUTDOWN";
     private static final String UPDATE_VALUE = "='%s',";
@@ -110,34 +113,30 @@ public class Backend
             System.exit(1);
         }
 
-        final String file = TimeTracker.HOME + Constants.FOLDER_USERDATA + "/timetrackerDB";
+        String reason = "Can't connect to " + FILE;
         try
         {
             Log.info("Connect to DB...");
-            Log.info("Database file: " + file);
-            this.conn = DriverManager.getConnection("jdbc:hsqldb:" + file + ";hsqldb.default_table_type=CACHED;hsqldb.cache_size=60000;hsqldb.log_size=5",
-                                                    "sa", null);
+            Log.info("Database file: " + FILE);
+            this.conn = DriverManager.getConnection(CONNECT_URL, "sa", null);
             Log.info("Connected successfully to DB");
 
-            try
-            {
-                this.statement = this.conn.createStatement();
-            }
-            catch (final SQLException e)
-            {
-                Log.severe("Could not create statement. Can not handle issues in DB!", e);
-            }
+            reason = "Faild adding shutdown hook";
+            Runtime.getRuntime().addShutdownHook(new DBShutDownThread());
 
+            reason = "Could not create statement. Can not handle issues in DB!";
+            this.statement = this.conn.createStatement();
+
+            reason = "Initialising tables";
             initTables();
 
             //Verhindert das automatische Committen. Es können sonst keine Updates zurückgerollt werden.
+            reason = "Setting auto commit to false";
             executeUpdate("SET AUTOCOMMIT FALSE;", true);
-
-            Runtime.getRuntime().addShutdownHook(new DBShutDownThread());
         }
         catch (final SQLException e)
         {
-            Log.severe("Can't connect to " + file, e);
+            Log.severe(reason, e);
             System.exit(1);
         }
     }
@@ -254,9 +253,9 @@ public class Backend
         sqlTable.append(TN_ISSUES);
         sqlTable.append(TN_ISSUES_COLUMNS);
 
-        try (final Statement stmt = this.conn.createStatement())
+        try
         {
-            stmt.executeUpdate(sqlTable.toString());
+            this.statement.executeUpdate(sqlTable.toString());
             Log.info("Table created: " + TN_ISSUES);
 
             insertIssue(new Issue(Constants.STRING_EMPTY, "Support", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon()));
@@ -281,9 +280,9 @@ public class Backend
         sqlTable.append(TN_UPDATES);
         sqlTable.append(TN_UPDATES_COLUMNS);
 
-        try (final Statement stmt = this.conn.createStatement())
+        try
         {
-            stmt.executeUpdate(sqlTable.toString());
+            this.statement.executeUpdate(sqlTable.toString());
             Log.info("Table created: " + TN_UPDATES);
             return true;
         }
@@ -330,7 +329,7 @@ public class Backend
 
     private void setOrder(final Issue issue) throws SQLException
     {
-        int order = issue.getOrder();
+        final int order = issue.getOrder();
         if(order == -1)
         {
             getNewOrder(issue);
@@ -378,10 +377,9 @@ public class Backend
      * Führt ein Update oder Delete aus
      * @param query Statement
      * @param commit Apply changes
-     * @return Anzahl der betroffenen Datensätze
      * @throws SQLException database access error
      */
-    private int executeUpdate(final String query, final boolean commit) throws SQLException
+    private void executeUpdate(final String query, final boolean commit) throws SQLException
     {
         SQLException ex = null;
         int i = -1;
@@ -407,7 +405,6 @@ public class Backend
         {
             throw ex;
         }
-        return i;
     }
 
     /**

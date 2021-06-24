@@ -71,7 +71,7 @@ public class CopyUserFiles implements IUpdateMethod
                     if("TimeTracker.properties".equalsIgnoreCase(fileName))
                     {
                         //Zertifikat eintragen
-                        TimeTracker.saveSetting("cert.cer", Constants.YOUTRACK_CERT);
+                        TimeTracker.saveSetting(Constants.YOUTRACK_CERT, "cert.cer");
                     }
                 }
                 else
