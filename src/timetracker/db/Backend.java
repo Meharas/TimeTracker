@@ -121,7 +121,7 @@ public class Backend
             this.conn = DriverManager.getConnection(CONNECT_URL, "sa", null);
             Log.info("Connected successfully to DB");
 
-            reason = "Faild adding shutdown hook";
+            reason = "Failed adding shutdown hook";
             Runtime.getRuntime().addShutdownHook(new DBShutDownThread());
 
             reason = "Could not create statement. Can not handle issues in DB!";
@@ -236,11 +236,11 @@ public class Backend
         rs = metaData.getTables(null, null, TN_UPDATES, null);
         if (!rs.next())
         {
-            insertInitialUpdates = initUpdateTable();
+            initUpdateTable();
         }
         if(insertInitialUpdates)
         {
-            Updates.insertInitialUpdates();
+            Updates.insertInitialUpdates(this);
         }
     }
 
@@ -274,7 +274,7 @@ public class Backend
     /**
      * Erzeugt die Tabelle für die UpdateIds
      */
-    private boolean initUpdateTable()
+    private void initUpdateTable()
     {
         final StringBuilder sqlTable = new StringBuilder(STMT_CREATE_TABLE);
         sqlTable.append(TN_UPDATES);
@@ -284,13 +284,11 @@ public class Backend
         {
             this.statement.executeUpdate(sqlTable.toString());
             Log.info("Table created: " + TN_UPDATES);
-            return true;
         }
         catch (final Exception e)
         {
             Util.handleException(e);
         }
-        return false;
     }
 
     /**
@@ -308,6 +306,7 @@ public class Backend
         if(id == null)
         {
             id = UUID.randomUUID().toString();
+            id = id.substring(id.lastIndexOf("-") + 1); //Die letzten Zeichen sind die max. zulässige Anzahl Zeichen der Spalte
         }
         issue.setId(id);
 

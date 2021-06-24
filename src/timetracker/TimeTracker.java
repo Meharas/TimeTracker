@@ -808,8 +808,10 @@ public class TimeTracker extends JFrame
 
     private static void initClipboardObserver()
     {
+        ClipboardMonitor.disabled = true;
         final ClipboardMonitor monitor = ClipboardMonitor.getMonitor();
         monitor.addObserver((o, arg) -> Log.info("Clipboard has been regained!"));
+        ClipboardMonitor.disabled = false;
     }
 
     /**

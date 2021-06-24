@@ -73,10 +73,10 @@ public final class Updates
 
     /**
      * Fügt die Updates beim Anlegen der Datenbank initial ein.
+     * @param backend Backend. Wird hier übergeben, da die Instanz ggf. noch nicht vollständig initialisiert wurde.
      */
-    public static void insertInitialUpdates()
+    public static void insertInitialUpdates(final Backend backend)
     {
-        final Backend backend = Backend.getInstance();
         final Set<Integer> updateIds = backend.getUpdateIds();
         for(final Class<? extends IUpdateMethod> updateMethod : UPDATE_METHODS)
         {

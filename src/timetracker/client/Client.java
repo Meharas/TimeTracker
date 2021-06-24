@@ -112,14 +112,18 @@ public class Client
      */
     public static String getIssueID(final String ticket) throws URISyntaxException, IOException
     {
-        final URIBuilder getIssueBuilder = Client.getURIBuilder(ServicePath.ISSUE, ticket);
-        final HttpGet request = new HttpGet(getIssueBuilder.build());
-        final HttpResponse response = Client.executeRequest(request);
-        if (response == null)
+        String id = null;
+        if (ticket != null && !ticket.isEmpty())
         {
-            return null;
+            final URIBuilder getIssueBuilder = Client.getURIBuilder(ServicePath.ISSUE, ticket);
+            final HttpGet request = new HttpGet(getIssueBuilder.build());
+            final HttpResponse response = Client.executeRequest(request);
+            if (response != null)
+            {
+                id = Client.getID(response, null);
+            }
         }
-        return Client.getID(response, null);
+        return id;
     }
 
     /**

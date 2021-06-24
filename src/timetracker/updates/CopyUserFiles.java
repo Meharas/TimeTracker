@@ -5,6 +5,11 @@ import timetracker.TimeTracker;
 import timetracker.log.Log;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -62,22 +67,38 @@ public class CopyUserFiles implements IUpdateMethod
             final Map<Level, String> logMessages = new HashMap<>();
             for(final File file : filesToMove)
             {
+                final Path source = Paths.get(file.toURI());
                 final String fileName = file.getName();
-                final File destination = new File(targetFolder.getAbsolutePath() + File.separator + fileName);
-                if(file.renameTo(destination))
+                final Path destination = Paths.get(new File(targetFolder.getAbsolutePath() + File.separator + fileName).toURI());
+                try
                 {
-                    logMessages.put(Level.INFO, String.format("File %s successfully moved to %s", file.getAbsolutePath(), destination.getAbsolutePath()));
-
-                    if("TimeTracker.properties".equalsIgnoreCase(fileName))
+                    Files.move(source, destination);
+                }
+                catch (final FileAlreadyExistsException e)
+                {
+                    try
                     {
-                        //Zertifikat eintragen
-                        TimeTracker.saveSetting(Constants.YOUTRACK_CERT, "cert.cer");
+                        Files.delete(destination);
+                        Files.move(source, destination);
+                    }
+                    catch (final Exception ex)
+                    {
+                        logMessages.put(Level.SEVERE, String.format("Deleting file %s failed.", destination));
+                        result = false;
+                        continue;
                     }
                 }
-                else
+                catch (final IOException e)
                 {
-                    logMessages.put(Level.SEVERE, String.format("Moving file %s to %s failed.", file.getAbsolutePath(), destination.getAbsolutePath()));
+                    logMessages.put(Level.SEVERE, String.format("Moving file %s to %s failed.", file.getAbsolutePath(), destination));
                     result = false;
+                    continue;
+                }
+
+                if("TimeTracker.properties".equalsIgnoreCase(fileName))
+                {
+                    //Zertifikat eintragen
+                    TimeTracker.saveSetting(Constants.YOUTRACK_CERT, "cert.cer");
                 }
             }
             for(final Map.Entry<Level, String> messages : logMessages.entrySet())
