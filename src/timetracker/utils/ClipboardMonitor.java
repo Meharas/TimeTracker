@@ -39,9 +39,10 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
                 {
                     Log.info("String content detected");
 
-                    final String ticket = (String) transferData;
-                    if(!TimeTracker.getTimeTracker().isVisible() && TimeTracker.matches(ticket))
+                    if(!TimeTracker.getTimeTracker().isVisible() && TimeTracker.matches((String) transferData))
                     {
+                        final String ticket = TimeTracker.MATCHER.group(1);
+
                         final JPopupMenu menu = new JPopupMenu();
                         final JMenuItem add = new JMenuItem(Resource.getString(PropertyConstants.TEXT_ADD_CLIPBOARD, ticket));
                         final Font current = add.getFont();
