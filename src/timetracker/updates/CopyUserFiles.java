@@ -67,6 +67,12 @@ public class CopyUserFiles implements IUpdateMethod
                 if(file.renameTo(destination))
                 {
                     logMessages.put(Level.INFO, String.format("File %s successfully moved to %s", file.getAbsolutePath(), destination.getAbsolutePath()));
+
+                    if("TimeTracker.properties".equalsIgnoreCase(fileName))
+                    {
+                        //Zertifikat eintragen
+                        TimeTracker.saveSetting("cert.cer", Constants.YOUTRACK_CERT);
+                    }
                 }
                 else
                 {
