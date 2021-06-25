@@ -14,5 +14,6 @@ public final class ComboBoxStates extends JComboBox<String>
     public ComboBoxStates()
     {
         State.getNames().forEach(this::addItem);
+        setSelectedIndex(-1);
     }
 }
