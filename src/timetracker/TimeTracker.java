@@ -3,6 +3,7 @@ package timetracker;
 import timetracker.actions.AddClipboardAction;
 import timetracker.actions.ResetAction;
 import timetracker.actions.ShowAddButtonAction;
+import timetracker.buttons.BaseButton;
 import timetracker.buttons.GlobalButton;
 import timetracker.client.Client;
 import timetracker.data.Issue;
@@ -59,6 +60,7 @@ public class TimeTracker extends JFrame
         super("Time Tracker");
         setMinimumSize(new Dimension(575, 0));
         setAlwaysOnTop(true);
+        setIconImage(Toolkit.getDefaultToolkit().getImage(TimeTracker.HOME + BaseButton.getIconName(Icon.BURN.getIcon())));
         addWindowListener(new WindowAdapter()
         {
             @Override
