@@ -5,6 +5,7 @@ import timetracker.Resource;
 import timetracker.TimeTracker;
 import timetracker.actions.AddAction;
 import timetracker.actions.EditAction;
+import timetracker.buttons.IssueButton;
 import timetracker.data.Issue;
 import timetracker.icons.IconFileFilter;
 import timetracker.utils.EscapeEvent;
@@ -14,6 +15,8 @@ import timetracker.utils.Util;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Dialog zum Erfassen eines Tickets
@@ -30,7 +33,7 @@ public class AddIssueDialog extends JFrame
 
         final JFileChooser chooser = new JFileChooser();
         chooser.setPreferredSize(new Dimension(600, 300));
-        chooser.setMultiSelectionEnabled(true);
+        chooser.setMultiSelectionEnabled(false);
         chooser.setControlButtonsAreShown(false);
         chooser.setFileFilter(new IconFileFilter());
 
@@ -39,16 +42,40 @@ public class AddIssueDialog extends JFrame
         labelField.setPreferredSize(new Dimension(200, 30));
         labelField.setBackground(TimeTracker.MANDATORY);
 
+        addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowOpened(final WindowEvent e )
+            {
+                labelField.requestFocus();
+            }
+        });
+
         final JButton ok = new JButton(Resource.getString(PropertyConstants.TEXT_OK));
-        final String name = button != null ? button.getName() : null;
-        if(name != null)
+        final boolean hasIssue = button instanceof IssueButton;
+        if(hasIssue)
         {
             labelField.setText(button.getText());
             ok.setAction(new EditAction(issue, ok, button, labelField, chooser));
         }
         else
         {
-            ok.setAction(new AddAction(ok, labelField, chooser));
+            ok.setAction(new AddAction(ok, labelField, chooser)
+            {
+                @Override
+                protected JButton createButton(final String text)
+                {
+                    if(TimeTracker.matches(labelField.getText()))
+                    {
+                        AddIssueDialog.this.dispose();
+
+                        final String ticket = TimeTracker.MATCHER.group(1);
+                        final ClipboardDialog dialog = new ClipboardDialog(ticket);
+                        dialog.setVisible(true);
+                    }
+                    return null;
+                }
+            });
         }
 
         final JPanel addButtonPanel = new JPanel();
@@ -78,5 +105,6 @@ public class AddIssueDialog extends JFrame
         final int height = getHeight();
         final Point location = Util.getWindowLocation(new Dimension(width, height));
         setBounds(new Rectangle(location.x, location.y, width, height));
+        SwingUtilities.getRootPane(ok).setDefaultButton(ok);
     }
 }
