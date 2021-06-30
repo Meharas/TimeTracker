@@ -472,7 +472,7 @@ public class Backend
         setOrder(issue);
         executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getOrder(), issue.getLabel(), issue.getType().getId(), issue.getDuration(), issue.getDurationSaved(),
                                     issue.getIcon(), issue.canBeFinished(), issue.isMarked(), issue.getId()), commit);
-        Log.info("Issue updated: " +  issue);
+        Log.log(Level.FINE, "Issue updated: " +  issue);
 
         final IssueButton button = Util.getButton(issue);
         Optional.ofNullable(button).ifPresent(btn -> btn.refresh(issue));

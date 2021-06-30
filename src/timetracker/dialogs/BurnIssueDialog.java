@@ -4,7 +4,7 @@ import timetracker.Constants;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
-import timetracker.actions.BaseAction;
+import timetracker.actions.TimerAction;
 import timetracker.buttons.DatePickerButton;
 import timetracker.client.Client;
 import timetracker.data.Issue;
@@ -12,10 +12,7 @@ import timetracker.data.WorkItemType;
 import timetracker.db.Backend;
 import timetracker.icons.Icon;
 import timetracker.menu.ComboBoxWorkItems;
-import timetracker.utils.DatePicker;
-import timetracker.utils.EscapeEvent;
-import timetracker.utils.LookAndFeelManager;
-import timetracker.utils.Util;
+import timetracker.utils.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -32,10 +29,10 @@ public class BurnIssueDialog extends JFrame
 {
     private final Issue issue;
 
-    public BurnIssueDialog(final JButton button, final JLabel label, final Issue issue) throws HeadlessException
+    public BurnIssueDialog(final TimerAction action) throws HeadlessException
     {
         super("Burning time");
-        this.issue = issue;
+        this.issue = action.getIssue();
 
         setBounds(Util.getPopUpLocation(400, 400));
         setResizable(false);
@@ -43,7 +40,7 @@ public class BurnIssueDialog extends JFrame
         EscapeEvent.add(this);
 
         final JTextField ticketField = createTextField(350, 100);
-
+        final JButton button = action.getButton();
         final String buttonText = button.getText();
         TimeTracker.MATCHER.reset(buttonText);
         if (TimeTracker.MATCHER.matches())
@@ -56,6 +53,7 @@ public class BurnIssueDialog extends JFrame
             ticketField.setText(ticket);
         }
 
+        final JLabel label = action.getLabel();
         final JTextField timeField = createTextField(350, 100);
         timeField.setText(getParsedTime(label.getText()));
 
@@ -111,14 +109,13 @@ public class BurnIssueDialog extends JFrame
         commentPanel.add(scrollPane);
         globalPanel.add(commentPanel);
 
-        final Action action = button.getAction();
-        final BaseAction timerAction = action instanceof BaseAction ? (BaseAction) action : null;
-        if (timerAction != null && timerAction.timer != null && timerAction.timer.isRunning())
+        final DurationTimer timer = action.getTimer();
+        if (timer != null && timer.isRunning())
         {
-            timerAction.stopWithoutSave();
+            action.stopWithoutSave();
         }
 
-        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
+        final TimeTracker timeTracker = TimeTracker.getInstance();
         final JButton ok = new JButton(new AbstractAction(Resource.getString(PropertyConstants.TEXT_OK))
         {
             private static final long serialVersionUID = -2918616353182983419L;
@@ -128,10 +125,7 @@ public class BurnIssueDialog extends JFrame
             {
                 if (burnTime(ticketField, timeField, dateField, typeField, textArea))
                 {
-                    if(timerAction != null)
-                    {
-                        timerAction.reset();
-                    }
+                    action.reset();
 
                     final String savedDuration = issue.getDurationSaved();
                     timeTracker.setLabelTooltip(savedDuration, label);
@@ -271,8 +265,8 @@ public class BurnIssueDialog extends JFrame
 
         if (!Client.hasToken())
         {
-            JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), String.format("Authorization token not found! Please create a token in youtrack and enter it in the " +
-                                                                                      "TimeTracker.properties with the key %s", Constants.YOUTRACK_TOKEN));
+            JOptionPane.showMessageDialog(TimeTracker.getInstance(), String.format("Authorization token not found! Please create a token in youtrack and enter it in the " +
+                                                                                   "TimeTracker.properties with the key %s", Constants.YOUTRACK_TOKEN));
             return false;
         }
 

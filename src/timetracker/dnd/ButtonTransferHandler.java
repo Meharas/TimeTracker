@@ -46,7 +46,7 @@ public class ButtonTransferHandler extends TransferHandler
                     final String sourceIssueId = sourceIssue.getId();
                     if(!targetIssueId.equalsIgnoreCase(sourceIssueId))
                     {
-                        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
+                        final TimeTracker timeTracker = TimeTracker.getInstance();
                         timeTracker.move(sourceIssue, this.targetIssue);
                         success = true;
                     }

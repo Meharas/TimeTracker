@@ -25,7 +25,7 @@ public class ShowDatabaseContent extends AbstractAction
     @Override
     public void actionPerformed(final ActionEvent e)
     {
-        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
+        final TimeTracker timeTracker = TimeTracker.getInstance();
         final List<Issue> issues;
         try
         {

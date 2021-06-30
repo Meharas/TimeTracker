@@ -4,6 +4,7 @@ import timetracker.PropertyConstants;
 import timetracker.TimeTracker;
 
 import javax.swing.*;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -39,7 +40,7 @@ public final class LookAndFeelManager
     private LookAndFeelManager()
     {
         installLookAndFeel(new LafInfo("Metal", "javax.swing.plaf.metal.MetalLookAndFeel"));
-        installLookAndFeel(new LafInfo("Nimbus", "javax.swing.plaf.nimbus.NimbusLookAndFeel"));
+        installLookAndFeel(new LafInfo("Nimbus", NimbusLookAndFeel.class.getName()));
         installLookAndFeel(new LafInfo("FlatLaf Light", "com.formdev.flatlaf.FlatLightLaf"));
         //installLookAndFeel(new LafInfo("FlatLaf IntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf"));
         //installLookAndFeel(new LafInfo("FlatLaf Dark", "com.formdev.flatlaf.FlatDarkLaf", true));
@@ -105,7 +106,7 @@ public final class LookAndFeelManager
         {
             LookAndFeelManager.selectedLafClassName = classname;
             UIManager.setLookAndFeel(classname);
-            SwingUtilities.updateComponentTreeUI(TimeTracker.getTimeTracker());
+            SwingUtilities.updateComponentTreeUI(TimeTracker.getInstance());
             TimeTracker.saveSetting(PropertyConstants.LOOK_AND_FEEL, classname);
         }
         catch (final Exception ex)

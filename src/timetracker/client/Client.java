@@ -592,7 +592,7 @@ public class Client
         if(certFileName == null || certFileName.isEmpty())
         {
             final String msg = String.format("Value of property %s missing.", Constants.YOUTRACK_CERT);
-            JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
+            JOptionPane.showMessageDialog(TimeTracker.getInstance(), msg);
             throw new IOException(msg);
         }
 
@@ -600,7 +600,7 @@ public class Client
         if(!certificate.exists())
         {
             final String msg = "Certificate file missing.";
-            JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
+            JOptionPane.showMessageDialog(TimeTracker.getInstance(), msg);
             throw new IOException(msg);
         }
 

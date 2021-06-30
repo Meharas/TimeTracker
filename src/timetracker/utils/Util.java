@@ -82,7 +82,7 @@ public class Util
             t.printStackTrace();
             Log.severe(msg, t);
         }
-        JOptionPane.showMessageDialog(TimeTracker.getTimeTracker(), msg);
+        JOptionPane.showMessageDialog(TimeTracker.getInstance(), msg);
     }
 
     public static String getMessage(final Throwable e)
@@ -110,7 +110,7 @@ public class Util
     public static Collection<IssueButton> getButtons()
     {
         final Set<Component> components = new HashSet<>();
-        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
+        final TimeTracker timeTracker = TimeTracker.getInstance();
         timeTracker.collectComponents(timeTracker, components);
         return components.stream().filter(IssueButton.class::isInstance).map(IssueButton.class::cast).collect(Collectors.toList());
     }
@@ -149,7 +149,7 @@ public class Util
      */
     public static Rectangle getPopUpLocation(final int width, final int height)
     {
-        final TimeTracker timeTracker = TimeTracker.getTimeTracker();
+        final TimeTracker timeTracker = TimeTracker.getInstance();
         final Point location = timeTracker.getWindowLocation();
         final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         final int x =  (int) Math.max(Math.min(location.x, screenSize.getWidth() - width), 0);

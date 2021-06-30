@@ -3,10 +3,10 @@ package timetracker.misc;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
-import timetracker.actions.BaseAction;
 import timetracker.actions.BurnButtonAction;
 import timetracker.actions.DeleteButtonAction;
 import timetracker.actions.FinishDialogAction;
+import timetracker.actions.TimerAction;
 import timetracker.buttons.IssueActionButton;
 import timetracker.buttons.IssueButton;
 import timetracker.data.Issue;
@@ -26,6 +26,7 @@ import java.util.Collection;
 public class Row extends JPanel
 {
     private final IssueButton button;
+    private final JLabel label;
 
     public Row (final Issue issue)
     {
@@ -41,27 +42,27 @@ public class Row extends JPanel
         labelPanel.setLayout(new BorderLayout(0, 0));
         labelPanel.add(this.button, BorderLayout.CENTER);
 
-        final JLabel timeLabel = new JLabel();
-        timeLabel.setName(issue.getId());
-        timeLabel.setPreferredSize(new Dimension(100, 20));
-        timeLabel.setBorder(new EmptyBorder(0, 8, 0, 0));
+        this.label = new JLabel();
+        this.label.setName(issue.getId());
+        this.label.setPreferredSize(new Dimension(100, 20));
+        this.label.setBorder(new EmptyBorder(0, 8, 0, 0));
 
         final String savedDuration = issue.getDurationSaved();
         if(savedDuration != null && !savedDuration.isEmpty())
         {
-            final TimeTracker timeTracker = TimeTracker.getTimeTracker();
-            timeTracker.setLabelTooltip(savedDuration, timeLabel);
+            final TimeTracker timeTracker = TimeTracker.getInstance();
+            timeTracker.setLabelTooltip(savedDuration, this.label);
         }
-        labelPanel.add(timeLabel, BorderLayout.EAST);
+        labelPanel.add(this.label, BorderLayout.EAST);
 
-        setTime(timeLabel, issue);
+        setTime(this.label, issue);
 
-        final BaseAction timerAction = new BaseAction(this.button, issue, timeLabel);
+        final TimerAction timerAction = new TimerAction(this.button, issue, this.label);
         this.button.setAction(timerAction);
 
         final JButton burnAction = new IssueActionButton(timetracker.icons.Icon.BURN);
         burnAction.setToolTipText(Resource.getString(PropertyConstants.TOOLTIP_BURN));
-        burnAction.addActionListener(new BurnButtonAction(this.button, timeLabel, issue));
+        burnAction.addActionListener(new BurnButtonAction(this.button, this.label, issue));
 
         final JButton action = new IssueActionButton(timetracker.icons.Icon.FINISH);
         action.setToolTipText(Resource.getString(PropertyConstants.LABEL_FINISH));
@@ -96,6 +97,11 @@ public class Row extends JPanel
     public IssueButton getButton()
     {
         return this.button;
+    }
+
+    public JLabel getLabel()
+    {
+        return this.label;
     }
 
     public int getIndex()

@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent;
 /**
  * Klasse zum Burnen von Zeiten
  */
-public class BurnButtonAction extends BaseAction
+public class BurnButtonAction extends TimerAction
 {
     private static final long serialVersionUID = -2092965435624779543L;
 
@@ -21,7 +21,7 @@ public class BurnButtonAction extends BaseAction
     @Override
     public void actionPerformed(final ActionEvent e)
     {
-        final BurnIssueDialog dialog = new BurnIssueDialog(this.button, this.label, this.issue);
+        final BurnIssueDialog dialog = new BurnIssueDialog(this);
         dialog.setVisible(true);
     }
 }

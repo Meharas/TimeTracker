@@ -8,7 +8,6 @@ import timetracker.db.Backend;
 import timetracker.utils.Util;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.sql.SQLException;
 
@@ -21,14 +20,15 @@ public class DeleteButtonAction extends BaseAction
 
     public DeleteButtonAction(final JButton button, final Issue issue)
     {
-        super(button, issue, null);
+        super(button, issue);
     }
 
     @Override
     public void actionPerformed(final ActionEvent e)
     {
         final String message = Resource.getString(PropertyConstants.TICKET_DELETE, this.issue.getTicket());
-        final int result = JOptionPane.showConfirmDialog(TimeTracker.getTimeTracker(), message, Resource.getString(PropertyConstants.TEXT_CONFIRMATION), JOptionPane.YES_NO_OPTION);
+        final TimeTracker timeTracker = TimeTracker.getInstance();
+        final int result = JOptionPane.showConfirmDialog(timeTracker, message, Resource.getString(PropertyConstants.TEXT_CONFIRMATION), JOptionPane.YES_NO_OPTION);
         if(result != JOptionPane.YES_OPTION)
         {
             return;
@@ -37,9 +37,9 @@ public class DeleteButtonAction extends BaseAction
         try
         {
             backend.deleteIssue(this.issue);
-            this.timeTracker.removeRow(this.issue);
-            this.timeTracker.updateGui(true);
-            this.timeTracker.decreaseLine();
+            timeTracker.removeRow(this.issue);
+            timeTracker.updateGui(true);
+            timeTracker.decreaseLine();
             backend.commit();
         }
         catch (final Throwable t)
@@ -54,41 +54,5 @@ public class DeleteButtonAction extends BaseAction
                 Util.handleException(t);
             }
         }
-    }
-
-    /**
-     * Entfernt eine komplette Zeile
-     */
-    private void remove()
-    {
-        final Container parent = this.button.getParent().getParent();
-        if (parent == null)
-        {
-            return;
-        }
-        final Component[] components = parent.getComponents();
-        for (final Component child : components)
-        {
-            remove(parent, child);
-        }
-        this.timeTracker.getContentPane().remove(parent);
-    }
-
-    /**
-     * Entfernt die Komponente und deren Kinder vom Parent
-     * @param parent Parent
-     * @param component Komponente
-     */
-    private void remove(final Container parent, final Component component)
-    {
-        if (component instanceof JPanel)
-        {
-            final Component[] components = ((JPanel) component).getComponents();
-            for (final Component child : components)
-            {
-                remove((Container) component, child);
-            }
-        }
-        parent.remove(component);
     }
 }

@@ -32,6 +32,6 @@ public final class ErrorCodes
         {
             return value;
         }
-        return MessageFormat.format(value, args);
+        return MessageFormat.format(value, (Object[]) args);
     }
 }

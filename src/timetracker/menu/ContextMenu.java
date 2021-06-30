@@ -4,10 +4,7 @@ import timetracker.Constants;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
-import timetracker.actions.AddAction;
-import timetracker.actions.BaseAction;
-import timetracker.actions.OpenUrlAction;
-import timetracker.actions.ShowAddButtonAction;
+import timetracker.actions.*;
 import timetracker.buttons.IssueButton;
 import timetracker.client.Client;
 import timetracker.data.Issue;
@@ -128,7 +125,7 @@ public class ContextMenu
         redoItem.setBorder(BORDER);
         redoItem.addActionListener((final ActionEvent event) -> {
             final Action a = button.getAction();
-            ((BaseAction) a).reset();
+            ((TimerAction) a).reset();
         });
 
         menu.add(openItem);

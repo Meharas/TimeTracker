@@ -29,7 +29,7 @@ public class SystemTrayIcon
     {
         if(SystemTray.isSupported())
         {
-            final TimeTracker timeTracker = TimeTracker.getTimeTracker();
+            final TimeTracker timeTracker = TimeTracker.getInstance();
             final MenuItem aboutItem = new MenuItem(Resource.getString(PropertyConstants.LABEL_ABOUT));
             aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(timeTracker, "Version 0.8 Leipzig\n\nby Andreas Beyer\n©" + LocalDateTime.now().getYear()));
 
@@ -58,6 +58,7 @@ public class SystemTrayIcon
                 }
             });
 
+
             final MenuItem add = new MenuItem(Resource.getString(PropertyConstants.LABEL_ADD));
             add.addActionListener(new ShowAddButtonAction());
 
@@ -71,7 +72,7 @@ public class SystemTrayIcon
             showDb.addActionListener(new ShowDatabaseContent());
 
             final MenuItem exit = new MenuItem(Resource.getString(PropertyConstants.LABEL_EXIT));
-            exit.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(new WindowEvent(TimeTracker.getTimeTracker(), WindowEvent.WINDOW_CLOSING)));
+            exit.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(new WindowEvent(TimeTracker.getInstance(), WindowEvent.WINDOW_CLOSING)));
 
             final PopupMenu popup = new PopupMenu();
             popup.add(openItem);

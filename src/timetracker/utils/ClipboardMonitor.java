@@ -29,7 +29,6 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
 
     private void gainOwnership(final Transferable content)
     {
-        Log.info("gain ownership...");
         try
         {
             if (!ClipboardMonitor.disabled && content != null && content.isDataFlavorSupported(DataFlavor.stringFlavor))
@@ -37,9 +36,7 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
                 final Object transferData = content.getTransferData(DataFlavor.stringFlavor);
                 if(transferData instanceof String && !((String) transferData).isEmpty())
                 {
-                    Log.info("String content detected");
-
-                    if(!TimeTracker.getTimeTracker().isVisible() && TimeTracker.matches((String) transferData))
+                    if(!TimeTracker.getInstance().isVisible() && TimeTracker.matches((String) transferData))
                     {
                         final String ticket = TimeTracker.MATCHER.group(1);
 
@@ -89,8 +86,6 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
     @Override
     public void lostOwnership(final Clipboard clipboard, final Transferable contents)
     {
-        Log.info("Ownership lost ...");
-
         try
         {
             Thread.sleep(50);

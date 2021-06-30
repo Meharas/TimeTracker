@@ -6,7 +6,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import timetracker.*;
-import timetracker.actions.BaseAction;
+import timetracker.actions.TimerAction;
 import timetracker.client.Client;
 import timetracker.log.Log;
 import timetracker.menu.ComboBoxFixVersions;
@@ -74,8 +74,8 @@ public class FinishIssueDialog extends JFrame
         globalPanel.add(commentPanel);
 
         final Action action = button.getAction();
-        final BaseAction timerAction = action instanceof BaseAction ? (BaseAction) action : null;
-        if (timerAction != null && timerAction.timer != null && timerAction.timer.isRunning())
+        final TimerAction timerAction = action instanceof TimerAction ? (TimerAction) action : null;
+        if (timerAction != null && timerAction.getTimer() != null && timerAction.getTimer().isRunning())
         {
             timerAction.stopWithoutSave();
         }

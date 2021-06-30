@@ -57,7 +57,8 @@ public class EditAction extends BaseAction
             ((BaseButton) this.issueButton).setIcon(filePath);
         }
 
-        final Frame frame = this.timeTracker.getParentFrame(this.button);
+        final TimeTracker timeTracker = TimeTracker.getInstance();
+        final Frame frame = timeTracker.getParentFrame(this.button);
         if(frame != null)
         {
             frame.dispose();

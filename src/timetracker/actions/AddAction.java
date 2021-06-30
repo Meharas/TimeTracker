@@ -81,22 +81,23 @@ public class AddAction extends BaseAction
             ticket = TimeTracker.MATCHER.group(1);
         }
 
+        final TimeTracker timeTracker = TimeTracker.getInstance();
         final Issue issue = new Issue(ticket, text, null, null, null, filePath);
         JButton button = null;
         try
         {
             Backend.getInstance().insertIssue(issue);
 
-            button = this.timeTracker.addButton(issue);
-            this.timeTracker.updateGui(false);
-            this.timeTracker.increaseLine();
+            button = timeTracker.addButton(issue);
+            timeTracker.updateGui(false);
+            timeTracker.increaseLine();
         }
         catch (final Throwable t)
         {
             Util.handleException(t);
         }
 
-        final Frame frame = this.timeTracker.getParentFrame(this.button);
+        final Frame frame = timeTracker.getParentFrame(this.button);
         if(frame != null)
         {
             frame.dispose();

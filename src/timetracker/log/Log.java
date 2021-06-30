@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.*;
 
 /**
@@ -52,19 +53,13 @@ public class Log
                     while (iterator.hasNext())
                     {
                         final Map.Entry<Level, String> entry = iterator.next();
-                        doLog(entry.getKey(), entry.getValue());
+                        super.log(entry.getKey(), entry.getValue());
                         iterator.remove();
                     }
                     init();
                 }
-                doLog(level, msg);
+                super.log(level, msg);
             }
-        }
-
-        private void doLog(final Level level, final String msg)
-        {
-            System.out.println(msg);
-            super.log(level, msg);
         }
 
         private void init()
@@ -73,15 +68,6 @@ public class Log
             {
                 return;
             }
-            // suppress the logging output to the console
-            final Logger rootLogger = Logger.getLogger(Constants.STRING_EMPTY);
-            final Handler[] handlers = rootLogger.getHandlers();
-            if (handlers[0] instanceof ConsoleHandler)
-            {
-                rootLogger.removeHandler(handlers[0]);
-            }
-
-            super.setLevel(Level.INFO);
 
             final File logFile = getLogFile();
             if (!logFile.exists())
@@ -92,11 +78,13 @@ public class Log
                     final Path file = Files.createFile(logFile.toPath());
                     System.out.println("Log file created: " + file.toFile().getAbsolutePath());
                 }
-                catch (IOException | SecurityException | UnsupportedOperationException e)
+                catch (final IOException | SecurityException | UnsupportedOperationException e)
                 {
                     System.out.println("Error occurred while creating log file: " + e.getMessage());
                 }
             }
+
+            addHandler(new ConsoleHandler());
 
             try (final InputStream inputStream = new FileInputStream(TimeTracker.getHome() + Constants.DEFAULT_PROPERTIES))
             {
@@ -105,10 +93,25 @@ public class Log
 
                 final FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), true);
                 fileHandler.setFormatter(new LogFormatter());
-                super.addHandler(fileHandler);
+                addHandler(fileHandler);
+
+                final Properties properties = TimeTracker.getProperties();
+                final Handler[] handlers = getHandlers();
+                for(final Handler handler : handlers)
+                {
+                    final String level = properties.getProperty(handler.getClass().getName() + ".level", Level.INFO.getName());
+                    handler.setLevel(Level.parse(level));
+
+                    if(handler instanceof FileHandler)
+                    {
+                        Log.info("Setting log level to " + level);
+                        super.setLevel(handler.getLevel());
+                    }
+                }
+
                 this.initialized = true;
             }
-            catch (IOException e)
+            catch (final IOException e)
             {
                 super.log(Level.SEVERE, e.getMessage(), e);
             }

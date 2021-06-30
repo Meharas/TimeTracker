@@ -13,13 +13,11 @@ import timetracker.log.Log;
 import timetracker.menu.TimeTrackerMenuBar;
 import timetracker.misc.Row;
 import timetracker.updates.Updates;
-import timetracker.utils.ClipboardMonitor;
-import timetracker.utils.LookAndFeelManager;
-import timetracker.utils.SystemTrayIcon;
-import timetracker.utils.Util;
+import timetracker.utils.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import javax.swing.text.TextAction;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -45,7 +43,6 @@ public class TimeTracker extends JFrame
     public static final Matcher MATCHER = Constants.PATTERN.matcher(Constants.STRING_EMPTY);
     public static final Matcher TIME_MATCHER = Constants.TIME_PATTERN.matcher(Constants.STRING_EMPTY);
     public static final Matcher BURN_MATCHER = Constants.BURN_PATTERN.matcher(Constants.STRING_EMPTY);
-    public static final Matcher DURATION_MATCHER = Constants.DURATION_PATTERN.matcher(Constants.STRING_EMPTY);
 
     public static final Color MANDATORY = new Color(200, 221, 242);
 
@@ -117,10 +114,13 @@ public class TimeTracker extends JFrame
         pack();
         restoreWindowPositionAndSize();
 
-        final String classname = properties.getProperty(PropertyConstants.LOOK_AND_FEEL, "javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        final String classname = properties.getProperty(PropertyConstants.LOOK_AND_FEEL, NimbusLookAndFeel.class.getName());
         LookAndFeelManager.setLookAndFeel(classname);
 
         setJMenuBar(new TimeTrackerMenuBar(classname));
+
+        //noinspection ResultOfMethodCallIgnored
+        AutoSave.getInstance();
     }
 
     public static String getHome()
@@ -163,7 +163,7 @@ public class TimeTracker extends JFrame
      */
     public Collection<Row> getRows()
     {
-        final Container contentPane = TimeTracker.getTimeTracker().getContentPane();
+        final Container contentPane = TimeTracker.getInstance().getContentPane();
         final Component[] components = contentPane.getComponents();
         final Collection<Row> rows = new ArrayList<>(components.length);
         for(final Component component : components)
@@ -212,7 +212,7 @@ public class TimeTracker extends JFrame
      */
     private void moveDown(final int sourceIndex, final int targetIndex)
     {
-        final Container contentPane = TimeTracker.getTimeTracker().getContentPane();
+        final Container contentPane = TimeTracker.getInstance().getContentPane();
         final List<Row> newRows = new LinkedList<>();
         for(int i = sourceIndex + 1, counter = 0; sourceIndex + counter < targetIndex; counter++)
         {
@@ -241,7 +241,7 @@ public class TimeTracker extends JFrame
      */
     private void moveUp(final int sourceIndex, final int targetIndex)
     {
-        final Container contentPane = TimeTracker.getTimeTracker().getContentPane();
+        final Container contentPane = TimeTracker.getInstance().getContentPane();
         final Row row = (Row) contentPane.getComponent(sourceIndex);
         contentPane.remove(row);
         contentPane.add(row, targetIndex);
@@ -376,7 +376,7 @@ public class TimeTracker extends JFrame
     {
         Log.info("Timetracker closing...");
 
-        saveDurations();
+        AutoSave.getInstance().stop();
 
         if(!isVisible())
         {
@@ -408,37 +408,6 @@ public class TimeTracker extends JFrame
         finally
         {
             System.exit(0);
-        }
-    }
-
-    /**
-     * Merkt sich alle Zeiten in der Datenbank
-     */
-    private void saveDurations()
-    {
-        final Set<Component> components = new HashSet<>();
-        collectComponents(this, components);
-
-        for (final Component component : components)
-        {
-            if (component instanceof JLabel)
-            {
-                final String id = component.getName();
-                if (id != null)
-                {
-                    final String currentTime = ((JLabel) component).getText();
-                    try
-                    {
-                        Backend.getInstance().saveCurrentDuration(id, currentTime);
-                    }
-                    catch (final Throwable t)
-                    {
-                        final String msg = Util.getMessage(t);
-                        Log.severe(msg, t);
-                        JOptionPane.showMessageDialog(this, String.format("Error while saving spent time for %s:%n%s", ((JLabel)component).getText(), msg));
-                    }
-                }
-            }
         }
     }
 
@@ -539,7 +508,7 @@ public class TimeTracker extends JFrame
         {
             Log.severe(e.getMessage(), e);
         }
-        return null;
+        return properties;
     }
 
     /**
@@ -847,7 +816,7 @@ public class TimeTracker extends JFrame
         });
     }
 
-    public static TimeTracker getTimeTracker()
+    public static TimeTracker getInstance()
     {
         return timeTracker;
     }
