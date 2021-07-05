@@ -1,5 +1,6 @@
 package timetracker.buttons;
 
+import timetracker.actions.TimerAction;
 import timetracker.data.Issue;
 import timetracker.dnd.ButtonTransferHandler;
 import timetracker.icons.Icon;
@@ -170,5 +171,11 @@ public class IssueButton extends BaseButton
             return Icon.STAR;
         }
         return Icon.CLOCK;
+    }
+
+    @Override
+    public TimerAction getAction()
+    {
+        return (TimerAction) super.getAction();
     }
 }

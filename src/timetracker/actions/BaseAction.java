@@ -34,4 +34,14 @@ public abstract class BaseAction extends AbstractAction
         this.button = button;
         this.issue = issue;
     }
+
+    public JButton getButton()
+    {
+        return this.button;
+    }
+
+    public Issue getIssue()
+    {
+        return this.issue;
+    }
 }

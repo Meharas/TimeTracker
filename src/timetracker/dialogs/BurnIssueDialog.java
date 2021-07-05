@@ -4,6 +4,7 @@ import timetracker.Constants;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
+import timetracker.actions.BurnButtonAction;
 import timetracker.actions.TimerAction;
 import timetracker.buttons.DatePickerButton;
 import timetracker.client.Client;
@@ -29,7 +30,7 @@ public class BurnIssueDialog extends JFrame
 {
     private final Issue issue;
 
-    public BurnIssueDialog(final TimerAction action) throws HeadlessException
+    public BurnIssueDialog(final BurnButtonAction action) throws HeadlessException
     {
         super("Burning time");
         this.issue = action.getIssue();
@@ -49,7 +50,7 @@ public class BurnIssueDialog extends JFrame
         }
         else
         {
-            final String ticket = issue.getTicket();
+            final String ticket = this.issue.getTicket();
             ticketField.setText(ticket);
         }
 
@@ -109,10 +110,11 @@ public class BurnIssueDialog extends JFrame
         commentPanel.add(scrollPane);
         globalPanel.add(commentPanel);
 
-        final DurationTimer timer = action.getTimer();
+        final TimerAction timerAction = action.getButton().getAction();
+        final DurationTimer timer = timerAction.getTimer();
         if (timer != null && timer.isRunning())
         {
-            action.stopWithoutSave();
+            timerAction.stopWithoutSave();
         }
 
         final TimeTracker timeTracker = TimeTracker.getInstance();
@@ -125,7 +127,7 @@ public class BurnIssueDialog extends JFrame
             {
                 if (burnTime(ticketField, timeField, dateField, typeField, textArea))
                 {
-                    action.reset();
+                    timerAction.reset();
 
                     final String savedDuration = issue.getDurationSaved();
                     timeTracker.setLabelTooltip(savedDuration, label);

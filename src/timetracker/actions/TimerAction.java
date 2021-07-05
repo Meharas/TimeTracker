@@ -34,16 +34,6 @@ public class TimerAction extends BaseAction
         this.label = label;
     }
 
-    public JButton getButton()
-    {
-        return this.button;
-    }
-
-    public Issue getIssue()
-    {
-        return this.issue;
-    }
-
     public DurationTimer getTimer()
     {
         return this.timer;

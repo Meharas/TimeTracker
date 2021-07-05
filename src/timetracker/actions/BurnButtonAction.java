@@ -1,5 +1,6 @@
 package timetracker.actions;
 
+import timetracker.buttons.IssueButton;
 import timetracker.data.Issue;
 import timetracker.dialogs.BurnIssueDialog;
 
@@ -9,13 +10,15 @@ import java.awt.event.ActionEvent;
 /**
  * Klasse zum Burnen von Zeiten
  */
-public class BurnButtonAction extends TimerAction
+public class BurnButtonAction extends BaseAction
 {
     private static final long serialVersionUID = -2092965435624779543L;
+    private final JLabel label;
 
-    public BurnButtonAction(final JButton button, final JLabel label, final Issue issue)
+    public BurnButtonAction(final IssueButton button, final JLabel label, final Issue issue)
     {
-        super(button, issue, label);
+        super(button, issue);
+        this.label = label;
     }
 
     @Override
@@ -23,5 +26,16 @@ public class BurnButtonAction extends TimerAction
     {
         final BurnIssueDialog dialog = new BurnIssueDialog(this);
         dialog.setVisible(true);
+    }
+
+    public JLabel getLabel()
+    {
+        return this.label;
+    }
+
+    @Override
+    public IssueButton getButton()
+    {
+        return (IssueButton) this.button;
     }
 }
