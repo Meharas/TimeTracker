@@ -39,7 +39,6 @@ public class DeleteButtonAction extends BaseAction
             backend.deleteIssue(this.issue);
             timeTracker.removeRow(this.issue);
             timeTracker.updateGui(true);
-            timeTracker.decreaseLine();
             backend.commit();
         }
         catch (final Throwable t)

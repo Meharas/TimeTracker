@@ -103,7 +103,6 @@ public class ClipboardDialog extends JFrame
             final TimeTracker timeTracker = TimeTracker.getInstance();
             button = timeTracker.addButton(issue);
             timeTracker.updateGui(false);
-            timeTracker.increaseLine();
         }
         catch (final Throwable t)
         {

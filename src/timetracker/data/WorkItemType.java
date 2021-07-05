@@ -1,6 +1,7 @@
 package timetracker.data;
 
 import timetracker.Constants;
+import timetracker.Resource;
 import timetracker.client.Client;
 import timetracker.utils.Util;
 
@@ -60,6 +61,17 @@ public class WorkItemType implements Serializable
     public static WorkItemType getType(final String id)
     {
         return WORKITEM_TYPES.stream().filter(item -> item.getId().equalsIgnoreCase(id)).findFirst().orElse(WorkItemType.EMPTY);
+    }
+
+    public String getTooltip()
+    {
+        String key = this.label;
+        final int indexSpace = key.indexOf(Constants.STRING_SPACE);
+        if(indexSpace > -1)
+        {
+            key = key.substring(0, indexSpace);
+        }
+        return Resource.getString("workitem.tooltip." + key.toLowerCase());
     }
 
     public static List<WorkItemType> getTypes()

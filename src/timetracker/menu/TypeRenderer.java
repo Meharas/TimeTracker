@@ -30,7 +30,14 @@ public class TypeRenderer extends DefaultListCellRenderer
         final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value != null)
         {
-            setText(((WorkItemType) value).getLabel());
+            final WorkItemType item = (WorkItemType) value;
+            setText(item.getLabel());
+
+            final String tooltip = item.getTooltip();
+            if (tooltip != null && !tooltip.isEmpty())
+            {
+                list.setToolTipText(tooltip);
+            }
         }
         return component;
     }

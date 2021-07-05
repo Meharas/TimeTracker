@@ -19,14 +19,16 @@ public class EditAction extends BaseAction
 {
     private static final long serialVersionUID = -7024916220743619039L;
     private final JButton issueButton;
-    private final JTextField textInput;
+    private final JTextField label;
+    private final JTextArea description;
     private final JFileChooser icon;
 
-    public EditAction(final Issue issue, final JButton okButton, final JButton issueButton, final JTextField textInput, final JFileChooser icon)
+    public EditAction(final Issue issue, final JButton okButton, final JButton issueButton, final JTextField label, final JTextArea description, final JFileChooser icon)
     {
         super(okButton, issue);
         this.issueButton = issueButton;
-        this.textInput = textInput;
+        this.label = label;
+        this.description = description;
         this.icon = icon;
     }
 
@@ -35,13 +37,16 @@ public class EditAction extends BaseAction
     {
         final File file = this.icon.getSelectedFile();
         final String filePath = file == null ? Constants.STRING_EMPTY : file.getPath();
-        final String text = TimeTracker.getTicketSummary(this.textInput);
+        final String text = TimeTracker.getTicketSummary(this.label);
 
         this.issue.setLabel(text);
         if(file != null)
         {
             this.issue.setIcon(filePath);
         }
+
+        this.issue.setDescription(this.description.getText());
+
         try
         {
             Backend.getInstance().updateIssue(this.issue);

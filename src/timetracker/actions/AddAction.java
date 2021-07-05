@@ -20,18 +20,20 @@ import java.net.URISyntaxException;
 public class AddAction extends BaseAction
 {
     private static final long serialVersionUID = 2109270279366930967L;
-    private final JTextField textInput;
+    private final JTextField label;
+    private final JTextArea description;
     private final JFileChooser icon;
 
     public AddAction(final JButton button)
     {
-        this(button, null, null);
+        this(button, null, null, null);
     }
 
-    public AddAction(final JButton button, final JTextField textInput, final JFileChooser icon)
+    public AddAction(final JButton button, final JTextField textInput, final JTextArea description, final JFileChooser icon)
     {
         super( button);
-        this.textInput = textInput;
+        this.label = textInput;
+        this.description = description;
         this.icon = icon;
     }
 
@@ -60,7 +62,7 @@ public class AddAction extends BaseAction
 
     protected String createButtonText()
     {
-        return TimeTracker.getTicketSummary(this.textInput);
+        return TimeTracker.getTicketSummary(this.label);
     }
 
     protected JButton createButton(String text)
@@ -83,6 +85,7 @@ public class AddAction extends BaseAction
 
         final TimeTracker timeTracker = TimeTracker.getInstance();
         final Issue issue = new Issue(ticket, text, null, null, null, filePath);
+        issue.setDescription(this.description.getText());
         JButton button = null;
         try
         {
@@ -90,7 +93,6 @@ public class AddAction extends BaseAction
 
             button = timeTracker.addButton(issue);
             timeTracker.updateGui(false);
-            timeTracker.increaseLine();
         }
         catch (final Throwable t)
         {

@@ -1,5 +1,6 @@
 package timetracker.utils;
 
+import timetracker.Constants;
 import timetracker.TimeTracker;
 import timetracker.buttons.IssueButton;
 import timetracker.data.Issue;
@@ -13,6 +14,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
  */
 public class Util
 {
+    private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("mm 'minutes' ss 'seconds' SSS 'milliseconds'");
+
     private Util()
     {
     }
@@ -155,5 +159,16 @@ public class Util
         final int x =  (int) Math.max(Math.min(location.x, screenSize.getWidth() - width), 0);
         final int y = (int) Math.max(Math.min(location.y, screenSize.getHeight() - height), 0);
         return new Rectangle(x, y, width, height);
+    }
+
+    public static void logDuration(final long start)
+    {
+        logDuration(null, start);
+    }
+
+    public static void logDuration(final String prefix, final long start)
+    {
+        Log.finest(String.format("%sduration:	%s", prefix == null || prefix.isEmpty() ? Constants.STRING_EMPTY : (prefix + Constants.STRING_SPACE),
+                                 TIME_FORMAT.format(new Date(System.currentTimeMillis() - start))));
     }
 }

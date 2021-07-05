@@ -50,8 +50,6 @@ public class TimeTracker extends JFrame
     private static TimeTracker timeTracker;
     private static final Object syncObject = new Object();
 
-    private int line;
-
     private TimeTracker()
     {
         super("Time Tracker");
@@ -100,15 +98,12 @@ public class TimeTracker extends JFrame
         globalActionsPanel.add(reset);
         globalActionsPanel.setBorder(new EmptyBorder(0,0,0,0));
         addToPanel(globalActionsPanel);
-        increaseLine();
         addToPanel(new JPanel()); //Spacer
-        increaseLine();
 
         final List<Issue> issues = Backend.getInstance().getIssues();
         for(final Issue issue : issues)
         {
             addButton(issue);
-            increaseLine();
         }
 
         pack();
@@ -126,16 +121,6 @@ public class TimeTracker extends JFrame
     public static String getHome()
     {
         return HOME;
-    }
-
-    public void increaseLine()
-    {
-        this.line++;
-    }
-
-    public void decreaseLine()
-    {
-        this.line--;
     }
 
     public void showFrame(final MenuItem openItem, final boolean show)
@@ -242,7 +227,7 @@ public class TimeTracker extends JFrame
     private void moveUp(final int sourceIndex, final int targetIndex)
     {
         final Container contentPane = TimeTracker.getInstance().getContentPane();
-        final Row row = (Row) contentPane.getComponent(sourceIndex);
+        final Component row = contentPane.getComponent(sourceIndex);
         contentPane.remove(row);
         contentPane.add(row, targetIndex);
 
@@ -291,10 +276,10 @@ public class TimeTracker extends JFrame
         pack();
     }
 
-    private void addToPanel(final JPanel panel)
+    private void addToPanel(final JComponent comp)
     {
         updateRows(true);
-        getContentPane().add(panel, this.line);
+        getContentPane().add(comp);
     }
 
     private void updateRows(final boolean addRow)
@@ -762,7 +747,7 @@ public class TimeTracker extends JFrame
         Log.info("Starting TimeTracker");
 
         final Properties properties = getProperties();
-        if (properties == null || properties.isEmpty())
+        if (properties.isEmpty())
         {
             Log.severe("Empty properties!");
             return;

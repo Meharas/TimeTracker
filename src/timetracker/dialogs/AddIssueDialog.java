@@ -1,5 +1,6 @@
 package timetracker.dialogs;
 
+import timetracker.Constants;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.TimeTracker;
@@ -8,6 +9,7 @@ import timetracker.actions.EditAction;
 import timetracker.buttons.IssueButton;
 import timetracker.data.Issue;
 import timetracker.icons.IconFileFilter;
+import timetracker.misc.LimitedTextArea;
 import timetracker.utils.EscapeEvent;
 import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
@@ -17,6 +19,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Optional;
 
 /**
  * Dialog zum Erfassen eines Tickets
@@ -36,11 +39,20 @@ public class AddIssueDialog extends JFrame
         chooser.setMultiSelectionEnabled(false);
         chooser.setControlButtonsAreShown(false);
         chooser.setFileFilter(new IconFileFilter());
+        chooser.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         final JTextField labelField = new JTextField();
         labelField.setForeground(LookAndFeelManager.getFontColor());
         labelField.setPreferredSize(new Dimension(200, 30));
         labelField.setBackground(TimeTracker.MANDATORY);
+        labelField.setDocument(new LimitedTextArea());
+        labelField.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JTextArea description = new JTextArea(5,30);
+        description.setLineWrap(true);
+        description.setWrapStyleWord(true);
+        description.setDocument(new LimitedTextArea());
+        description.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         addWindowListener(new WindowAdapter()
         {
@@ -56,48 +68,46 @@ public class AddIssueDialog extends JFrame
         if(hasIssue)
         {
             labelField.setText(button.getText());
-            ok.setAction(new EditAction(issue, ok, button, labelField, chooser));
+            description.setText(Optional.ofNullable(issue).map(Issue::getDescription).orElse(Constants.STRING_EMPTY));
+            ok.setAction(new EditAction(issue, ok, button, labelField, description, chooser));
         }
         else
         {
-            ok.setAction(new AddAction(ok, labelField, chooser)
+            ok.setAction(new AddAction(ok, labelField, description, chooser)
             {
                 @Override
-                protected JButton createButton(final String text)
+                protected JButton createButton(final String ticket)
                 {
-                    if(TimeTracker.matches(labelField.getText()))
-                    {
-                        AddIssueDialog.this.dispose();
+                    AddIssueDialog.this.dispose();
 
-                        final String ticket = TimeTracker.MATCHER.group(1);
-                        final ClipboardDialog dialog = new ClipboardDialog(ticket);
+                    if(TimeTracker.matches(ticket))
+                    {
+                        final ClipboardDialog dialog = new ClipboardDialog(TimeTracker.MATCHER.group(1));
                         dialog.setVisible(true);
                     }
+                    super.createButton(ticket);
                     return null;
                 }
             });
         }
 
-        final JPanel addButtonPanel = new JPanel();
-        addButtonPanel.setLayout(new BoxLayout(addButtonPanel, BoxLayout.Y_AXIS));
-        addButtonPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
-        add(addButtonPanel);
-
-        final JPanel labelPanel = new JPanel();
-        labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
-        labelPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
-        addButtonPanel.add(labelPanel);
-        addButtonPanel.add(chooser);
-
         final JPanel okBtnPanel = new JPanel();
-        okBtnPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        okBtnPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         okBtnPanel.add(ok);
-        addButtonPanel.add(okBtnPanel);
 
-        final JLabel label = new JLabel("Label");
-        label.setPreferredSize(new Dimension(50, 25));
-        labelPanel.add(label);
-        labelPanel.add(labelField);
+        final JPanel rootPanel = new JPanel();
+        rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
+        rootPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        rootPanel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_ISSUE)));
+        rootPanel.add(labelField);
+        rootPanel.add(new JPanel());
+        rootPanel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_DESCRIPTION)));
+        rootPanel.add(description);
+        rootPanel.add(new JPanel());
+        rootPanel.add(new JLabel(Resource.getString(PropertyConstants.LABEL_ICON)));
+        rootPanel.add(chooser);
+        rootPanel.add(okBtnPanel);
+        add(rootPanel);
 
         pack();
 

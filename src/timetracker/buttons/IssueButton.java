@@ -10,7 +10,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.dnd.DropTarget;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -31,18 +30,48 @@ public class IssueButton extends BaseButton
 
         setName(issue.getId());
         setMinimumSize(MINIMUM_SIZE);
-        addMouseListener(new MouseAdapter()
+
+        final ToolTipManager ttm = ToolTipManager.sharedInstance();
+        ttm.setInitialDelay(0);
+        ttm.setDismissDelay(10000);
+        ttm.registerComponent(this);
+
+        final MouseAdapter mouseAdapter = new MouseAdapter()
         {
             @Override
             public void mousePressed(final MouseEvent e)
             {
                 showPopUp(e);
+                ttm.mousePressed(e);
             }
 
             @Override
             public void mouseReleased(final MouseEvent e)
             {
                 showPopUp(e);
+                ttm.mouseReleased(e);
+            }
+
+            @Override
+            public void mouseEntered(final MouseEvent e)
+            {
+                ttm.mouseEntered(e);
+            }
+
+            @Override
+            public void mouseMoved(final MouseEvent e)
+            {
+                ttm.mouseMoved(e);
+            }
+
+            @Override
+            public void mouseDragged(final MouseEvent e)
+            {
+                final JButton button = (JButton) e.getSource();
+                final TransferHandler handle = button.getTransferHandler();
+                handle.exportAsDrag(button, e, TransferHandler.COPY);
+
+                ttm.mouseDragged(e);
             }
 
             private void showPopUp(final MouseEvent e)
@@ -53,19 +82,19 @@ public class IssueButton extends BaseButton
                     menu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
-        });
+        };
 
-        addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseDragged(final MouseEvent e)
-            {
-                final JButton button = (JButton) e.getSource();
-                final TransferHandler handle = button.getTransferHandler();
-                handle.exportAsDrag(button, e, TransferHandler.COPY);
-            }
-        });
+        addMouseListener(mouseAdapter);
+        addMouseMotionListener(mouseAdapter);
 
         setTransferHandler(new ButtonTransferHandler(issue));
+    }
+
+    @Override
+    public String getToolTipText(final MouseEvent event)
+    {
+        final String description = this.issue.getDescription();
+        return description == null || description.isEmpty() ? null : description;
     }
 
     public Issue getIssue()

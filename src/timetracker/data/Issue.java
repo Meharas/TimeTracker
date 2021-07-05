@@ -16,6 +16,7 @@ public class Issue implements Serializable
     private int order = -1;
     private String ticket;
     private String label;
+    private String description;
     private WorkItemType type;
     private String duration;
     private String durationSaved;
@@ -41,6 +42,7 @@ public class Issue implements Serializable
         this.order = Optional.ofNullable(data.get(Backend.CN_ORDER)).map(Integer::parseInt).orElse(-1);
         this.ticket = getString(data.get(Backend.CN_ISSUE));
         this.label = getString(data.get(Backend.CN_LABEL));
+        this.description = getString(data.get(Backend.CN_DESCRIPTION));
         this.type = WorkItemType.getType(data.get(Backend.CN_TYPE));
         this.duration = getString(data.get(Backend.CN_DURATION));
         this.durationSaved = getString(data.get(Backend.CN_DURATION_SAVED));
@@ -95,6 +97,16 @@ public class Issue implements Serializable
     public void setLabel(final String label)
     {
         this.label = getString(label);
+    }
+
+    public String getDescription()
+    {
+        return this.description;
+    }
+
+    public void setDescription(final String description)
+    {
+        this.description = getString(description);
     }
 
     public WorkItemType getType()
@@ -194,7 +206,7 @@ public class Issue implements Serializable
     @Override
     public String toString()
     {
-        return String.format("Issue{Id=%s, Ticket=%s, Order=%d, Label=%s, Type=%s, Duration=%s, Saved duration=%s, Icon=%s, Can be finished=%s, Marked=%s}",
-                             getId(), getTicket(), getOrder(), getLabel(), getType(), getDuration(), getDurationSaved(), getIcon(), canBeFinished(), isMarked());
+        return String.format("Issue{Id=%s, Ticket=%s, Order=%d, Label=%s, Description=%s, Type=%s, Duration=%s, Saved duration=%s, Icon=%s, Can be finished=%s, Marked=%s}",
+                             getId(), getTicket(), getOrder(), getLabel(), getDescription(), getType(), getDuration(), getDurationSaved(), getIcon(), canBeFinished(), isMarked());
     }
 }

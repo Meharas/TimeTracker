@@ -46,6 +46,10 @@ public final class PropertyConstants
     public static final String LABEL_EXIT = "button.label.exit";
     public static final String LABEL_ABOUT = "button.label.about";
 
+    public static final String LABEL_ISSUE = "label.issue";
+    public static final String LABEL_DESCRIPTION = "label.description";
+    public static final String LABEL_ICON = "labe.icon";
+
     public static final String TICKET_IN_PROGRESS = "ticket.inprogress";
     public static final String TICKET_DELETE = "text.delete";
     public static final String TIME_SAVED = "time.saved";

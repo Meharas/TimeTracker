@@ -45,15 +45,16 @@ public class Backend
     public static final String CN_ICON = "ICON";
     public static final String CN_TYPE = "TYPE";
     public static final String CN_ORDER = "ORDER_ID";
+    public static final String CN_DESCRIPTION = "DESCRIPTION";
 
     public static final String CN_UPDATE_ID = "UPDATE_ID";
 
     public static final String TN_ISSUES = "ISSUES";
     public static final String TN_UPDATES = "UPDATES";
-    private static final String TN_ISSUES_COLUMNS = String.format(" (%s VARCHAR(12), %s INTEGER, %s VARCHAR(12), %s NVARCHAR(255), %s VARCHAR (12), %s VARCHAR(16), %s VARCHAR(16), " +
-                                                                  "%s VARCHAR(255), %s BOOLEAN, %s BOOLEAN, PRIMARY KEY (%s));",
-                                                                  CN_ID, CN_ORDER, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON,
-                                                                  CN_CAN_BE_FINISHED, CN_MARKED, CN_ID);
+    private static final String TN_ISSUES_COLUMNS = String.format(" (%s VARCHAR(12), %s INTEGER, %s VARCHAR(12), %s NVARCHAR(255),  %s NVARCHAR(255), %s VARCHAR (12), " +
+                                                                  "%s VARCHAR(16), %s VARCHAR(16), %s VARCHAR(255), %s BOOLEAN, %s BOOLEAN, PRIMARY KEY (%s));",
+                                                                  CN_ID, CN_ORDER, CN_ISSUE, CN_LABEL, CN_DESCRIPTION, CN_TYPE, CN_DURATION, CN_DURATION_SAVED,
+                                                                  CN_ICON, CN_CAN_BE_FINISHED, CN_MARKED, CN_ID);
     private static final String TN_UPDATES_COLUMNS = String.format(" (%s INTEGER PRIMARY KEY);", CN_UPDATE_ID);
 
     private static final String RENAME_TABLE = "ALTER TABLE %s ALTER COLUMN %s RENAME TO %s;";
@@ -70,7 +71,8 @@ public class Backend
                                                             CN_CAN_BE_FINISHED, CN_MARKED) +
                                               "('%s', %d, '%s', '%s', '%s', '%s', '%s', '%s', %s, %s);";
     private static final String DELETE_STMT = String.format("DELETE FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s';";
-    private static final String UPDATE_STMT = "UPDATE " + TN_ISSUES + " SET " + CN_ISSUE + UPDATE_VALUE + CN_ORDER + "=%d," + CN_LABEL + UPDATE_VALUE + CN_TYPE + UPDATE_VALUE +
+    private static final String UPDATE_STMT = "UPDATE " + TN_ISSUES + " SET " + CN_ISSUE + UPDATE_VALUE + CN_ORDER + "=%d," + CN_LABEL + UPDATE_VALUE +
+                                              CN_DESCRIPTION + UPDATE_VALUE + CN_TYPE + UPDATE_VALUE +
                                               CN_DURATION + UPDATE_VALUE + CN_DURATION_SAVED + UPDATE_VALUE + CN_ICON + UPDATE_VALUE +
                                               CN_CAN_BE_FINISHED + UPDATE_VALUE + CN_MARKED + "=%s WHERE " + CN_ID + "='%s';";
 
@@ -206,7 +208,8 @@ public class Backend
         }
         else
         {
-            boolean columnFound = false;
+            boolean orderColumnFound = false;
+            boolean descColumnFound = false;
             try (final ResultSet resultSet = this.statement.executeQuery(QUERY_FIRST_ISSUE))
             {
                 final ResultSetMetaData rsMetaData = resultSet.getMetaData();
@@ -215,21 +218,28 @@ public class Backend
                 {
                     for(int i = 1; i <= columnCount; i++)
                     {
-                        columnFound = CN_ORDER.equalsIgnoreCase(rsMetaData.getColumnName(i));
-                        if(columnFound)
+                        if(CN_ORDER.equalsIgnoreCase(rsMetaData.getColumnName(i)))
                         {
-                            break;
+                            orderColumnFound = true;
+                        }
+                        else if(CN_DESCRIPTION.equalsIgnoreCase(rsMetaData.getColumnName(i)))
+                        {
+                            descColumnFound = true;
                         }
                     }
-                    if(columnFound)
+                    if(orderColumnFound && descColumnFound)
                     {
                         break;
                     }
                 }
             }
-            if(!columnFound)
+            if(!orderColumnFound)
             {
                 addColum(TN_ISSUES, CN_ORDER, "INTEGER");
+            }
+            if(!descColumnFound)
+            {
+                addColum(TN_ISSUES, CN_DESCRIPTION, "NVARCHAR(255)");
             }
         }
 
@@ -380,11 +390,15 @@ public class Backend
      */
     private void executeUpdate(final String query, final boolean commit) throws SQLException
     {
+        Log.finest("Executing " + query);
+
         SQLException ex = null;
         int i = -1;
         try
         {
+            final long start = System.currentTimeMillis();
              i = this.statement.executeUpdate(query);
+             Util.logDuration(start);
              if(commit)
              {
                  commit();
@@ -441,13 +455,12 @@ public class Backend
 
     /**
      * Speichert die Zeitdauer für ein bestimmtes Issue
-     * @param issueId Id des Issues
+     * @param issue Issue
      * @param duration Zeitdauer
      * @throws Throwable database access error or other errors
      */
-    public void saveCurrentDuration(final String issueId, final String duration) throws Throwable
+    public void saveCurrentDuration(final Issue issue, final String duration) throws Throwable
     {
-        final Issue issue = getIssue(issueId);
         issue.setDuration(duration);
         updateIssue(issue);
     }
@@ -470,8 +483,8 @@ public class Backend
     public void updateIssue(final Issue issue, final boolean commit) throws Throwable
     {
         setOrder(issue);
-        executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getOrder(), issue.getLabel(), issue.getType().getId(), issue.getDuration(), issue.getDurationSaved(),
-                                    issue.getIcon(), issue.canBeFinished(), issue.isMarked(), issue.getId()), commit);
+        executeUpdate(String.format(UPDATE_STMT, issue.getTicket(), issue.getOrder(), issue.getLabel(), issue.getDescription(), issue.getType().getId(),
+                                    issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.canBeFinished(), issue.isMarked(), issue.getId()), commit);
         Log.log(Level.FINE, "Issue updated: " +  issue);
 
         final IssueButton button = Util.getButton(issue);
@@ -486,8 +499,12 @@ public class Backend
      */
     private List<Issue> executeSelect(final String query) throws Throwable
     {
+        Log.finest("Executing query " + query);
+        final long start = System.currentTimeMillis();
         try (final ResultSet rs = this.statement.executeQuery(query))
         {
+            Util.logDuration("Query", start);
+
             final ResultSetMetaData metaData = rs.getMetaData();
             final int columnCount = metaData.getColumnCount();
             final List<Issue> issues = new ArrayList<>();
@@ -500,6 +517,7 @@ public class Backend
                 }
                 issues.add(new Issue(record));
             }
+            Log.finest(String.format("%d issue(s) found", issues.size()));
             return issues;
         }
     }

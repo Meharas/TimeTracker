@@ -3,6 +3,7 @@ package timetracker;
 import timetracker.utils.Util;
 
 import java.text.MessageFormat;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
@@ -34,7 +35,15 @@ public final class Resource
      */
     public static String getString(final String key, final String... args)
     {
-        final String value = bundle.getString(key);
+        final String value;
+        try
+        {
+            value = bundle.getString(key);
+        }
+        catch (final MissingResourceException e)
+        {
+            return Constants.STRING_EMPTY;
+        }
         if (args == null)
         {
             return value;

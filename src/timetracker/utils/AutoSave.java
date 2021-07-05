@@ -54,7 +54,7 @@ public final class AutoSave
                 final Issue issue = row.getButton().getIssue();
                 try
                 {
-                    Backend.getInstance().saveCurrentDuration(issue.getId(), currentTime);
+                    Backend.getInstance().saveCurrentDuration(issue, currentTime);
                 }
                 catch (final Throwable t)
                 {
