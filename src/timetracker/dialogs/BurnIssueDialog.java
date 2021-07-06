@@ -1,5 +1,6 @@
 package timetracker.dialogs;
 
+import org.apache.http.client.HttpResponseException;
 import timetracker.Constants;
 import timetracker.PropertyConstants;
 import timetracker.Resource;
@@ -125,7 +126,17 @@ public class BurnIssueDialog extends JFrame
             @Override
             public void actionPerformed(final ActionEvent e)
             {
-                if (burnTime(ticketField, timeField, dateField, typeField, textArea))
+                boolean success;
+                try
+                {
+                    success = burnTime(ticketField, timeField, dateField, typeField, textArea);
+                }
+                catch (final HttpResponseException ex)
+                {
+                    success = true;
+                    Util.handleException(ex);
+                }
+                if (success)
                 {
                     timerAction.reset();
 
@@ -219,8 +230,10 @@ public class BurnIssueDialog extends JFrame
      * @param typeField Feld mit dem Typ
      * @param textArea Feld mit dem Kommentar
      * @return <code>true</code>, wenn erfolgreich, sonst <code>false</code>
+     * @throws HttpResponseException Fehler im Response, z.B. Ticket nicht gefunden
      */
-    private boolean burnTime(final JTextField ticketField, final JTextField timeField, final JTextField dateField, final JComboBox<WorkItemType> typeField, final JTextArea textArea)
+    private boolean burnTime(final JTextField ticketField, final JTextField timeField, final JTextField dateField, final JComboBox<WorkItemType> typeField,
+                             final JTextArea textArea) throws HttpResponseException
     {
         final String ticket = ticketField.getText();
         final String spentTime = timeField.getText();
@@ -281,6 +294,10 @@ public class BurnIssueDialog extends JFrame
         try
         {
             return Client.setSpentTime(ticket, spentTime, date, this.issue.getType().getId(), text);
+        }
+        catch (final HttpResponseException e)
+        {
+            throw e;
         }
         catch (final URISyntaxException | IOException e)
         {

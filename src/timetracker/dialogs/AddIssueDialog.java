@@ -76,16 +76,17 @@ public class AddIssueDialog extends JFrame
             ok.setAction(new AddAction(ok, labelField, description, chooser)
             {
                 @Override
-                protected JButton createButton(final String ticket)
+                protected JButton createButton(final String text)
                 {
                     AddIssueDialog.this.dispose();
 
-                    if(TimeTracker.matches(ticket))
+                    final String ticket = TimeTracker.getTicketFromText(text);
+                    if(ticket != null)
                     {
-                        final ClipboardDialog dialog = new ClipboardDialog(TimeTracker.MATCHER.group(1));
+                        final ClipboardDialog dialog = new ClipboardDialog(ticket);
                         dialog.setVisible(true);
                     }
-                    super.createButton(ticket);
+                    super.createButton(text);
                     return null;
                 }
             });

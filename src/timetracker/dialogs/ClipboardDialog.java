@@ -85,12 +85,7 @@ public class ClipboardDialog extends JFrame
 
     private JButton createButton(final String text, final String icon)
     {
-        String ticket = null;
-        if(TimeTracker.matches(text))
-        {
-            ticket = TimeTracker.MATCHER.group(1);
-        }
-
+        final String ticket = TimeTracker.getTicketFromText(text);
         final Issue issue = new Issue(ticket, text, null, null, null, icon);
         JButton button;
         try

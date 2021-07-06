@@ -19,10 +19,10 @@ public class ComboBoxWorkItems extends JComboBox<WorkItemType>
         setAlignmentX(Component.LEFT_ALIGNMENT);
         setBackground(TimeTracker.MANDATORY);
         setRenderer(TypeRenderer.getInstance());
-        setSelectedItem(issue.getType());
 
         final List<WorkItemType> workItemTypes = WorkItemType.getTypes();
         workItemTypes.forEach(this::addItem);
+        setSelectedItem(issue.getType());
 
         if(issue.getType() == WorkItemType.EMPTY)
         {

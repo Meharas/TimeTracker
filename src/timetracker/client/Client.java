@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -18,6 +19,7 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.EnglishReasonPhraseCatalog;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.DefaultSchemePortResolver;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -27,6 +29,7 @@ import timetracker.Constants;
 import timetracker.ServicePath;
 import timetracker.TimeTracker;
 import timetracker.data.Project;
+import timetracker.error.ErrorCodes;
 import timetracker.log.Log;
 import timetracker.utils.DatePicker;
 import timetracker.utils.Util;
@@ -671,7 +674,24 @@ public class Client
             return false;
         }
         Client.logResponse(response);
-        return true;
+
+        final StatusLine statusLine = response.getStatusLine();
+        final int status = statusLine.getStatusCode();
+        final boolean success = HttpStatus.SC_OK == status;
+        if(!success)
+        {
+            final String msg;
+            if(HttpStatus.SC_NOT_FOUND == status)
+            {
+                msg = ErrorCodes.getString(ErrorCodes.ERROR_ISSUE_NOT_EXISTS, ticket);
+            }
+            else
+            {
+                msg = ErrorCodes.getString(ErrorCodes.ERROR_RESPONSE_STATUS_UNKNOWN, EnglishReasonPhraseCatalog.INSTANCE.getReason(status, Util.getLocale()));
+            }
+            throw new HttpResponseException(status, msg);
+        }
+        return success;
     }
 
     /**
@@ -683,10 +703,8 @@ public class Client
      */
     public static boolean setInProgress(String ticket) throws IOException, URISyntaxException
     {
-        if(TimeTracker.matches(ticket))
-        {
-            ticket = TimeTracker.MATCHER.group(1);
-        }
+        ticket = Optional.ofNullable(TimeTracker.getTicketFromText(ticket)).orElse(ticket);
+
         final String issueID = Client.getIssueID(ticket);
         if (issueID == null)
         {

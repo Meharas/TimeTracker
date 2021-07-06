@@ -59,10 +59,7 @@ public class Util
                 final Object transferData = contents.getTransferData(DataFlavor.stringFlavor);
                 if(transferData instanceof String)
                 {
-                    if(TimeTracker.matches((String) transferData))
-                    {
-                        return TimeTracker.MATCHER.group(1);
-                    }
+                    return TimeTracker.getTicketFromText((String) transferData);
                 }
             }
             catch (final UnsupportedFlavorException | IOException ex)

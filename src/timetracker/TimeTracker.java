@@ -335,6 +335,16 @@ public class TimeTracker extends JFrame
         return MATCHER.matches();
     }
 
+    public static String getTicketFromText(final String text)
+    {
+        MATCHER.reset(text);
+        if(MATCHER.matches())
+        {
+            return TimeTracker.MATCHER.group(1);
+        }
+        return null;
+    }
+
     /**
      * Liefet den übergeordneten JFrame
      * @param component Komponente, dessen übergeordneter Frame ermittelt werden soll

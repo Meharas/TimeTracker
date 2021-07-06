@@ -13,6 +13,8 @@ public final class ErrorCodes
     private static final ResourceBundle bundle = ResourceBundle.getBundle("timetracker.error.ErrorCodes", Util.getLocale());
 
     public static final String ERROR_ISSUE_EXISTS = "1001";
+    public static final String ERROR_ISSUE_NOT_EXISTS = "1002";
+    public static final String ERROR_RESPONSE_STATUS_UNKNOWN = "1050";
     public static final String ERROR_DRAG_N_DROP = "1101";
 
     private ErrorCodes()
