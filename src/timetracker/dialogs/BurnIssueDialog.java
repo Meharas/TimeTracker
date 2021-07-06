@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * Dialog zum Burnen der Zeit eines Issues
@@ -41,19 +42,9 @@ public class BurnIssueDialog extends JFrame
         setAlwaysOnTop(true);
         EscapeEvent.add(this);
 
-        final JTextField ticketField = createTextField(350, 100);
         final JButton button = action.getButton();
-        final String buttonText = button.getText();
-        TimeTracker.MATCHER.reset(buttonText);
-        if (TimeTracker.MATCHER.matches())
-        {
-            ticketField.setText(TimeTracker.MATCHER.group(1));
-        }
-        else
-        {
-            final String ticket = this.issue.getTicket();
-            ticketField.setText(ticket);
-        }
+        final JTextField ticketField = createTextField(350, 100);
+        ticketField.setText(Optional.ofNullable(TimeTracker.getTicketFromText(button.getText())).orElse(this.issue.getTicket()));
 
         final JLabel label = action.getLabel();
         final JTextField timeField = createTextField(350, 100);
