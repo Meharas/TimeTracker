@@ -4,6 +4,7 @@ import timetracker.PropertyConstants;
 import timetracker.Resource;
 import timetracker.actions.OpenLogAction;
 import timetracker.actions.ShowDatabaseContent;
+import timetracker.actions.ShowSettings;
 import timetracker.utils.LookAndFeelManager;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ public class TimeTrackerMenuBar extends JMenuBar
         final JMenuItem showLogMenuItem = new JMenuItem(Resource.getString(PropertyConstants.LABEL_SHOW_LOG));
         showLogMenuItem.addActionListener(new OpenLogAction());
 
-        final JMenu tools = new JMenu("Tools");
+        final JMenu tools = new JMenu(Resource.getString(PropertyConstants.MENU_TOOLS));
         tools.add(showDatabaseContentMenuItem);
         tools.add(showLogMenuItem);
         add(tools);
@@ -39,5 +40,11 @@ public class TimeTrackerMenuBar extends JMenuBar
             lookAndFeel.add(menu);
         }
         add(lookAndFeel);
+
+        final JMenuItem settingsItem = new JMenuItem(Resource.getString(PropertyConstants.MENU_ITEM_SETTINGS));
+        settingsItem.addActionListener(new ShowSettings());
+        final JMenu settings = new JMenu(Resource.getString(PropertyConstants.MENU_SETTINGS));
+        settings.add(settingsItem);
+        add(settings);
     }
 }

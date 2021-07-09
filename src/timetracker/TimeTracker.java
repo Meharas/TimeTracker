@@ -54,7 +54,6 @@ public class TimeTracker extends JFrame
     {
         super("Time Tracker");
         setMinimumSize(new Dimension(575, 0));
-        setAlwaysOnTop(true);
         setIconImage(Toolkit.getDefaultToolkit().getImage(TimeTracker.HOME + BaseButton.getIconName(Icon.BURN.getIcon())));
         addWindowListener(new WindowAdapter()
         {
@@ -100,11 +99,16 @@ public class TimeTracker extends JFrame
         addToPanel(globalActionsPanel);
         addToPanel(new JPanel()); //Spacer
 
-        final List<Issue> issues = Backend.getInstance().getIssues();
+        final Backend backend = Backend.getInstance();
+        final List<Issue> issues = backend.getIssues();
         for(final Issue issue : issues)
         {
             addButton(issue);
         }
+
+        final Map<String, String> settings = backend.getSettings();
+        final String alwaysOnTop = Optional.ofNullable(settings).map(s -> s.get(Backend.SETTING_ALWAYS_ON_TOP)).orElse(null);
+        setAlwaysOnTop(Boolean.parseBoolean(alwaysOnTop));
 
         pack();
         restoreWindowPositionAndSize();

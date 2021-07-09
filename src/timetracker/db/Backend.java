@@ -49,13 +49,18 @@ public class Backend
 
     public static final String CN_UPDATE_ID = "UPDATE_ID";
 
+    public static final String CN_SETTING_NAME = "SETTING_NAME";
+    public static final String CN_SETTING_VALUE = "SETTING_VALUE";
+
     public static final String TN_ISSUES = "ISSUES";
     public static final String TN_UPDATES = "UPDATES";
+    public static final String TN_SETTNGS = "SETTINGS";
     private static final String TN_ISSUES_COLUMNS = String.format(" (%s VARCHAR(12), %s INTEGER, %s VARCHAR(12), %s NVARCHAR(255),  %s NVARCHAR(255), %s VARCHAR (12), " +
                                                                   "%s VARCHAR(16), %s VARCHAR(16), %s VARCHAR(255), %s BOOLEAN, %s BOOLEAN, PRIMARY KEY (%s));",
                                                                   CN_ID, CN_ORDER, CN_ISSUE, CN_LABEL, CN_DESCRIPTION, CN_TYPE, CN_DURATION, CN_DURATION_SAVED,
                                                                   CN_ICON, CN_CAN_BE_FINISHED, CN_MARKED, CN_ID);
     private static final String TN_UPDATES_COLUMNS = String.format(" (%s INTEGER PRIMARY KEY);", CN_UPDATE_ID);
+    private static final String TN_SETTINGS_COLUMNS = String.format(" (%s VARCHAR(32) PRIMARY KEY, %s VARCHAR(32));", CN_SETTING_NAME, CN_SETTING_VALUE);
 
     private static final String RENAME_TABLE = "ALTER TABLE %s ALTER COLUMN %s RENAME TO %s;";
     private static final String ADD_COLUMN = "ALTER TABLE %s ADD %s %s;";
@@ -78,8 +83,15 @@ public class Backend
 
     private static final String QUERY_MAX_ORDER = String.format("SELECT MAX(%s) FROM %s;", CN_ORDER, TN_ISSUES);
 
+    private static final String QUERY_SETTINGS = String.format("SELECT * FROM %s ORDER BY %s;", TN_SETTNGS, CN_SETTING_NAME);
+    private static final String INSERT_SETTINGS = String.format("INSERT INTO %s (%s, %s) VALUES", TN_SETTNGS, CN_SETTING_NAME, CN_SETTING_VALUE) + " ('%s', '%s');";
+    private static final String UPDATE_SETTINGS = String.format("UPDATE %s SET %s=%s WHERE %s=%s", TN_SETTNGS, CN_SETTING_VALUE, "'%s'", CN_SETTING_NAME, "'%s'");
+
     private static final String COMMIT_STMT = "COMMIT;";
     private static final String ROLLBACK_STMT = "ROLLBACK WORK;";
+
+    public static final String SETTING_ALWAYS_ON_TOP = "ALWAYS_ON_TOP";
+    public static final String SETTING_DEFAULT_WORKTYPE = "DEFAULT_WORKTYPE";
 
     // Innere private Klasse, die erst beim Zugriff durch die umgebende Klasse initialisiert wird
     private static final class InstanceHolder
@@ -252,6 +264,12 @@ public class Backend
         {
             Updates.insertInitialUpdates(this);
         }
+
+        rs = metaData.getTables(null, null, TN_SETTNGS, null);
+        if(!rs.next())
+        {
+            initSettingsTable();
+        }
     }
 
     /**
@@ -259,14 +277,9 @@ public class Backend
      */
     private boolean initIssueTable()
     {
-        final StringBuilder sqlTable = new StringBuilder(STMT_CREATE_TABLE);
-        sqlTable.append(TN_ISSUES);
-        sqlTable.append(TN_ISSUES_COLUMNS);
-
         try
         {
-            this.statement.executeUpdate(sqlTable.toString());
-            Log.info("Table created: " + TN_ISSUES);
+            initTable(TN_ISSUES, TN_ISSUES_COLUMNS);
 
             insertIssue(new Issue(Constants.STRING_EMPTY, "Support", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.SUPPORT.getIcon()));
             insertIssue(new Issue(Constants.STRING_EMPTY, "Telefonat", WorkItemType.EMPTY, Constants.STRING_EMPTY, Constants.STRING_EMPTY, Icon.PHONE.getIcon()));
@@ -286,14 +299,38 @@ public class Backend
      */
     private void initUpdateTable()
     {
+        initTable(TN_UPDATES, TN_UPDATES_COLUMNS);
+    }
+
+    /**
+     * Erzeugt die Tabelle für die Einstellungen
+     */
+    private void initSettingsTable()
+    {
+        initTable(TN_SETTNGS, TN_SETTINGS_COLUMNS);
+
+        try
+        {
+            executeUpdate(String.format(INSERT_SETTINGS, SETTING_ALWAYS_ON_TOP, "true"), false);
+            executeUpdate(String.format(INSERT_SETTINGS, SETTING_DEFAULT_WORKTYPE, Constants.STRING_EMPTY), false);
+            commit();
+        }
+        catch (final SQLException e)
+        {
+            Util.handleException(e);
+        }
+    }
+
+    private void initTable(final String tableName, final String tableColumns)
+    {
         final StringBuilder sqlTable = new StringBuilder(STMT_CREATE_TABLE);
-        sqlTable.append(TN_UPDATES);
-        sqlTable.append(TN_UPDATES_COLUMNS);
+        sqlTable.append(tableName);
+        sqlTable.append(tableColumns);
 
         try
         {
             this.statement.executeUpdate(sqlTable.toString());
-            Log.info("Table created: " + TN_UPDATES);
+            Log.info("Table created: " + tableName);
         }
         catch (final Exception e)
         {
@@ -417,6 +454,43 @@ public class Backend
         if(ex != null)
         {
             throw ex;
+        }
+    }
+
+    public Map<String, String> getSettings()
+    {
+        try
+        {
+            try (final ResultSet rs = this.statement.executeQuery(QUERY_SETTINGS))
+            {
+                final Map<String, String> result = new LinkedHashMap<>();
+                while (rs.next())
+                {
+                    result.put(rs.getString(1), rs.getString(2));
+                }
+                return result;
+            }
+        }
+        catch (final SQLException t)
+        {
+            Util.handleException(t);
+        }
+        return Collections.emptyMap();
+    }
+
+    /**
+     * Specichert die Einstellungen
+     * @param settings Einstellungen
+     * @throws SQLException Wenn beim Speichern der Einstellungen ein Fehler aufgetreten ist.
+     */
+    public void saveSettings(final Map<String, String> settings) throws SQLException
+    {
+        if(settings != null && !settings.isEmpty())
+        {
+            for(final Map.Entry<String, String> setting : settings.entrySet())
+            {
+                executeUpdate(String.format(UPDATE_SETTINGS, setting.getValue(), setting.getKey()), true);
+            }
         }
     }
 

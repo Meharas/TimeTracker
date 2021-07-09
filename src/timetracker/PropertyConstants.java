@@ -26,6 +26,9 @@ public final class PropertyConstants
     public static final String MENU_ITEM_STAR = "menu.item.star";
     public static final String MENU_ITEM_UNSTAR = "menu.item.unstar";
     public static final String MENU_ITEM_REMOVE_ICON = "menu.item.removeicon";
+    public static final String MENU_ITEM_SETTINGS = "menu.item.settings";
+    public static final String MENU_TOOLS = "menu.tools";
+    public static final String MENU_SETTINGS = "menu.settings";
 
     public static final String TOOLTIP_DELETE = "button.tooltip.delete";
     public static final String TOOLTIP_BURN = "button.tooltip.burn";
@@ -48,6 +51,7 @@ public final class PropertyConstants
     public static final String LABEL_SHOW_DB = "button.label.showdb";
     public static final String LABEL_EXIT = "button.label.exit";
     public static final String LABEL_ABOUT = "button.label.about";
+    public static final String LABEL_SAVE = "button.label.save";
 
     public static final String LABEL_ISSUE = "label.issue";
     public static final String LABEL_DESCRIPTION = "label.description";

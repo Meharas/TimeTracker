@@ -39,7 +39,7 @@ public class WorkItemType implements Serializable
     public WorkItemType()
     {
         this.id = Constants.STRING_EMPTY;
-        this.label = Constants.STRING_EMPTY;
+        this.label = "-";
     }
 
     public WorkItemType(final String id, final String label)
