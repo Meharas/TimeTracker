@@ -3,6 +3,7 @@ package timetracker.updates;
 import timetracker.Constants;
 import timetracker.TimeTracker;
 import timetracker.log.Log;
+import timetracker.utils.Util;
 
 import java.io.File;
 import java.io.IOException;
@@ -104,6 +105,30 @@ public class CopyUserFiles implements IUpdateMethod
             for(final Map.Entry<Level, String> messages : logMessages.entrySet())
             {
                 Log.log(messages.getKey(), messages.getValue());
+            }
+        }
+
+        final File propertyFile = new File(TimeTracker.HOME + Constants.PROPERTIES);
+        if(!propertyFile.exists())
+        {
+            try
+            {
+                final boolean created = propertyFile.createNewFile();
+                if(created)
+                {
+                    Log.info("Property file created");
+                    //Zertifikat eintragen
+                    TimeTracker.saveSetting(Constants.YOUTRACK_CERT, "cert.cer");
+                }
+                else
+                {
+                    Log.severe("Failed creating property file");
+                }
+            }
+            catch (final IOException e)
+            {
+                Log.severe("Failed creating property file");
+                Util.handleException(e);
             }
         }
 

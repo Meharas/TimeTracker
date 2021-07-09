@@ -42,25 +42,16 @@ public class ClipboardDialog extends JFrame
 
         rows.add(new JLabel(Resource.getString(PropertyConstants.TICKET_IN_PROGRESS, ticket)));
 
-        final JPanel buttonPanel = new JPanel(new GridLayout(1, 3));
+        final JPanel buttonPanel = new JPanel(new GridLayout(1, 4));
         buttonPanel.setBorder(new EmptyBorder(20, 10, 10, 10));
         rows.add(buttonPanel);
 
-        final JButton noButton = new JButton(Resource.getString(PropertyConstants.TEXT_NO));
-        noButton.addActionListener((final ActionEvent event) -> {
-            createButton(ticket, icon);
-            dispose();
-        });
-
-        final JButton yesButton = new JButton(Resource.getString(PropertyConstants.TEXT_YES));
-        yesButton.addActionListener((final ActionEvent event) -> {
+        final JButton inProgress = new JButton(Resource.getString(PropertyConstants.TEXT_INPROGRESS));
+        inProgress.addActionListener((final ActionEvent event) -> {
             try
             {
                 Client.setInProgress(ticket);
                 dispose();
-
-                final JButton button = createButton(ticket, icon);
-                Optional.ofNullable(button).ifPresent(AbstractButton::doClick);
             }
             catch (final URISyntaxException | IOException ex)
             {
@@ -68,17 +59,39 @@ public class ClipboardDialog extends JFrame
             }
         });
 
+        final JButton startTimer = new JButton(Resource.getString(PropertyConstants.TEXT_TIMER_START));
+        startTimer.addActionListener((final ActionEvent event) -> {
+            final JButton button = createButton(ticket, icon);
+            Optional.ofNullable(button).ifPresent(AbstractButton::doClick);
+            dispose();
+        });
+
+        final JButton both = new JButton(Resource.getString(PropertyConstants.TEXT_BOTH));
+        both.addActionListener((final ActionEvent event) -> {
+            try
+            {
+                Client.setInProgress(ticket);
+                createButton(ticket, icon);
+            }
+            catch (final URISyntaxException | IOException ex)
+            {
+                Log.severe(ex.getMessage(), ex);
+            }
+            dispose();
+        });
+
         final JButton cancelButton = new JButton(Resource.getString(PropertyConstants.TEXT_CANCEL));
         cancelButton.addActionListener(e -> dispose());
 
-        buttonPanel.add(yesButton);
-        buttonPanel.add(noButton);
+        buttonPanel.add(inProgress);
+        buttonPanel.add(startTimer);
+        buttonPanel.add(both);
         buttonPanel.add(cancelButton);
 
         final Dimension size = getPreferredSize();
         setBounds(Util.getPopUpLocation(size.width, size.height));
 
-        SwingUtilities.getRootPane(yesButton).setDefaultButton(yesButton);
+        SwingUtilities.getRootPane(inProgress).setDefaultButton(inProgress);
 
         pack();
     }

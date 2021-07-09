@@ -66,10 +66,10 @@ public class Backend
     private static final String QUERY_STMT = String.format("SELECT * FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s';";
     private static final String QUERY_ALL_STMT = String.format("SELECT * FROM %s ORDER BY %s;", TN_ISSUES, CN_ORDER);
     private static final String QUERY_FIRST_ISSUE = String.format("SELECT * FROM %s LIMIT 1;", TN_ISSUES);
-    private static final String INSERT_STMT = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES ",
-                                                            TN_ISSUES, CN_ID, CN_ORDER, CN_ISSUE, CN_LABEL, CN_TYPE, CN_DURATION, CN_DURATION_SAVED, CN_ICON,
-                                                            CN_CAN_BE_FINISHED, CN_MARKED) +
-                                              "('%s', %d, '%s', '%s', '%s', '%s', '%s', '%s', %s, %s);";
+    private static final String INSERT_STMT = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES ",
+                                                            TN_ISSUES, CN_ID, CN_ORDER, CN_ISSUE, CN_LABEL, CN_DESCRIPTION, CN_TYPE, CN_DURATION, CN_DURATION_SAVED,
+                                                            CN_ICON, CN_CAN_BE_FINISHED, CN_MARKED) +
+                                              "('%s', %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s);";
     private static final String DELETE_STMT = String.format("DELETE FROM %s WHERE %s = ", TN_ISSUES, CN_ID) + "'%s';";
     private static final String UPDATE_STMT = "UPDATE " + TN_ISSUES + " SET " + CN_ISSUE + UPDATE_VALUE + CN_ORDER + "=%d," + CN_LABEL + UPDATE_VALUE +
                                               CN_DESCRIPTION + UPDATE_VALUE + CN_TYPE + UPDATE_VALUE +
@@ -330,7 +330,7 @@ public class Backend
 
         setOrder(issue);
 
-        executeUpdate(String.format(INSERT_STMT, id, issue.getOrder(), ticket, issue.getLabel(), Optional.ofNullable(issue.getType()).map(WorkItemType::getId).orElse(null),
+        executeUpdate(String.format(INSERT_STMT, id, issue.getOrder(), ticket, issue.getLabel(), issue.getDescription(), issue.getType().getId(),
                                     issue.getDuration(), issue.getDurationSaved(), issue.getIcon(), issue.canBeFinished(), issue.isMarked()), true);
         issue.setId(id);
         Log.info("Issue inserted: " +  issue);

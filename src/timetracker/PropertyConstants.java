@@ -16,6 +16,9 @@ public final class PropertyConstants
     public static final String TEXT_RESET = "text.reset";
     public static final String TEXT_CANCEL = "text.cancel";
     public static final String TEXT_ADD_CLIPBOARD = "text.add.clipboard";
+    public static final String TEXT_INPROGRESS = "text.inprogress";
+    public static final String TEXT_TIMER_START = "text.timer.start";
+    public static final String TEXT_BOTH = "text.both";
 
     public static final String MENU_ITEM_COPY = "menu.item.copy";
     public static final String MENU_ITEM_EDIT = "menu.item.edit";
