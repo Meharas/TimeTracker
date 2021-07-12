@@ -7,6 +7,7 @@ import timetracker.actions.AddClipboardAction;
 import timetracker.actions.OpenLogAction;
 import timetracker.actions.ShowAddButtonAction;
 import timetracker.actions.ShowDatabaseContent;
+import timetracker.db.Backend;
 import timetracker.icons.Icon;
 
 import javax.swing.*;
@@ -14,6 +15,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * Erzeugt ein TrayIcon mit Menü
@@ -86,6 +88,12 @@ public class SystemTrayIcon
             popup.add(exit);
             icon.setPopupMenu(popup);
             SystemTray.getSystemTray().add(icon);
+
+            final Map<String, String> settings = Backend.getInstance().getSettings();
+            if(settings.containsKey(Backend.SETTING_START_MINIMIZED))
+            {
+                timeTracker.showFrame(openItem, !Boolean.parseBoolean(settings.get(Backend.SETTING_START_MINIMIZED)));
+            }
 
             timeTracker.addWindowStateListener((final WindowEvent e) -> {
                 if(e.getNewState() == Frame.ICONIFIED || e.getNewState() == 7)

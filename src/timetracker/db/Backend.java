@@ -91,6 +91,7 @@ public class Backend
     private static final String ROLLBACK_STMT = "ROLLBACK WORK;";
 
     public static final String SETTING_ALWAYS_ON_TOP = "ALWAYS_ON_TOP";
+    public static final String SETTING_START_MINIMIZED = "START_MINIMIZED";
     public static final String SETTING_DEFAULT_WORKTYPE = "DEFAULT_WORKTYPE";
 
     // Innere private Klasse, die erst beim Zugriff durch die umgebende Klasse initialisiert wird
@@ -312,6 +313,7 @@ public class Backend
         try
         {
             executeUpdate(String.format(INSERT_SETTINGS, SETTING_ALWAYS_ON_TOP, "true"), false);
+            executeUpdate(String.format(INSERT_SETTINGS, SETTING_START_MINIMIZED, "false"), false);
             executeUpdate(String.format(INSERT_SETTINGS, SETTING_DEFAULT_WORKTYPE, Constants.STRING_EMPTY), false);
             commit();
         }
@@ -423,9 +425,10 @@ public class Backend
      * Führt ein Update oder Delete aus
      * @param query Statement
      * @param commit Apply changes
+     * @return Anzahl geänderter Datensätze
      * @throws SQLException database access error
      */
-    private void executeUpdate(final String query, final boolean commit) throws SQLException
+    private int executeUpdate(final String query, final boolean commit) throws SQLException
     {
         Log.finest("Executing " + query);
 
@@ -433,7 +436,7 @@ public class Backend
         int i = -1;
         try
         {
-            final long start = System.currentTimeMillis();
+             final long start = System.currentTimeMillis();
              i = this.statement.executeUpdate(query);
              Util.logDuration(start);
              if(commit)
@@ -448,13 +451,14 @@ public class Backend
         }
         if (i == -1)
         {
-            final String sb = String.format("Could not execute statement for insert/delete in db-table: %s%n%s", TN_ISSUES, query);
+            final String sb = String.format("Could not execute statement for insert/update/delete: %n%s", query);
             Log.severe(sb);
         }
         if(ex != null)
         {
             throw ex;
         }
+        return i;
     }
 
     public Map<String, String> getSettings()
@@ -489,7 +493,11 @@ public class Backend
         {
             for(final Map.Entry<String, String> setting : settings.entrySet())
             {
-                executeUpdate(String.format(UPDATE_SETTINGS, setting.getValue(), setting.getKey()), true);
+                final int updated = executeUpdate(String.format(UPDATE_SETTINGS, setting.getValue(), setting.getKey()), true);
+                if(updated < 1)
+                {
+                    executeUpdate(String.format(INSERT_SETTINGS, setting.getKey(), setting.getValue()), true);
+                }
             }
         }
     }
