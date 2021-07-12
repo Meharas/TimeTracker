@@ -71,7 +71,8 @@ public class ClipboardDialog extends JFrame
             try
             {
                 Client.setInProgress(ticket);
-                createButton(ticket, icon);
+                final JButton button = createButton(ticket, icon);
+                Optional.ofNullable(button).ifPresent(AbstractButton::doClick);
             }
             catch (final URISyntaxException | IOException ex)
             {
