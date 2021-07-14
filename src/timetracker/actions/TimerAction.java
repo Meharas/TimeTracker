@@ -4,6 +4,7 @@ import timetracker.Constants;
 import timetracker.buttons.IssueButton;
 import timetracker.data.Issue;
 import timetracker.db.Backend;
+import timetracker.log.Log;
 import timetracker.utils.DurationTimer;
 import timetracker.utils.LookAndFeelManager;
 import timetracker.utils.Util;
@@ -11,6 +12,7 @@ import timetracker.utils.Util;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.logging.Level;
 
 /**
  * Base Action
@@ -50,6 +52,7 @@ public class TimerAction extends BaseAction
     {
         if (this.timer.isRunning())
         {
+            Log.info("Resetting time for " + this.issue);
             stop();
             return;
         }
@@ -80,44 +83,50 @@ public class TimerAction extends BaseAction
 
     void stopTimers()
     {
+        Log.log(Level.FINE, "stopTimers()");
         final Collection<IssueButton> buttons = Util.getButtons();
         for (final IssueButton btn : buttons)
         {
-            final Action action = btn.getAction();
-            if (action instanceof TimerAction)
+            final TimerAction action = btn.getAction();
+            if (action != null)
             {
-                ((TimerAction) action).stop();
+                action.stop();
             }
         }
     }
 
     public static void resetTimers()
     {
+        Log.log(Level.FINE, "resetTimers()");
         final Collection<IssueButton> buttons = Util.getButtons();
         for (final IssueButton btn : buttons)
         {
-            final Action action = btn.getAction();
-            if (action instanceof TimerAction && ((TimerAction) action).issue != null)
+            final TimerAction action = btn.getAction();
+            if (action != null && action.issue != null)
             {
-                ((TimerAction) action).reset();
+                action.reset();
             }
         }
     }
 
     void stop()
     {
+        Log.log(Level.FINE, "stop()");
         stop(true, false);
     }
 
     public void stopWithoutSave()
     {
+        Log.log(Level.FINE, "stopWithoutSave()");
         stop(false, false);
     }
 
     void stop(final boolean saveDuration, final boolean reset)
     {
+        Log.log(Level.FINE, String.format("stop(%s, %s)", saveDuration, reset));
         if (this.timer != null)
         {
+            Log.info("Resetting time for " + this.issue);
             this.timer.stop();
             if (saveDuration && this.label != null)
             {
@@ -153,6 +162,8 @@ public class TimerAction extends BaseAction
     public void reset()
     {
         stop(true, true);
+
+        Log.info("Resetting timer for " + this.issue);
         this.timer.reset();
         if (this.label != null)
         {

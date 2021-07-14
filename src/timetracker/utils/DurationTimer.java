@@ -3,13 +3,14 @@ package timetracker.utils;
 import timetracker.Constants;
 
 import javax.swing.*;
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.regex.Matcher;
 
 /**
  * Übernimmt die Anzeige der Bearbeitungszeit
  */
-public final class DurationTimer
+public final class DurationTimer implements Serializable
 {
     private static final String TIME_PATTERN = "%02dh %02dmin %02ds";
     private static final Matcher DURATION_MATCHER = Constants.DURATION_PATTERN.matcher(Constants.STRING_EMPTY);

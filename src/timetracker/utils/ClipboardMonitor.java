@@ -36,8 +36,11 @@ public class ClipboardMonitor extends Observable implements ClipboardOwner, Runn
                 final Object transferData = content.getTransferData(DataFlavor.stringFlavor);
                 if(transferData instanceof String && !((String) transferData).isEmpty())
                 {
+                    final TimeTracker timeTracker = TimeTracker.getInstance();
+                    final boolean showPopUp = timeTracker.isVisible() && !timeTracker.isAlwaysOnTop() || !timeTracker.isVisible();
+
                     final String ticket;
-                    if(!TimeTracker.getInstance().isVisible() && (ticket = TimeTracker.getTicketFromText((String) transferData)) != null)
+                    if(showPopUp && (ticket = TimeTracker.getTicketFromText((String) transferData)) != null)
                     {
                         final JPopupMenu menu = new JPopupMenu();
                         final JMenuItem add = new JMenuItem(Resource.getString(PropertyConstants.TEXT_ADD_CLIPBOARD, ticket));
