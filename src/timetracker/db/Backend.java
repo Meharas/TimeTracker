@@ -93,6 +93,8 @@ public class Backend
     public static final String SETTING_ALWAYS_ON_TOP = "ALWAYS_ON_TOP";
     public static final String SETTING_START_MINIMIZED = "START_MINIMIZED";
     public static final String SETTING_DEFAULT_WORKTYPE = "DEFAULT_WORKTYPE";
+    public static final String SETTING_LOG_LEVEL = "LOG_LEVEL";
+    public static final String SETTING_ENABLE_DRAGNDROP = "ENABLE_DRAGNDROP";
 
     // Innere private Klasse, die erst beim Zugriff durch die umgebende Klasse initialisiert wird
     private static final class InstanceHolder
@@ -312,9 +314,11 @@ public class Backend
 
         try
         {
-            executeUpdate(String.format(INSERT_SETTINGS, SETTING_ALWAYS_ON_TOP, "true"), false);
-            executeUpdate(String.format(INSERT_SETTINGS, SETTING_START_MINIMIZED, "false"), false);
+            executeUpdate(String.format(INSERT_SETTINGS, SETTING_ALWAYS_ON_TOP, true), false);
+            executeUpdate(String.format(INSERT_SETTINGS, SETTING_START_MINIMIZED, false), false);
             executeUpdate(String.format(INSERT_SETTINGS, SETTING_DEFAULT_WORKTYPE, Constants.STRING_EMPTY), false);
+            executeUpdate(String.format(INSERT_SETTINGS, SETTING_LOG_LEVEL, Level.INFO), false);
+            executeUpdate(String.format(INSERT_SETTINGS, SETTING_ENABLE_DRAGNDROP, true), false);
             commit();
         }
         catch (final SQLException e)
@@ -499,6 +503,8 @@ public class Backend
                     executeUpdate(String.format(INSERT_SETTINGS, setting.getKey(), setting.getValue()), true);
                 }
             }
+            TimeTracker.getInstance().setAlwaysOnTop(Boolean.parseBoolean(settings.get(Backend.SETTING_ALWAYS_ON_TOP)));
+            Log.setLevel(Level.parse(settings.get(Backend.SETTING_LOG_LEVEL)));
         }
     }
 

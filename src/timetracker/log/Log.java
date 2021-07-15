@@ -2,6 +2,7 @@ package timetracker.log;
 
 import timetracker.Constants;
 import timetracker.TimeTracker;
+import timetracker.db.Backend;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,10 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.*;
 
 /**
@@ -21,7 +19,14 @@ import java.util.logging.*;
 public class Log
 {
     public static boolean disabled = true;
-    private static final LocalLogger logger = new LocalLogger();
+    private static final LocalLogger logger = new LocalLogger() {
+        @Override
+        public void setLevel(final Level newLevel) throws SecurityException
+        {
+            Log.info("Setting log level to " + newLevel);
+            super.setLevel(newLevel);
+        }
+    };
     private static final Map<Level, String> QUEUE = new HashMap<>();
 
     private Log()
@@ -88,6 +93,8 @@ public class Log
 
             try (final InputStream inputStream = new FileInputStream(TimeTracker.getHome() + Constants.DEFAULT_PROPERTIES))
             {
+                final Map<String, String> settings = Backend.getInstance().getSettings();
+                final String logLevel = Optional.ofNullable(settings.get(Backend.SETTING_LOG_LEVEL)).orElse(null);
                 final LogManager manager = LogManager.getLogManager();
                 manager.readConfiguration(inputStream);
 
@@ -99,14 +106,13 @@ public class Log
                 final Handler[] handlers = getHandlers();
                 for(final Handler handler : handlers)
                 {
-                    final String level = properties.getProperty(handler.getClass().getName() + ".level", Level.INFO.getName());
-                    handler.setLevel(Level.parse(level));
-
+                    String level = properties.getProperty(handler.getClass().getName() + ".level", Level.INFO.getName());
                     if(handler instanceof FileHandler)
                     {
-                        Log.info("Setting log level to " + level);
+                        level = Optional.ofNullable(logLevel).orElse(level);
                         super.setLevel(handler.getLevel());
                     }
+                    handler.setLevel(Level.parse(level));
                 }
 
                 this.initialized = true;
