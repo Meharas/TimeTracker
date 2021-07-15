@@ -31,7 +31,6 @@ public class FinishIssueDialog extends JFrame
     {
         super("Finish issue");
 
-        setBounds(Util.getPopUpLocation(400, 300));
         setResizable(false);
         setAlwaysOnTop(true);
         EscapeEvent.add(this);
@@ -129,5 +128,9 @@ public class FinishIssueDialog extends JFrame
         okBtnPanel.add(okButton);
         globalPanel.add(okBtnPanel);
         add(globalPanel);
+
+        final Dimension size = getPreferredSize();
+        final Rectangle location = Util.getPopUpLocation(size.width, size.height);
+        setBounds(location);
     }
 }

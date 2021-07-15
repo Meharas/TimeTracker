@@ -2,10 +2,12 @@ package timetracker.data;
 
 import timetracker.Constants;
 import timetracker.db.Backend;
+import timetracker.log.Log;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
 
 /**
  * Repräsentiert ein Ticket
@@ -194,6 +196,7 @@ public class Issue implements Serializable
 
     public void setPreventTimer(final boolean preventTimer)
     {
+        Log.log(Level.FINE, String.format("preventTimer(%s)", preventTimer));
         this.preventTimer = preventTimer;
     }
 

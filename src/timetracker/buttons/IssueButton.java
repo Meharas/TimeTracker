@@ -1,5 +1,6 @@
 package timetracker.buttons;
 
+import timetracker.TimeTracker;
 import timetracker.actions.TimerAction;
 import timetracker.data.Issue;
 import timetracker.dnd.ButtonTransferHandler;
@@ -13,6 +14,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Properties;
 
 /**
  * Stellt einen Button für ein Issue dar
@@ -86,9 +88,14 @@ public class IssueButton extends BaseButton
         };
 
         addMouseListener(mouseAdapter);
-        addMouseMotionListener(mouseAdapter);
 
-        setTransferHandler(new ButtonTransferHandler(issue));
+        final Properties properties = TimeTracker.getProperties();
+        final boolean dragNdropEnabled = Boolean.parseBoolean(properties.getProperty("dragndrop.enabled", "true"));
+        if(dragNdropEnabled)
+        {
+            addMouseMotionListener(mouseAdapter);
+            setTransferHandler(new ButtonTransferHandler(issue));
+        }
     }
 
     @Override

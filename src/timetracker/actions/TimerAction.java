@@ -50,6 +50,7 @@ public class TimerAction extends BaseAction
     @Override
     public void actionPerformed(final ActionEvent e)
     {
+        Log.info("Button clicked for " + this.issue);
         if (this.timer.isRunning())
         {
             Log.info("Resetting time for " + this.issue);
@@ -59,6 +60,7 @@ public class TimerAction extends BaseAction
 
         if(this.issue.isPreventTimer())
         {
+            Log.log(Level.FINE, String.format("isPreventTimer(): %s", this.issue));
             return;
         }
 

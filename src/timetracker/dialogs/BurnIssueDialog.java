@@ -37,7 +37,6 @@ public class BurnIssueDialog extends JFrame
         super("Burning time");
         this.issue = action.getIssue();
 
-        setBounds(Util.getPopUpLocation(400, 400));
         setResizable(false);
         setAlwaysOnTop(true);
         EscapeEvent.add(this);
@@ -143,6 +142,10 @@ public class BurnIssueDialog extends JFrame
         okBtnPanel.add(ok);
         globalPanel.add(okBtnPanel);
         add(globalPanel);
+
+        final Dimension size = getPreferredSize();
+        final Rectangle location = Util.getPopUpLocation(size.width, size.height);
+        setBounds(location);
     }
 
     private JTextField createTextField(final int width, final int height)

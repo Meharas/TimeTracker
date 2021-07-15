@@ -1,10 +1,12 @@
 package timetracker.utils;
 
 import timetracker.Constants;
+import timetracker.log.Log;
 
 import javax.swing.*;
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 
 /**
@@ -63,11 +65,13 @@ public final class DurationTimer implements Serializable
 
     public final void start()
     {
+        Log.log(Level.FINE, "starting timer");
         this.timer.start();
     }
 
     public final void stop()
     {
+        Log.log(Level.FINE, "stopping timer");
         this.timer.stop();
     }
 
