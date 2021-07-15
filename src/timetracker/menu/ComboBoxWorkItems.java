@@ -28,7 +28,6 @@ public class ComboBoxWorkItems extends JComboBox<WorkItemType>
 
     private ComboBoxWorkItems(final Issue issue, final boolean addEmptyItem)
     {
-        setMaximumSize(new Dimension(350, 100));
         setAlignmentX(Component.LEFT_ALIGNMENT);
         setBackground(TimeTracker.MANDATORY);
         setRenderer(TypeRenderer.getInstance());
